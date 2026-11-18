@@ -6,6 +6,7 @@ const { spawn } = require('child_process'); const { chromium } = require('playwr
 const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Promise(r => setTimeout(r, ms));
 let fails = 0;
 async function run(name, server, env, port, wait, expectOk, srvEnv = {}, maxFed = 99) {
+  if (!fs.existsSync(path.join(ROOT, 'nova-remote', server))) { console.log(`--   ${name}: skipped (${server} isn't in this copy; it's the old server kept only for comparison)`); return; }
   const out = path.join(DIR, `fakebg_${port}.txt`); try { fs.unlinkSync(out); } catch (_) {}
   const fake = spawn('python3', [path.join(DIR, 'fake_nova523.py'), path.join(ROOT, 'cap/direct1_conv.log'), out, String(wait + 10)], { env: { ...process.env, ...env } });
   const pty = await new Promise(r => fake.stdout.once('data', d => r(String(d).trim())));

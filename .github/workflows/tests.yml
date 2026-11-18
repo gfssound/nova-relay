@@ -23,7 +23,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.63.0
           npx playwright install --with-deps chromium
-          sudo apt-get install -y -qq zip unzip fonts-dejavu-core >/dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq zip unzip fonts-dejavu-core python3-pil >/dev/null
       - name: Signing key (only if the secret is set)
         env:
           KEY: ${{ secrets.NOVA_SIGNING_KEY }}

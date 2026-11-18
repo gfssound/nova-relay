@@ -1,6 +1,6 @@
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const path=require('path');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-(async()=>{ const home=require('fs').mkdtempSync('/tmp/claude-0/-home-claude/10fb85d4-efc5-5dbf-a537-af46f5c1d13e/scratchpad/apihome-');
+(async()=>{ const home=require('fs').mkdtempSync(require('path').join(__dirname, '..', 'apihome-'));
  const srv=spawn('node',[path.join(__dirname,'../nova-remote/server.js'),'--port','8136','--no-open'],{env:{...process.env,HOME:home}});
  await sleep(800); const b=await chromium.launch(); const errs=[];
  const p=await b.newPage({viewport:{width:1280,height:900}}); p.on('pageerror',e=>errs.push(e.message)); await p.goto('http://localhost:8136/'); await sleep(1500);
