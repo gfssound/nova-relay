@@ -1,0 +1,27 @@
+const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs = require('fs'); const os = require('os'); const path = require('path');
+const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  const rx = path.join(DIR, 'fake_listen.txt');
+  const fake = spawn('python3', [path.join(DIR, 'fake_nova.py'), path.join(ROOT, 'cap/tap1101.log'), rx, '20', '1']);
+  const pty = await new Promise(r => fake.stdout.once('data', d => r(String(d).trim())));
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'nr-'));
+  const srv = spawn('node', [path.join(ROOT, 'nova-remote/server.js'), '--port', '8138', '--no-open', '--data', data]);
+  await sleep(800);
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
+  await p.goto('http://localhost:8138/'); await p.waitForFunction(() => cart.ready);
+  await p.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(400);
+  await p.check('#f-listen');
+  await p.evaluate(path => { const s = document.getElementById('f-serial-port'); s.append(new Option(path, path)); s.value = path; }, pty);
+  await p.locator('button', { hasText: 'Connect' }).first().click(); await sleep(3000);
+  await p.fill('#f-cap-note', 'pressed MENU on the Nova'); await p.keyboard.press('Enter'); await sleep(500);
+  await p.evaluate(() => set('tone.enable', [], 1)); await sleep(800);
+  const sent = fs.readFileSync(rx, 'utf8').trim();
+  const capF = fs.readdirSync(data).filter(f => /serial-capture/.test(f)).map(f => path.join(data, f))[0];
+  const cap = capF ? fs.readFileSync(capF, 'utf8') : '';
+  console.log('bytes the Nova received:', sent ? sent.split('\n').length + ' frames' : 'none');
+  console.log('capture:', cap.split('\n').filter(l => /NOTE|Listen|TX/.test(l)).join(' | '));
+  console.log('status:', await p.locator('[role=status]').allTextContents());
+  console.log((await p.evaluate(() => LOG.slice(-4).map(e => e.line))).join('\n'));
+  await p.screenshot({ path: path.join(DIR, 'listen.png'), fullPage: true });
+  await b.close(); srv.kill(); fake.kill();
+})().catch(e => { console.error(e); process.exit(1); });

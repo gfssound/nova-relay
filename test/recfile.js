@@ -1,0 +1,18 @@
+const { chromium } = require('playwright'); const path = require('path'); const fs = require('fs');
+(async () => { const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true }); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.goto('file://' + path.resolve('build/cart-remote.html')); await p.waitForTimeout(500);
+  await p.evaluate(() => sim.command('RECORD')); await p.waitForTimeout(1300);
+  console.log('header while recording:', await p.textContent('.tc-sub'), '| hidden:', await p.getAttribute('#stFile', 'hidden'));
+  await p.screenshot({ path: 'build/recfile-header.png', clip: { x: 0, y: 40, width: 700, height: 100 } });
+  await p.evaluate(() => sim.command('STOP')); await p.waitForTimeout(300);
+  console.log('header stopped:', await p.textContent('.tc-sub'));
+  await p.evaluate(() => go('meta')); await p.waitForTimeout(300);
+  console.log('first row:', (await p.locator('table.hist tbody tr').first().innerText()).replace(/\s+/g, ' '));
+  console.log('folder label:', await p.locator('.panel .hint.keep', { hasText: 'Folder' }).first().textContent());
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.locator('button', { hasText: 'Sound report' }).click()]);
+  const f = 'build/sound-report-test.csv'; await dl.saveAs(f); console.log('download:', dl.suggestedFilename()); console.log(fs.readFileSync(f, 'utf8'));
+  await p.locator('table.hist tbody tr').first().click(); await p.waitForTimeout(200);
+  console.log('editor:', (await p.locator('.modal.nt').innerText()).split('\n').slice(0, 4).join(' | '));
+  await p.screenshot({ path: 'build/recfile-editor.png' }); await p.keyboard.press('Escape'); await p.evaluate(() => closeModal());
+  await p.screenshot({ path: 'build/recfile-meta.png', fullPage: false });
+  console.log('errors:', errs.length ? errs : 'none'); await b.close(); })();

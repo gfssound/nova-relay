@@ -1,0 +1,13 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:1280,height:820}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(500);
+const r={}; r.strips=await p.locator('.strip').count(); r.armBtns=await p.locator('.sarm').count();
+await p.click('.tab[data-v="arm"]'); await p.locator('.armbtn').nth(12).click(); await p.locator('.armbtn').nth(0).click();
+await p.click('.tab[data-v="home"]'); await p.waitForTimeout(300); r.after=await p.locator('.strip').count();
+await p.click('#layoutSeg [data-l="touch"]'); await p.waitForTimeout(300); r.touchRows=await p.locator('.hrow').count();
+await p.click('.tab[data-v="arm"]'); await p.click('.armall >> text=Disarm all'); await p.click('.tab[data-v="home"]'); await p.waitForTimeout(200);
+r.empty=await p.locator('text=No tracks armed').count();
+await p.click('#layoutSeg [data-l="console"]'); await p.click('.tab[data-v="arm"]'); await p.click('.armall >> text=Arm mix tracks only'); await p.click('.tab[data-v="home"]'); await p.waitForTimeout(800);
+await p.screenshot({path:'build/meters-armed.png'});
+console.log(r,errs);await b.close();})();

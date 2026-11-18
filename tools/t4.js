@@ -1,0 +1,12 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:1280,height:820}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(400);
+await p.click('.tab[data-v="arm"]');await p.waitForTimeout(200);
+await p.locator('.armbtn').nth(12).click();
+const a=await p.locator('.armbtn').nth(12).getAttribute('aria-pressed');
+await p.click('#bRec');await p.waitForTimeout(150);
+await p.locator('.armbtn').nth(12).click();
+const b2=await p.locator('.armbtn').nth(12).getAttribute('aria-pressed');
+await p.screenshot({path:'build/arm.png'});
+console.log({a,b2,count:await p.locator('.armbtn').count(),errs});await b.close();})();

@@ -1,0 +1,13 @@
+const { chromium } = require('playwright'); const path=require('path');
+(async()=>{ const b=await chromium.launch(); const errs=[]; const p=await b.newPage({viewport:{width:1024,height:768}}); p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+path.join(__dirname,'../build/cart-remote.html')); await p.waitForTimeout(400);
+await p.evaluate(()=>{ set("home.meters.source",[],1,"local"); go("home"); }); await p.waitForTimeout(300);
+const names=()=>p.evaluate(()=>[...document.querySelectorAll('.strips .scrib, .strips button')].slice(0,3).map(e=>e.textContent));
+console.log(await names());
+await p.evaluate(()=>openOutputModal(0)); await p.waitForTimeout(200);
+await p.fill('#mo-name-0','cam a'); await p.press('#mo-name-0','Enter'); await p.waitForTimeout(100);
+console.log('while open', await names());
+await p.evaluate(()=>closeModal()); await p.waitForTimeout(100); console.log('closed', await names());
+await p.evaluate(()=>openOutputModal(1)); await p.fill('#mo-name-1','ifb'); await p.press('#mo-name-1','Enter'); await p.evaluate(()=>closeModal()); await p.waitForTimeout(100); console.log('second', await names());
+await p.evaluate(()=>{ set("ui.outnames",[],["","","","","","","",""],"ui"); set("home.meters.source",[],0,"local"); });
+console.log(errs); await b.close(); })();

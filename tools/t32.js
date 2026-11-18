@@ -1,0 +1,13 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(300);
+const r={};
+await p.click('.tab[data-v="routing"]'); await p.locator('.routeseg button',{hasText:'Outputs'}).click(); await p.locator('button',{hasText:'Edit Presets'}).click(); await p.waitForTimeout(200);
+r.outSelect=await p.locator('.modal #op-from').count();
+await p.fill('#pe-new-name','dialog cams'); await p.press('#pe-new-name','Enter');
+r.added=await p.evaluate(()=>V["ui.outpresets"].slice(-1)[0]);
+await p.fill('#pe-new-name','mix l'); await p.locator('.modal button',{hasText:'New preset'}).click(); r.dupe=await p.locator('.toast').textContent();
+await p.locator('.modal button',{hasText:'New preset'}).click(); r.auto=await p.evaluate(()=>V["ui.outpresets"].slice(-1)[0].name);
+await p.keyboard.press('Escape');
+console.log(JSON.stringify(r),errs);await b.close();})();

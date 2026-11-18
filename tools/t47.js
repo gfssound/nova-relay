@@ -1,0 +1,10 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(300);
+const r={};
+await p.click('.tab[data-v="routing"]'); await p.locator('.routeseg button',{hasText:'Headphones'}).click(); await p.waitForTimeout(150);
+r.opts=await p.locator('#f-hp-select option').allTextContents();
+await p.evaluate(()=>{for(let i=0;i<12;i++) set("hpmix.enable",[i],1);});
+const seq=[]; for(let k=0;k<11;k++){await p.click('#hpBtn'); seq.push(await p.evaluate(()=>V["hpmix.preset"]));} r.seq=seq;
+console.log(JSON.stringify(r),errs);await b.close();})();

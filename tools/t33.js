@@ -1,0 +1,16 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(300);
+const r={};
+await p.click('.tab[data-v="routing"]'); await p.locator('.routeseg button',{hasText:'Headphones'}).click(); await p.waitForTimeout(200);
+r.rows=await p.locator('.hpmx tbody tr').count(); r.cellsRow=await p.locator('.hpmx tbody tr').first().locator('.hpc').count();
+const c=p.locator('.hpmx tbody tr').nth(2).locator('.hpc').nth(4); const seq=[];
+for(let k=0;k<4;k++){await c.click(); seq.push(await p.evaluate(()=>V["hpmix.tracks"][2][4]));} r.cycle=seq;
+await c.click(); await c.click({button:'right'}); r.flip=await p.evaluate(()=>V["hpmix.tracks"][2][4]); r.flipTxt=await c.textContent();
+await c.click(); r.flipNext=await p.evaluate(()=>V["hpmix.tracks"][2][4]);
+const bus=p.locator('.hpmx tbody tr').nth(12).locator('.hpc').nth(17); await bus.click(); r.bus=await p.evaluate(()=>V["hpmix2.returns"][1]);
+await p.locator('.hpmx tbody tr').nth(7).locator('button.chip').click(); r.en=await p.evaluate(()=>V["hpmix.enable"][7]);
+await p.screenshot({path:'build/hpmx.png'});
+r.overflow=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+console.log(JSON.stringify(r),errs);await b.close();})();

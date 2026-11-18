@@ -1,0 +1,27 @@
+# Nova Relay box settings. Change these before running Build Pi Image.command; every card made from the image
+# uses them. Lines starting with # are notes.
+
+# The box's own Wi-Fi network, for phones, iPads and laptops (password: 8 characters or more).
+WIFI_NAME=NOVA-REMOTE
+WIFI_PASSWORD=novaremote
+
+# Two-letter country code for the Wi-Fi rules (US, CA, GB, DE, AU...).
+WIFI_COUNTRY=US
+
+# 5 keeps clear of ZaxNet, which uses 2.4 GHz. Use 2.4 only for a Pi that can't do 5 GHz (Zero 2 W, Pi 3B).
+WIFI_BAND=5
+# Leave empty for the usual channel (36 on 5 GHz, 6 on 2.4 GHz).
+WIFI_CHANNEL=
+
+# yes = the box makes its own Wi-Fi network. no = it joins the cart's network or Ethernet instead.
+HOTSPOT=yes
+
+# The box's name, for http://nova.local
+BOX_NAME=nova
+
+# Login for SSH (for updates and troubleshooting): ssh pi@nova.local
+LOGIN_NAME=pi
+LOGIN_PASSWORD=novaremote
+
+# Time zone for the box's clock (log times, sound report dates). Empty = the same as this Mac.
+TIME_ZONE=

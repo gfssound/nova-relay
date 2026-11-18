@@ -1,0 +1,10 @@
+const { chromium } = require('playwright'); const path=require('path');
+(async()=>{ const b=await chromium.launch(); const errs=[]; const p=await b.newPage({viewport:{width:1280,height:900}}); p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+path.join(__dirname,'../build/cart-remote.html')); await p.waitForTimeout(400);
+const t=()=>p.evaluate(()=>[get("tone.enable"), document.getElementById('bTone').classList.contains('locked')]);
+await p.evaluate(()=>{set("tone.enable",[],0); sim.command("RECORD")}); await p.waitForTimeout(300);
+console.log('rec, off', await t()); await p.click('#bTone',{force:true}); await p.waitForTimeout(100); console.log('after tap', await t(), await p.evaluate(()=>document.querySelector('.toast')?.textContent));
+await p.screenshot({path:path.join(__dirname,'tonelock.png'), clip:{x:860,y:50,width:420,height:100}});
+await p.evaluate(()=>sim.command("STOP")); await p.waitForTimeout(200); console.log('stopped', await t()); await p.click('#bTone',{force:true}); console.log('tap stopped', await t());
+await p.evaluate(()=>sim.command("RECORD")); await p.waitForTimeout(200); console.log('rec with tone on', await t()); await p.click('#bTone',{force:true}); console.log('turn off while rec', await t());
+console.log(errs); await b.close(); })();

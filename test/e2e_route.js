@@ -1,0 +1,20 @@
+const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs = require('fs'); const os = require('os'); const path = require('path');
+const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  const fake = spawn('python3', [path.join(DIR, 'fake_nova.py'), path.join(ROOT, 'cap/tap5.log'), path.join(DIR, 'fake_rx6.txt'), '40']);
+  const pty = await new Promise(r => fake.stdout.once('data', d => r(String(d).trim())));
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'nr-'));
+  const srv = spawn('node', [path.join(ROOT, 'nova-remote/server.js'), '--port', '8136', '--no-open', '--data', data]);
+  await sleep(800);
+  const b = await chromium.launch(); const p = await b.newPage();
+  await p.goto('http://localhost:8136/'); await p.waitForFunction(() => cart.ready);
+  await p.evaluate(path => net.send({ t: 'serialOpen', path, baud: 38400, parity: 'odd' }), pty);
+  await p.waitForFunction(() => cart.nova && cart.nova.connected, null, { timeout: 15000 }); await sleep(3000);
+  console.log('tap cycle', await p.evaluate(() => [nextRoute(0), nextRoute(1), nextRoute(2)]));
+  await p.evaluate(() => { set('trackmix.matrix', [0, 0, 6], 2); set('trackmix.matrix', [0, 0, 6], 0); set('trackmix.matrix', [0, 2, 14], 0); set('trackmix.matrix', [0, 2, 14], 1);
+    set('outputmix.matrix', [0, 0, 8], 2); set('outputmix.matrix', [0, 0, 9], 1); set('input.trim.level', [0], -5); set('input.trim.level', [0], 12); set('input.notch.freq', [0, 0], 300);
+    set('input.power48V', [1], 1); set('hpmix.preset', [], 3); set('hpmix.enable', [2], 0); });
+  await sleep(1200);
+  await b.close(); srv.kill(); fake.kill();
+  console.log(fs.readFileSync(path.join(DIR, 'fake_rx6.txt'), 'utf8').split('\n').filter(l => l && !/ 20 50 43/.test(l)).join('\n'));
+})().catch(e => { console.error(e); process.exit(1); });

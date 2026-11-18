@@ -1,0 +1,13 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(300);
+const r={};
+await p.click('.tab[data-v="routing"]'); await p.locator('.routeseg button',{hasText:'Tracks'}).click(); await p.waitForTimeout(200);
+r.heads=(await p.locator('.mx thead th').allTextContents()).slice(-3);
+const c=p.locator('.mx tbody tr').nth(2).locator('button.chip',{hasText:'Com 1'}); await c.click();
+r.val=await p.evaluate(()=>V["ui.track.com1"][2]); r.pressed=await c.getAttribute('aria-pressed');
+await c.click(); r.off=await p.evaluate(()=>V["ui.track.com1"][2]);
+r.scroll=await p.evaluate(()=>{const w=document.querySelector('.mx-wrap');return w.scrollWidth-w.clientWidth});
+await p.screenshot({path:'build/trk-com1.png'});
+console.log(JSON.stringify(r),errs);await b.close();})();

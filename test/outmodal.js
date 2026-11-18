@@ -1,0 +1,10 @@
+const { chromium } = require('playwright'); const path=require('path');
+(async()=>{ const b=await chromium.launch(); const errs=[]; const p=await b.newPage({viewport:{width:1024,height:768}}); p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+path.join(__dirname,'../build/cart-remote.html')); await p.waitForTimeout(400);
+await p.evaluate(()=>openOutputModal(1)); await p.waitForTimeout(300);
+await p.fill('#mo-name-1','ifb director'); await p.press('#mo-name-1','Enter'); await p.waitForTimeout(100);
+console.log(await p.evaluate(()=>[get("ui.outnames"), document.getElementById('mtitle').textContent]));
+await p.screenshot({path:path.join(__dirname,'outmodal.png')});
+await p.evaluate(()=>{ closeModal(); go("names"); }); await p.waitForTimeout(200); console.log(await p.inputValue('#f-out-name-1'));
+await p.evaluate(()=>set("ui.outnames",[],["","","","","","","",""],"ui"));
+console.log(errs); await b.close(); })();

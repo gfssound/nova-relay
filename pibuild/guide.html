@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Nova Relay Box</title>
+<style>
+@page{size:Letter;margin:0.55in 0.6in}
+:root{--ink:#16181d;--muted:#5c6470;--line:#d3d8de;--accent:#2457c5;--tint:#eef2f8}
+body{font-family:"Helvetica Neue",Arial,sans-serif;color:var(--ink);font-size:10.4pt;line-height:1.38;margin:0}
+h1{font-size:20pt;margin:0 0 2pt;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 12pt}
+h2{font-size:12pt;margin:14pt 0 5pt;padding-bottom:3pt;border-bottom:1.5pt solid var(--ink)}
+h3{font-size:10.5pt;margin:9pt 0 3pt}
+table{width:100%;border-collapse:collapse;font-size:9.6pt}
+th{text-align:left;font-size:8pt;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1pt solid var(--line);padding:3pt 5pt}
+td{border-bottom:.6pt solid var(--line);padding:4pt 5pt;vertical-align:top}
+td.q{white-space:nowrap;color:var(--muted)}
+ol{margin:4pt 0;padding-left:16pt} li{margin:3pt 0}
+code,.mono{font-family:Menlo,Consolas,monospace;font-size:9pt;background:var(--tint);padding:0 3pt;border-radius:2pt}
+pre{font-family:Menlo,Consolas,monospace;font-size:8.8pt;background:var(--tint);padding:6pt 8pt;border-radius:3pt;margin:4pt 0;white-space:pre-wrap}
+.note{border-left:3pt solid var(--accent);background:var(--tint);padding:5pt 8pt;margin:6pt 0;font-size:9.6pt}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14pt}
+.fig{display:flex;align-items:center;gap:6pt;flex-wrap:wrap;font-size:9pt;margin:6pt 0}
+.fig span{border:1pt solid var(--ink);border-radius:3pt;padding:3pt 7pt;font-weight:600}
+.fig i{font-style:normal;color:var(--muted)}
+.brk{break-before:page}
+</style></head><body>
+<h1>Nova Relay Box</h1>
+<p class="sub">A Raspberry Pi on the cart that runs Nova Relay by itself: no laptop, no app to install on phones.</p>
+
+<div class="fig"><span>Nova</span><i>— USB —</i><span>Aria-8</span><i>— USB —</i><span>Pi (Nova Relay box)</span><i>· · · Wi-Fi “NOVA-REMOTE” · · ·</i><span>Phones · iPads · laptops</span></div>
+
+<h2>Parts</h2>
+<table>
+<tr><th>Part</th><th>Notes</th><th>Approx.</th></tr>
+<tr><td><b>Raspberry Pi 4 Model B, 2 GB</b> (recommended)</td><td>Full-size USB ports, so the Aria cable plugs straight in; built-in Wi-Fi and Ethernet. A Pi 5 works too, with the bigger supply and a cooler (below). A Pi Zero 2 W is smaller and cheaper but needs a micro-USB OTG adapter and only makes 2.4 GHz Wi-Fi (ZaxNet's band).</td><td class="q">$45–55</td></tr>
+<tr><td><b>microSD card</b>, 16–32 GB, A1 rated</td><td>A name brand (SanDisk, Samsung). Holds the system and Nova Relay.</td><td class="q">$8–12</td></tr>
+<tr><td><b>Power</b></td><td>For setup: the official 5.1 V 3 A USB-C supply. On the cart: a 12 V → 5 V 3 A USB-C step-down converter from cart power (a clean 3 A matters: weak supplies cause random reboots). <b>Pi 5:</b> the official 5.1 V 5 A (27 W) supply and a 5 V 5 A converter; on 3 A it limits its USB ports to 600 mA.</td><td class="q">$10–20</td></tr>
+<tr><td><b>Case</b></td><td>A passive aluminium case keeps a Pi 4 cool with no fan noise. A Pi 5 runs hotter: add the official Active Cooler or use a case with a fan.</td><td class="q">$10–20</td></tr>
+<tr><td><b>USB cable to the Aria</b></td><td>The same cable you use from the Aria to the computer today.</td><td class="q">—</td></tr>
+</table>
+
+<h2>1 · Make the card image (on your Mac, about 10 minutes, once per version)</h2>
+<ol>
+<li>Unzip <b>Nova-Relay-&lt;version&gt;-Pi.zip</b>. To change the box's Wi-Fi name, password or country, its name or its login, open <b>Pi box settings.txt</b> in TextEdit first and save it.</li>
+<li>Double-click <b>Build Pi Image.command</b> (the first time: right-click › Open › Open). It downloads Raspberry Pi OS Lite (64-bit, about 500 MB) and Node.js for the Pi, checks both against their published checksums, and makes <b>Nova-Relay-&lt;version&gt;-Pi.img.gz</b> next to it. The downloads are kept in a <code>downloads</code> folder for the next build.</li>
+</ol>
+<p>On a Linux PC instead: <code>sudo apt install mtools</code>, then run <code>./"Build Pi Image.command"</code> in a terminal.</p>
+
+<h2>2 · Write the card (about 5 minutes)</h2>
+<ol>
+<li>Install <b>Raspberry Pi Imager</b> from raspberrypi.com/software and open it.</li>
+<li>Choose Device: your Pi. Choose OS › <b>Use custom</b> › the <b>.img.gz</b> file. Choose Storage: the microSD card.</li>
+<li>When Imager asks whether to apply OS customisation settings, choose <b>No</b>: they would replace the box's own setup.</li>
+</ol>
+<p>One image makes as many cards as you like. balenaEtcher works too.</p>
+
+<h2>3 · First power-up (about 3 minutes, no internet needed)</h2>
+<p>Put the card in the Pi, plug the Aria into any USB port and power the Pi on. It sets itself up from the card: Nova Relay, its Wi-Fi network and its name. Then <b>NOVA-REMOTE</b> appears.</p>
+<div class="note">If NOVA-REMOTE hasn't appeared after 5 minutes, power the Pi off and put the card in your Mac: <b>bootfs › nova-remote › setup-log.txt</b> says what happened.</div>
+
+<h2>4 · On the cart</h2>
+<ol>
+<li>Plug the Aria into any USB port on the Pi and power the Pi from the cart.</li>
+<li>On a phone or iPad, join Wi-Fi <b>NOVA-REMOTE</b> (password <span class="mono">novaremote</span> unless you changed it).</li>
+<li>Open <b>http://nova.local</b> (or <b>http://10.42.0.1</b>). Nova Relay finds the Aria by itself.</li>
+<li>Make it an app: in Safari tap Share › <b>Add to Home Screen</b>; on Android Chrome, menu › <b>Add to Home screen</b>. It then opens full-screen with its own icon.</li>
+</ol>
+<div class="two">
+<div><h3>Stream Deck</h3><p>Plug it straight into one of the box's USB ports: its keys work like the Stream Deck plugin's, with no Stream Deck app. Choose what each key does in Setup › Stream Deck. (A box set up before 0.6.3 needs the installer run again, below, or a new card.) A Stream Deck on a Mac or PC can use the plugin instead, with the address <code>nova.local:80</code>.</p></div>
+<div><h3>Updating</h3><p>Keeping its settings: join NOVA-REMOTE with your Mac, copy the new Pi zip to the box and run the installer: <code>scp Nova-Relay-&lt;version&gt;-Pi.zip pi@nova.local:~</code>, then <code>ssh pi@nova.local</code>, unzip it, <code>cd</code> into it and run <code>sudo ./install-pi.sh</code>. Or write a new card from the new image, which starts the box fresh.</p></div>
+</div>
+
+<h2>Good to know</h2>
+<ul>
+<li><b>Power cuts:</b> the Pi tolerates being switched off with the cart, but like any computer it's safest to unplug it a few seconds after the cart's last change. Settings save within a second of each change.</li>
+<li><b>Range:</b> the Pi's built-in Wi-Fi covers the cart and nearby. For more range, set <code>HOTSPOT=no</code> in Pi box settings.txt and join a proper travel router or cart access point.</li>
+<li><b>No internet needed</b> once it's set up. Phones on NOVA-REMOTE won't have internet unless the Pi has an Ethernet uplink.</li>
+<li><b>Login:</b> <code>ssh pi@nova.local</code>, password <span class="mono">novaremote</span> (set in Pi box settings.txt). Change it with <code>passwd</code>.</li>
+<li><b>Logs:</b> <code>journalctl -u nova-remote -f</code> on the Pi shows what Nova Relay is doing.</li>
+<li><b>Without the Aria:</b> once the direct Nova link is confirmed, the same box plugs into the Nova instead.</li>
+</ul>
+</body></html>

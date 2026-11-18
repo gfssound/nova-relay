@@ -1,0 +1,10 @@
+const { chromium } = require('playwright'); const path=require('path');
+(async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1024,height:768}}); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+path.join(__dirname,'../build/cart-remote.html')); await p.waitForTimeout(400);
+await p.evaluate(()=>{ for(let t=0;t<32;t++) set("record.tracks",[t],0,"remote"); });
+await p.click('#bRec'); await p.waitForTimeout(300);
+console.log('state', await p.evaluate(()=>sim.state), 'dialog', !!(await p.$('.recwarn')));
+await p.screenshot({path:path.join(__dirname,'recwarn.png')});
+await p.click('text=Arm tracks'); await p.waitForTimeout(200); console.log('view', await p.evaluate(()=>current));
+await p.evaluate(()=>set("record.tracks",[0],1)); await p.click('#bRec'); await p.waitForTimeout(400);
+console.log('state', await p.evaluate(()=>sim.state)); console.log(errs); await b.close(); })();

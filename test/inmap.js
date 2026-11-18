@@ -1,0 +1,20 @@
+const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs=require('fs'),os=require('os'),path=require('path');
+const DIR=__dirname, ROOT=path.join(DIR,'..'); const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+  const out=path.join(DIR,'fake_im.txt');
+  const fake=spawn('python3',[path.join(DIR,'fake_nova.py'),path.join(ROOT,'cap/live4_conv.log'),out,'40','12']);
+  const pty=await new Promise(r=>fake.stdout.once('data',d=>r(String(d).trim())));
+  const data=fs.mkdtempSync(path.join(os.tmpdir(),'nr-'));
+  const srv=spawn('node',[path.join(ROOT,'nova-remote/server.js'),'--port','8148','--no-open','--no-auto','--data',data]);
+  await sleep(800); const b=await chromium.launch(); const errs=[]; const p=await b.newPage({viewport:{width:1024,height:768}}); p.on('pageerror',e=>errs.push(e.message));
+  await p.goto('http://localhost:8148/'); await p.waitForFunction(()=>cart.ready);
+  await p.evaluate(path=>net.send({t:'serialOpen',path,baud:38400,parity:'odd'}),pty);
+  await p.waitForFunction(()=>cart.nova&&cart.nova.connected,null,{timeout:15000}); await sleep(2500);
+  await p.evaluate(()=>{ set("input.trim.level",[0],3); set("input.trim.level",[14],2); set("input.trim.level",[19],-1); set("input.trim.level",[7],4); set("input.hpf.enable",[15],1); set("input.zaxnet.id",[19],9); set("input.notch.enable",[20,1],1); });
+  await sleep(700);
+  await p.evaluate(()=>{ go("inputs"); set("input.channel",[],20,"local"); }); await sleep(300);
+  console.log(await p.evaluate(()=>[...document.querySelectorAll('.tgroup')].map(g=>g.innerText.replace(/\n+/g,' | ')).join('\n')));
+  await p.screenshot({path:path.join(DIR,'inmap.png')});
+  await b.close(); srv.kill(); fake.kill(); await sleep(200);
+  console.log(fs.readFileSync(out,'utf8').split('\n').filter(l=>/ 55 (4C|4A|4E|5F) 00/.test(l)).join('\n'), errs);
+})().catch(e=>{console.error(e);process.exit(1)});

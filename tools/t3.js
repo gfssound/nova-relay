@@ -1,0 +1,12 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const p=await b.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(500);
+await p.click('#bRec');await p.waitForTimeout(200);
+const before=await p.locator('.sarm').nth(10).getAttribute('aria-pressed');
+await p.locator('.sarm').nth(10).click();await p.waitForTimeout(100);
+const after=await p.locator('.sarm').nth(10).getAttribute('aria-pressed');
+const toast=await p.locator('.locktoast').isVisible();
+await p.click('#bStop');await p.waitForTimeout(200);await p.locator('.sarm').nth(10).click();await p.waitForTimeout(100);
+const stopped=await p.locator('.sarm').nth(10).getAttribute('aria-pressed');
+console.log({before,after,toast,stopped,errs});await b.close();})();

@@ -1,0 +1,13 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:820}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(500);
+await p.click('.tab[data-v="routing"]');await p.waitForTimeout(300);
+const r={}; r.firstAfterBar=await p.evaluate(()=>document.querySelector('#view > .stack').children[1].firstElementChild.className);
+await p.screenshot({path:'build/rt-tracks.png'});
+await p.click('.routeseg >> text=Outputs');await p.waitForTimeout(300);
+r.outFirst=await p.evaluate(()=>document.querySelector('#view > .stack').children[1].firstElementChild.className);
+const c=p.locator('.mx tbody tr:nth-child(4) .cell').nth(5); await c.click(); r.src6=await p.evaluate(()=>V["output.source"][5]);
+await c.click(); r.src6off=await p.evaluate(()=>V["output.source"][5]);
+await p.screenshot({path:'build/rt-out.png'});
+console.log(r,errs);await b.close();})();

@@ -1,0 +1,26 @@
+Nova Relay: Windows desktop app
+================================
+
+Nova Relay in its own window, for this computer only. No browser, no Node.js and no internet needed:
+everything is inside the "Nova Relay" folder. Phones and iPads aren't used in this version.
+Works on 64-bit Windows 10 and 11.
+
+Start
+  1. Unzip this whole folder somewhere you keep apps (for example Documents, or C:\Nova Relay).
+  2. Open the "Nova Relay" folder and double-click "Nova Relay.exe".
+     The first time, Windows may say it protected your PC (the app has no Microsoft signature):
+     click "More info", then "Run anyway".
+  3. Optional: double-click "Install shortcuts.bat" to add Nova Relay to the Start menu and desktop.
+
+Connect to the Nova
+  - Plug the Aria-8 in by USB and close NovaTouch (only one program can use the port).
+  - The first time, go to Setup > Connection, pick the Aria's COM port and press Connect
+    (38400 baud, odd parity). After that Nova Relay reconnects to that port by itself.
+  - Close the window to stop Nova Relay.
+
+Update
+  Unzip the new version in place of the old folder (run "Install shortcuts.bat" again if you moved it).
+  Settings and capture files are kept in C:\Users\<you>\.nova-remote, shared with the other versions.
+
+Remove
+  Delete the folder, and the shortcuts if you made them. Settings stay in C:\Users\<you>\.nova-remote.

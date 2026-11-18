@@ -1,0 +1,16 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:820}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(400);
+const r={tabs:await p.locator('.tab').allTextContents()};
+await p.click('.tab[data-v="routing"]');await p.click('.routeseg >> text=Tracks');await p.waitForTimeout(200);
+r.presetInRouting=await p.locator('#view select[aria-label="Trackmix Preset"]').count();
+r.panels=await p.locator('#view .panel h3').allTextContents();
+await p.click('.routeseg >> text=Outputs');await p.waitForTimeout(200);
+r.outPanels=await p.locator('#view .panel h3').allTextContents();
+await p.click('.tab[data-v="names"]');await p.waitForTimeout(200);
+r.nameInputs=await p.locator('.namerow .txt').count();
+const inp=p.locator('.namerow .txt').nth(12); await inp.fill('sfx'); await inp.press('Enter');
+r.saved=await p.evaluate(()=>V["track.name"][12]);
+await p.screenshot({path:'build/names.png'});
+console.log(JSON.stringify(r),errs);await b.close();})();

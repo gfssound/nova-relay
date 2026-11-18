@@ -1,0 +1,17 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(300);
+const r={};
+await p.click('.tab[data-v="routing"]'); r.sub=await p.locator('.routeseg button').allTextContents();
+await p.locator('.routeseg button',{hasText:'Outputs'}).click(); await p.waitForTimeout(150);
+r.btn=await p.locator('button',{hasText:'Edit Presets'}).count();
+await p.locator('button',{hasText:'Edit Presets'}).click(); await p.waitForTimeout(200);
+r.modal=await p.locator('.modal.wide').count(); r.editors=await p.locator('.modal .ped').count();
+await p.locator('.modal .ped').nth(3).locator('.ocell').nth(0).click(); r.edit=await p.evaluate(()=>V["ui.outpresets"][3].r.slice(0,4));
+await p.selectOption('#pe-load-3','7'); r.out8=await p.evaluate(()=>V["outputmix.matrix"][0][7].slice(0,4));
+await p.screenshot({path:'build/presets-modal2.png'});
+await p.keyboard.press('Escape'); r.closed=await p.locator('.modal').count();
+r.out8label=await p.evaluate(()=>{const s=document.getElementById('f-outpreset-7');return s.options[s.selectedIndex].text});
+await p.locator('.routeseg button',{hasText:'Tracks'}).click(); r.btnOnTracks=await p.locator('button',{hasText:'Edit Presets'}).count();
+console.log(JSON.stringify(r),errs);await b.close();})();

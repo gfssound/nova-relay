@@ -1,0 +1,22 @@
+const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
+const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  const rx = path.join(DIR, 'fake_presets.txt');
+  const fake = spawn('python3', [path.join(DIR, 'fake_nova.py'), path.join(ROOT, 'cap/live22_conv.log'), rx, '20', '1']);
+  const pty = await new Promise(r => fake.stdout.once('data', d => r(String(d).trim())));
+  const data = fs.mkdtempSync(path.join(DIR, 'nrpre-'));
+  const srv = spawn('node', [path.join(ROOT, 'nova-remote/server.js'), '--port', '8147', '--no-open', '--data', data]); await sleep(900);
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 900 } }); const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.goto('http://127.0.0.1:8147/'); await p.waitForFunction(() => cart.ready);
+  await p.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(300);
+  await p.evaluate(path => { const s = document.getElementById('f-serial-port'); s.append(new Option(path, path)); s.value = path; }, pty);
+  await p.locator('button', { hasText: 'Connect' }).first().click(); await sleep(6000);
+  console.log('presets from Nova:', await p.evaluate(() => V['names.preset.name'].join(',')));
+  await p.evaluate(() => go('names')); await sleep(300);
+  const f = p.locator('#f-track-name-3'); const box = await f.boundingBox();
+  await p.mouse.move(box.x + 20, box.y + 10); await p.mouse.down(); await sleep(700); await p.mouse.up(); await sleep(200);
+  await p.locator('.presetlist button', { hasText: 'BOOM02' }).click(); await sleep(600);
+  const sent = fs.readFileSync(rx, 'utf8').trim().split('\n').filter(l => /AA .. .. 00 00 55 07 00/.test(l)).slice(-1);
+  console.log('track 4 =', await p.evaluate(() => get('track.name', [3])), '| frame to Nova:', sent.join(''));
+  await b.close(); srv.kill(); fake.kill(); fs.rmSync(data, { recursive: true }); console.log('errors', errs);
+})().catch(e => { console.error(e); process.exit(1); });

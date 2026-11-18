@@ -1,0 +1,17 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:820}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(500);
+const tabs=await p.locator('.tab').allTextContents();
+await p.click('.tab[data-v="routing"]');await p.waitForTimeout(300);
+const r={tabs, cells:await p.locator('.cell').count(), outRows:await p.locator('#sec-outputs table.list tbody tr').count()};
+await p.locator('.cell').first().click(); r.cell=await p.locator('.cell').first().textContent();
+await p.click('text=Outputs >> nth=1').catch(()=>{});
+await p.click('.tab[data-v="arm"]');await p.waitForTimeout(200);
+r.armDisplay=await p.locator('.armgrid').first().evaluate(e=>getComputedStyle(e).display);
+await p.click('#bRec');await p.waitForTimeout(150);
+r.lockShown=await p.locator('.lockhint').evaluate(e=>getComputedStyle(e).display);
+await p.screenshot({path:'build/arm2.png'});
+await p.click('#bStop'); await p.click('.tab[data-v="routing"]'); await p.click('#sec-tracks ~ * , .btn >> text=Outputs').catch(()=>{}); await p.waitForTimeout(700);
+await p.screenshot({path:'build/routing.png'});
+console.log(r,errs);await b.close();})();

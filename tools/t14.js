@@ -1,0 +1,11 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:820}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(400);
+await p.click('.tab[data-v="routing"]');await p.click('.routeseg >> text=Outputs');await p.waitForTimeout(200);
+const r={rows:await p.locator('.mx tbody tr').count(), cols:await p.locator('.mx thead th').count(), opts:await p.locator('#f-output-source-0 option').count()};
+await p.locator('.mx tbody tr').nth(5).locator('.cell').nth(15).click(); r.out6=await p.evaluate(()=>V["output.source"][5]);
+await p.locator('.mx tbody tr').nth(5).locator('button:has-text("Slate")').click(); r.slate6=await p.evaluate(()=>V["outputmix.slate"][0][5]);
+r.levelAdds=await p.locator('table.list tbody tr').first().locator('.flags button').allTextContents();
+await p.screenshot({path:'build/outmx.png'});
+console.log(JSON.stringify(r),errs);await b.close();})();

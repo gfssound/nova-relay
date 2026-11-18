@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nova Relay</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 4px 8px 12px; background: #2d2d2d; color: #d8d8d8; font: 13px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  .row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .row > label:first-child { flex: 0 0 96px; color: #9a9a9a; text-align: right; }
+  .row > .ctl { flex: 1; min-width: 0; }
+  input[type=text], select { width: 100%; box-sizing: border-box; background: #3d3d3d; color: #e8e8e8; border: 1px solid #4a4a4a; border-radius: 3px; padding: 4px 6px; font: inherit; }
+  input[type=text]:focus, select:focus { outline: 1px solid #6aa0e8; }
+  input[type=checkbox] { accent-color: #6aa0e8; }
+  button { background: #3d3d3d; color: #e8e8e8; border: 1px solid #555; border-radius: 3px; padding: 3px 10px; font: inherit; cursor: pointer; }
+  button:hover { background: #474747; }
+  .note { margin: 4px 0 8px 106px; color: #9a9a9a; font-size: 12px; }
+  .conn { margin: 4px 0 8px 106px; font-size: 12px; padding: 6px 8px; border-radius: 3px; background: #383838; }
+  .conn.ok { color: #9fe0b8; }
+  .conn.bad { color: #f0b37e; }
+  .tracks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px 8px; }
+  .tracks label { white-space: nowrap; }
+  hr { border: 0; border-top: 1px solid #3f3f3f; margin: 12px 0; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <div id="opts"></div>
+  <hr>
+  <div class="row">
+    <label for="address">Nova Relay</label>
+    <div class="ctl" style="display:flex;gap:6px"><input type="text" id="address" placeholder="This computer (127.0.0.1:8080)" spellcheck="false" autocomplete="off"><button type="button" id="test">Test</button></div>
+  </div>
+  <div class="note">Leave empty when Nova Relay runs on this computer. Otherwise type the address from Nova Relay &rsaquo; Setup &rsaquo; Stream Deck, for example 192.168.1.20:8080. It's shared by every Nova Relay key.</div>
+  <div class="conn" id="conn" role="status">Checking&hellip;</div>
+
+<script>
+  let ws = null, uuid = "", action = "", settings = {};
+  const $ = id => document.getElementById(id);
+  const kind = () => action.split(".").pop();
+
+  /* One set of options per kind of key. */
+  const VOLTS = Array.from({ length: 21 }, (_, i) => { const v = (10 + i * 0.5).toFixed(1); return [String(+v), v + " V"]; });
+  const IN_OPTS = ["Analog 1", "Analog 2", "Analog 3", "Analog 4", "Return 1", "Return 2", ...[1, 2, 3, 4, 5, 6, 7, 8].map(n => `AES ${n}`), ...[1, 2, 3, 4, 5, 6, 7, 8].map(n => `RX ${n}`)].map((t, i) => [String(i + 1), t]);
+  const range = (n, label) => Array.from({ length: n }, (_, i) => [String(i + 1), `${label} ${i + 1}`]);
+  const OPTS = {
+    rec: [{ key: "hold", type: "check", label: "Hold", text: "Hold to record (0.6 s), like REC on screen", def: true,
+            note: "Off: a single press records. Holding REC while recording starts a new take, as on the Aria." }],
+    stop: [{ key: "hold", type: "select", label: "Hold", def: "recording",
+             options: [["recording", "Hold while recording (0.4 s)"], ["always", "Always hold"], ["never", "No hold"]] }],
+    tone: [{ key: "mode", type: "select", label: "Press", def: "hold",
+             options: [["hold", "Hold for tone on, tap for off"], ["toggle", "Tap on, tap off"], ["on", "Tone on"], ["off", "Tone off"]] }],
+    slate: [{ key: "mode", type: "select", label: "Press", def: "hold",
+               options: [["hold", "On while held (like the Aria)"], ["latch", "Tap on, tap off"]],
+               note: "Sends the Aria's Slate button, so the slate mic goes wherever the Nova routes slate. Lit while it's on, also when Slate is pressed on the Aria." }],
+    com: [{ key: "mode", type: "select", label: "Press", def: "hold",
+             options: [["hold", "On while held (like the Aria)"], ["latch", "Tap on, tap off"]],
+             note: "Sends the Aria's Com button. Learn it once: Nova Relay › Setup › Stream Deck › Learn, then press Com on the Aria." }],
+    hp: [{ key: "mode", type: "select", label: "Preset", def: "next",
+           options: [["next", "Next preset"], ["prev", "Previous preset"], ...range(12, "Preset")],
+           note: "Next and previous skip presets that are turned off." }],
+    arm: [{ key: "track", type: "select", label: "Track", def: "1",
+            options: [...range(16, "Track"), ["all", "All tracks (arm)"], ["none", "No tracks (disarm all)"]],
+            note: "A press arms or disarms the track. Arming is locked while recording." },
+          { type: "info", note: "Arming folder: put Create Folder (Stream Deck › Navigation) on a key, open it, and drag Arm track onto each key. New Arm keys take the next free track, so they fill up as tracks 1, 2, 3… with their names. Change any of them here." }],
+    pfl: [{ key: "fader", type: "select", label: "Aria fader", def: "1",
+            options: [...range(8, "Fader"), ["off", "All PFL off"]],
+            note: "PFLs the input on that Aria fader. If the key says “Press fader's page”, press that fader's page button on the Aria once." },
+          { type: "info", note: "New PFL keys take the next free fader, so a PFL folder fills up as faders 1–8." }],
+    drive: [{ key: "amber", type: "select", label: "Amber under", def: "60", options: [["30", "30 minutes"], ["60", "1 hour"], ["90", "1 h 30 m"], ["120", "2 hours"], ["180", "3 hours"]] },
+            { key: "red", type: "select", label: "Red under", def: "15", options: [["5", "5 minutes"], ["10", "10 minutes"], ["15", "15 minutes"], ["30", "30 minutes"], ["60", "1 hour"]] },
+            { key: "blink", type: "check", label: "Blink", text: "Blink when red", def: true,
+              note: "Recording time left on the drive at the number of armed tracks, as the Nova works it out (TLOC)." }],
+    battery: [{ key: "amber", type: "select", label: "Amber under", def: "14", options: VOLTS },
+              { key: "red", type: "select", label: "Red under", def: "13", options: VOLTS },
+              { key: "blink", type: "check", label: "Blink", text: "Blink when red", def: true,
+                note: "Set these for your batteries. Your Nova has reported 16 to 19.9 V; a 4-cell lithium block runs about 16.8 V full and 13 V near empty." }],
+    primary: [{ key: "amber", type: "select", label: "Amber under", def: "20", options: [["5", "5 GB"], ["10", "10 GB"], ["20", "20 GB"], ["50", "50 GB"], ["100", "100 GB"]] },
+              { key: "red", type: "select", label: "Red under", def: "5", options: [["1", "1 GB"], ["2", "2 GB"], ["5", "5 GB"], ["10", "10 GB"], ["20", "20 GB"]] },
+              { key: "blink", type: "check", label: "Blink", text: "Blink when red", def: true }],
+    mirror: [{ key: "amber", type: "select", label: "Amber at", def: "3", options: [["1", "1 file behind"], ["2", "2 files behind"], ["3", "3 files behind"], ["5", "5 files behind"], ["10", "10 files behind"]] },
+             { key: "red", type: "select", label: "Red at", def: "10", options: [["3", "3 files behind"], ["5", "5 files behind"], ["10", "10 files behind"], ["20", "20 files behind"], ["50", "50 files behind"]] },
+             { key: "offWarn", type: "check", label: "Mirror off", text: "Amber when mirroring is off", def: true },
+             { key: "blink", type: "check", label: "Blink", text: "Blink when red", def: true,
+               note: "From the Nova's status line: the mirror mode (ON, CONT) and, while copying, the percent and file number. \u201cBehind\u201d is how many files are still to copy." }],
+    scene: [{ key: "mode", type: "select", label: "Press", def: "number", options: [["number", "Next scene number (075A \u2192 076)"], ["letter", "Next scene letter (075 \u2192 075A)"]],
+              note: "Sets the next scene (leading zeros stay). A new scene starts at take 1. The key shows the scene it will set." }],
+    take: [{ key: "mode", type: "select", label: "Press", def: "up", options: [["up", "Next take +1"], ["down", "Next take \u22121"]],
+             note: "Moves the next take. It counts on by itself after each take; use this to skip or go back a number." }],
+    note: [{ key: "kind", type: "select", label: "Note", def: "preset", options: [["preset", "A note preset"], ["text", "My own words"]] },
+           { key: "preset", type: "select", label: "Preset", def: "1", options: range(10, "Preset"), note: "The note presets are edited in Nova Relay \u203a Metadata \u203a Edit Presets; the key shows the preset's words." },
+           { key: "text", type: "text", label: "Words", def: "", placeholder: "e.g. CIRCLE", note: "Used when Note is \u201cMy own words\u201d." },
+           { type: "info", note: "While recording the note goes on the take being recorded, otherwise on the next take. Press again to clear it." }],
+    lasttake: [{ type: "info", note: "Shows the last recorded take: scene / take, its length and its note." }],
+    armset: [{ key: "name", type: "text", label: "Name", def: "", placeholder: "e.g. INTERVIEW" },
+             { key: "tracks", type: "tracks", label: "Tracks", def: "" },
+             { type: "info", note: "A press arms exactly these tracks and turns the others off. Red when exactly this set is armed. Locked while recording." }],
+    meter: [{ key: "source", type: "select", label: "Meter", def: "t1", options: [...Array.from({ length: 16 }, (_, i) => ["t" + (i + 1), `Track ${i + 1}`]), ...Array.from({ length: 6 }, (_, i) => ["o" + (i + 1), `OUT ${i + 1}`])],
+             note: "Green to \u221212 dB, yellow to \u22123, red above, with a peak mark." }],
+    rx: [{ key: "rx", type: "select", label: "Receiver", def: "1", options: range(8, "RX"), note: "Frequency, transmitter state and ZNet trim, as the Nova reports them. Amber on standby, low power or wake." }],
+    page: [{ key: "input", type: "select", label: "Input", def: "15", options: IN_OPTS,
+             note: "Opens that input's page on the Nova (press again to close it), using the Aria's page button. If the key says \u201cPress it on the Aria\u201d, press that input's page button on the Aria once." }],
+    route: [{ key: "out", type: "select", label: "Output", def: "1", options: range(8, "OUT") },
+            { key: "what", type: "select", label: "Source", def: "com1", options: [["tone", "Tone"], ["slate", "Slate"], ["com1", "Com 1"], ["com2", "Com 2"],
+              ...Array.from({ length: 16 }, (_, i) => ["track-" + (i + 1), `Track ${i + 1} (OUT 5\u20138)`]), ...IN_OPTS.map(([v, t]) => ["input-" + v, `${t} (OUT 1\u20134)`])] },
+            { key: "pre", type: "check", label: "Inputs", text: "Pre-fader (inputs only; off = post)", def: false,
+              note: "A press puts the source on the output or takes it off. Teal while routed. OUT 1\u20134 take inputs, OUT 5\u20138 take tracks." }],
+    jam: [{ key: "mode", type: "select", label: "Jam", def: "tc", options: [["tc", "Timecode from the reader (TC)"], ["ub", "User bits (UB)"], ["date", "Date into the user bits"], ["time", "Time of day"]],
+            note: "Hold the key to jam (0.6 s). Not while recording. Sent the way NovaTouch sends it." }],
+    trimdial: [{ key: "mode", type: "select", label: "Trim", def: "track", options: [["track", "Track trim (dB)"], ["znet", "ZNet trim: transmitter gain (RX only)"]] },
+      { key: "input", type: "select", label: "Input", def: "15", options: IN_OPTS, note: "Track trim: 1 dB per click, \u221220 to +30 dB, as on the Nova's input page. ZNet trim (RX 1\u20138): the transmitter's gain, 1 step per click, 0\u201352; the strip says \"Set once\" until the value is known (set it once in Nova Relay, the Nova or the Aria). The Nova's RX page keeps its old number, and trimming there or with the Aria's knob starts again from that old number, so the transmitter jumps back: trim each transmitter from one place." }],
+    faderdial: [{ key: "input", type: "select", label: "Input", def: "15", options: IN_OPTS,
+      note: "Turn to move that input's Aria fader, about 1.5% a click; press to pull it all the way down, press again to bring it back. Works while recording. The Nova doesn't report fader positions, so the strip shows where Nova Relay last put the fader and says \"Set once\" until then: drag its fader on the meters in Nova Relay once. Touching that fader on the Aria takes over." }],
+    faderstep: [{ key: "input", type: "select", label: "Input", def: "15", options: IN_OPTS },
+      { key: "dir", type: "select", label: "Direction", def: "up", options: [["up", "Up"], ["down", "Down"]] },
+      { key: "step", type: "select", label: "Step", def: "4", options: [["2", "Fine (about 1%)"], ["4", "Normal (about 1.5%)"], ["10", "Coarse (about 4%)"]],
+        note: "Hold to keep going. Needs the fader set once from Nova Relay (the Nova doesn't say where it is). Touching that fader on the Aria takes over." }],
+    hpdial: [{ type: "info", note: "Turn for the next or previous headphone preset (presets that are off are skipped)." }],
+    status: [{ type: "info", note: "Shows timecode, record state, scene and take. Press it to open Nova Relay in the browser." }],
+    scream: [{ type: "info", note: "Panic button for loud screams. Choose the transmitters and the scream ZNet trim in Nova Relay (Setup › Scream trim). One tap drops them, the next puts them back. Amber while on. The Nova's RX page keeps its old number, so trim each transmitter from one place." }],
+  };
+
+  function buildOpts() {
+    const box = $("opts"); box.innerHTML = "";
+    for (const o of OPTS[kind()] || []) {
+      if (o.type !== "info") {
+        const row = document.createElement("div"); row.className = "row";
+        const lab = document.createElement("label"); lab.textContent = o.label; lab.htmlFor = "o-" + o.key;
+        const ctl = document.createElement("div"); ctl.className = "ctl";
+        let el;
+        if (o.type === "text") {
+          el = document.createElement("input"); el.type = "text"; el.placeholder = o.placeholder || ""; el.value = settings[o.key] !== undefined ? settings[o.key] : o.def; el.spellcheck = false;
+          ctl.append(el);
+        } else if (o.type === "tracks") {
+          /* 16 tick boxes; saved as "3,4,5". */
+          el = document.createElement("div"); el.className = "tracks";
+          const have = new Set(String(settings[o.key] || "").split(/[^0-9]+/).filter(Boolean));
+          for (let t = 1; t <= 16; t++) { const l = document.createElement("label"); const c = document.createElement("input"); c.type = "checkbox"; c.value = t; c.checked = have.has(String(t)); l.append(c, " " + t); el.append(l); }
+          el.addEventListener("change", () => { settings[o.key] = [...el.querySelectorAll("input:checked")].map(c => c.value).join(","); save(); });
+          ctl.append(el); row.append(lab, ctl); box.append(row);
+          if (o.note) { const n = document.createElement("div"); n.className = "note"; n.textContent = o.note; box.append(n); }
+          continue;
+        } else if (o.type === "check") {
+          el = document.createElement("input"); el.type = "checkbox"; el.checked = settings[o.key] !== undefined ? !!settings[o.key] : o.def;
+          const span = document.createElement("label"); span.htmlFor = "o-" + o.key; span.textContent = " " + o.text;
+          ctl.append(el, span);
+        } else {
+          el = document.createElement("select");
+          for (const [v, t] of o.options) { const op = document.createElement("option"); op.value = v; op.textContent = t; el.append(op); }
+          el.value = settings[o.key] !== undefined ? String(settings[o.key]) : o.def;
+          ctl.append(el);
+        }
+        el.id = "o-" + o.key;
+        el.addEventListener("change", () => { settings[o.key] = o.type === "check" ? el.checked : o.type === "text" ? el.value.trim() : el.value; save(); });
+        row.append(lab, ctl); box.append(row);
+      }
+      if (o.note) { const n = document.createElement("div"); n.className = "note"; n.textContent = o.note; if (o.type === "info") n.style.marginLeft = "0"; box.append(n); }
+    }
+  }
+  function sendSD(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
+  function save() {
+    sendSD({ event: "setSettings", context: uuid, payload: settings });
+    sendSD({ event: "sendToPlugin", action, context: uuid, payload: { type: "settings", settings } });
+  }
+  function saveAddress() {
+    sendSD({ event: "sendToPlugin", action, context: uuid, payload: { type: "address", address: $("address").value.trim() } });
+    $("conn").className = "conn"; $("conn").textContent = "Checking…";
+  }
+  $("address").addEventListener("change", saveAddress);
+  $("address").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); saveAddress(); } });
+  $("test").addEventListener("click", () => { saveAddress(); sendSD({ event: "sendToPlugin", action, context: uuid, payload: { type: "test" } }); });
+
+  /* Called by the Stream Deck app when the settings panel opens. */
+  window.connectElgatoStreamDeckSocket = function (port, inUUID, registerEvent, info, actionInfo) {
+    uuid = inUUID;
+    try { const a = JSON.parse(actionInfo); action = a.action; settings = (a.payload && a.payload.settings) || {}; } catch (_) { }
+    buildOpts();
+    ws = new WebSocket("ws://127.0.0.1:" + port);
+    ws.onopen = () => {
+      sendSD({ event: registerEvent, uuid });
+      sendSD({ event: "getGlobalSettings", context: uuid });
+      sendSD({ event: "sendToPlugin", action, context: uuid, payload: { type: "hello" } });
+    };
+    ws.onmessage = e => {
+      let m; try { m = JSON.parse(e.data); } catch (_) { return; }
+      if (m.event === "didReceiveGlobalSettings") { const g = (m.payload && m.payload.settings) || {}; if (document.activeElement !== $("address")) $("address").value = g.address || ""; }
+      else if (m.event === "didReceiveSettings") { settings = (m.payload && m.payload.settings) || {}; buildOpts(); }
+      else if (m.event === "sendToPropertyInspector" && m.payload && m.payload.type === "conn") {
+        $("conn").className = "conn " + (m.payload.ok ? "ok" : "bad"); $("conn").textContent = m.payload.text;
+        if (document.activeElement !== $("address")) $("address").value = m.payload.address || "";
+      }
+    };
+  };
+</script>
+</body>
+</html>

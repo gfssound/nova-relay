@@ -1,0 +1,23 @@
+# build outputs and download caches
+out/
+pkg/
+appimg/
+winbuild/dl/
+pibuild/downloads/
+*.streamDeckPlugin
+*.img.gz
+*.AppImage
+
+# test output
+test/*.png
+test/fake*_*.txt
+test/nr*-*/
+test/ho-*/
+test/rf-*/
+
+# editor / system
+.DS_Store
+node_modules/
+__pycache__/
+*.bak
+*.tmp

@@ -1,0 +1,26 @@
+const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs=require('fs'),os=require('os'),path=require('path');
+const DIR=__dirname, ROOT=path.join(DIR,'..'); const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+  const fake=spawn('python3',[path.join(DIR,'fake_nova.py'),path.join(ROOT,'cap/live4_conv.log'),path.join(DIR,'fake_rx9.txt'),'120','12']);
+  const pty=await new Promise(r=>fake.stdout.once('data',d=>r(String(d).trim())));
+  const data=fs.mkdtempSync(path.join(os.tmpdir(),'nr-'));
+  const srv=spawn('node',[path.join(ROOT,'nova-remote/server.js'),'--port','8141','--no-open','--no-auto','--data',data]);
+  await sleep(800); const b=await chromium.launch(); const p=await b.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+  await p.goto('http://localhost:8141/'); await p.waitForFunction(()=>cart.ready);
+  await p.evaluate(path=>net.send({t:'serialOpen',path,baud:38400,parity:'odd'}),pty);
+  await p.waitForFunction(()=>cart.nova&&cart.nova.connected,null,{timeout:15000});
+  const snap=async tag=>console.log(tag, await p.evaluate(()=>JSON.stringify({t1:V["trackmix.matrix"][0][0].map((v,i)=>v?i+':'+v:'').filter(Boolean),t3:V["trackmix.matrix"][0][2].map((v,i)=>v?i+':'+v:'').filter(Boolean),o1:rowOf(0),o5:rowOf(4),o6:rowOf(5),trim:[15,17,7].map(i=>V["input.trim.level"][i])})));
+  const t0=Date.now(); const at=async s=>{ await sleep(t0+s*1000-Date.now()); };
+  await at(2); await snap('dump');
+  await at(22.7); await snap('22.7 OUT1');
+  await at(25.3); await snap('25.3 OUT5');
+  await at(28.8); await snap('28.8 T1');
+  await at(29.8); await snap('29.8 T1');
+  await at(30.8); await snap('30.8 T3');
+  await p.evaluate(()=>{ set('trackmix.matrix',[0,0,14],2); set('outputmix.matrix',[0,4,22],1); set('outputmix.matrix',[0,0,6],1); });
+  await sleep(800);
+  const logs=await p.evaluate(()=>[...document.querySelectorAll('*')].filter(e=>!e.childElementCount).map(e=>e.textContent).filter(t=>/doesn't know|source \d+ of/.test(t)));
+  console.log('unknown logs', logs.length, logs[0]||''); console.log('errors',errs);
+  await b.close(); srv.kill(); fake.kill();
+  console.log(fs.readFileSync(path.join(DIR,'fake_rx9.txt'),'utf8').split('\n').filter(l=>/ 55 (0D|18) 00/.test(l)).join('\n'));
+})().catch(e=>{console.error(e);process.exit(1)});

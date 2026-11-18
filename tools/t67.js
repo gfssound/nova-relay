@@ -1,0 +1,11 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+await p.goto('http://localhost:18080/'); await p.waitForTimeout(1000);
+const r={persist: await p.evaluate(()=>[V["track.name"][10], V["ui.outpresets"].length])};
+await p.evaluate(()=>net.send({t:"serialOpen", path:"/dev/pts/0", baud:115200})); await p.waitForTimeout(2800);
+r.serial=await p.evaluate(()=>cart.serial && [cart.serial.status, cart.serial.bytes, cart.serial.error]);
+r.raw=await p.evaluate(()=>LOG.filter(e=>e.dir==='raw').map(e=>e.line.slice(14)).slice(0,3));
+await p.click('.tab[data-v="setup"]'); await p.waitForTimeout(200); r.status=await p.locator('#view p[role=status]').textContent();
+await p.screenshot({path:'build/local-setup.png',fullPage:true});
+await p.evaluate(()=>net.send({t:"serialClose"})); await p.waitForTimeout(300); r.closed=await p.evaluate(()=>cart.serial.status);
+console.log(JSON.stringify(r,null,1),errs);await b.close();})();

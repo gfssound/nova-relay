@@ -1,0 +1,14 @@
+const { chromium } = require('playwright'); const path = require('path');
+(async () => { const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 900 } }); const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.goto('file://' + path.resolve('build/cart-remote.html')); await p.waitForTimeout(500);
+  await p.evaluate(() => openNextTakeModal('scene')); await p.waitForTimeout(200);
+  console.log('note placeholder:', await p.getAttribute('.modal.nt input[aria-label="Next note"]', 'placeholder'));
+  await p.fill('.modal.nt input[aria-label="Next scene"]', '075'); await p.locator('.modal.nt .btn', { hasText: 'Done' }).click(); await p.waitForTimeout(200);
+  console.log('after Done:', await p.evaluate(() => get('scene.next')));
+  await p.evaluate(() => openNextTakeModal('scene')); await p.waitForTimeout(200);
+  await p.locator('.modal.nt .btn', { hasText: 'Next Scene Letter' }).click(); await p.waitForTimeout(100);
+  console.log('letter field:', await p.inputValue('.modal.nt input[aria-label="Next scene"]'));
+  await p.locator('.modal.nt .btn', { hasText: 'Next Scene #' }).click(); await p.waitForTimeout(100);
+  console.log('number field:', await p.inputValue('.modal.nt input[aria-label="Next scene"]'));
+  await p.locator('.modal.nt .btn', { hasText: 'Done' }).click(); await p.waitForTimeout(100);
+  console.log('saved:', await p.evaluate(() => get('scene.next')), 'errors:', errs.length ? errs : 'none'); await b.close(); })();

@@ -1,0 +1,10 @@
+const { chromium } = require('playwright'); const path=require('path'); const fs=require('fs');
+(async()=>{ const b=await chromium.launch(); const errs=[];
+const p=await b.newPage({viewport:{width:1400,height:900}}); p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+path.join(__dirname,'../sidespro/sides-pro.html')); await p.waitForTimeout(800);
+const pages=JSON.parse(fs.readFileSync(path.join(__dirname,'../sidespro/test-pages.json'),'utf8'));
+await p.evaluate(pg=>SidesPro.load(pg,'test-sides.pdf'), pages); await p.waitForTimeout(200);
+console.log(await p.evaluate(()=>JSON.stringify(SidesPro.state.scenes.map(s=>[s.sceneNumber, s.heading, s.characters.map(c=>c.name+(c.isVO?'(vo)':'')+(c.dual?'(dual)':''))]))));
+console.log(await p.evaluate(()=>JSON.stringify(SidesPro.buildPlan().scenes)));
+await p.screenshot({path:path.join(__dirname,'sidespro-pdf.png')});
+console.log(errs); await b.close(); })();

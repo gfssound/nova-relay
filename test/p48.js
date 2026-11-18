@@ -1,0 +1,12 @@
+const { chromium } = require('playwright'); const path=require('path');
+(async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1024,height:768}}); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+path.join(__dirname,'../build/cart-remote.html')); await p.waitForTimeout(400);
+await p.evaluate(()=>{ go("inputs"); set("input.channel",[],1,"local"); set("input.power48V",[0],1,"remote"); set("input.level",[0],0,"remote"); }); await p.waitForTimeout(300);
+await p.click('.vtile:has-text("Level")'); await p.waitForTimeout(200);
+console.log('level after tap with 48V on', await p.evaluate(()=>get("input.level",[0])), await p.evaluate(()=>document.querySelector('.p48warn')?.textContent));
+await p.screenshot({path:path.join(__dirname,'p48-warn.png')});
+await p.evaluate(()=>{ set("input.power48V",[0],0); set("input.level",[0],1); }); await p.waitForTimeout(300);
+await p.click('.vtile:has-text("48 V")',{force:true}); await p.screenshot({path:path.join(__dirname,'p48-warn2.png')}); await p.waitForTimeout(200);
+console.log('48V after tap at line', await p.evaluate(()=>get("input.power48V",[0])));
+await p.waitForTimeout(3500); await p.screenshot({path:path.join(__dirname,'p48-gray.png')});
+console.log(errs); await b.close(); })();

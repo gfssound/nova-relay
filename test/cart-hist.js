@@ -1,0 +1,13 @@
+const { chromium } = require('playwright'); const { spawn } = require('child_process'); const path=require('path');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{ const home=require('fs').mkdtempSync('/tmp/claude-0/-home-claude/10fb85d4-efc5-5dbf-a537-af46f5c1d13e/scratchpad/apihome-');
+ const srv=spawn('node',[path.join(__dirname,'../nova-remote/server.js'),'--port','8134','--no-open'],{env:{...process.env,HOME:home}});
+ await sleep(800); const b=await chromium.launch(); const errs=[];
+ const p=await b.newPage({viewport:{width:390,height:844}}); p.on('pageerror',e=>errs.push(e.message)); await p.goto('http://localhost:8134/'); await sleep(1500);
+ await p.evaluate(()=>go("meta")); await sleep(200); await p.click('.phsecs .seg-b:has-text("History")'); await sleep(150);
+ await p.click('table.hist tbody tr >> nth=0'); await p.fill('#hist-note','wild'); await p.click('.modal .btn.primary'); await sleep(400);
+ const p2=await b.newPage(); await p2.goto('http://localhost:8134/'); await sleep(1500);
+ console.log(await p2.evaluate(()=>JSON.stringify((get("metadata.history")||[]).slice(0,2).map(r=>r&&[r.seg,r.scene,r.take,r.note]))));
+ await p.screenshot({path:path.join(__dirname,'cart-hist-phone.png')});
+ await p.evaluate(()=>go("names")); await sleep(200); console.log('names tabs', await p.evaluate(()=>[...document.querySelectorAll('.phsecs')].filter(e=>e.offsetParent).length));
+ console.log(errs); await b.close(); srv.kill(); })();

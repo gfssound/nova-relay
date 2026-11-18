@@ -1,0 +1,20 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(300);
+const r={};
+r.buttons=await p.locator('.tbtns button').allTextContents();
+await p.click('#goTake'); await p.waitForTimeout(150);
+r.open=await p.locator('.modal.nt').count(); r.focused=await p.evaluate(()=>document.activeElement.getAttribute('aria-label'));
+r.ph=await p.locator('.modal.nt input').evaluateAll(els=>els.map(e=>e.placeholder));
+await p.fill('.modal.nt input[aria-label="Next scene"]','42b');
+await p.locator('.modal.nt .presets .chip',{hasText:'WILD'}).click();
+await p.locator('.modal.nt button',{hasText:'Done'}).click();
+r.next=await p.evaluate(()=>[V["scene.next"],V["take.next"],V["note.next"]]); r.closed=await p.locator('.modal').count();
+// record a take, stop -> next applies
+await p.click('#bRec'); await p.waitForTimeout(400); await p.click('#bStop'); await p.waitForTimeout(200);
+r.after=await p.evaluate(()=>[V["scene.current"],V["take.current"],V["note.current"]]); r.tiles=[await p.textContent('#slScene'),await p.textContent('#slTake'),await p.textContent('#slNote')];
+await p.click('#goNote'); await p.waitForTimeout(100); r.focusNote=await p.evaluate(()=>document.activeElement.getAttribute('aria-label'));
+await p.screenshot({path:'build/nexttake.png'});
+await p.keyboard.press('Escape'); r.esc=await p.locator('.modal').count();
+console.log(JSON.stringify(r),errs);await b.close();})();

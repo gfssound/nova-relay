@@ -1,0 +1,16 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(300);
+const r={};
+await p.click('#goTake'); r.stoppedTitle=await p.locator('#mtitle').textContent(); await p.keyboard.press('Escape');
+await p.click('#bRec'); await p.waitForTimeout(300);
+await p.click('#goTake'); r.recTitle=await p.locator('#mtitle').textContent(); r.focus=await p.evaluate(()=>document.activeElement.getAttribute('aria-label'));
+await p.fill('.modal input[aria-label="Current take"]','3A'); await p.press('.modal input[aria-label="Current take"]','Enter');
+await p.locator('.modal .chip',{hasText:'MOS'}).click();
+r.cur=await p.evaluate(()=>[V["scene.current"],V["take.current"],V["note.current"],V["take.next"]]); r.tile=await p.textContent('#slTake');
+await p.screenshot({path:'build/curtake.png'});
+await p.locator('.modal button',{hasText:'Done'}).click();
+await p.click('#bStop'); await p.waitForTimeout(200);
+r.hist=await p.evaluate(()=>{const h=V["metadata.history"][0];return [h.scene,h.take,h.note]}); r.nextTile=await p.textContent('#slTake');
+console.log(JSON.stringify(r),errs);await b.close();})();

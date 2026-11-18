@@ -1,0 +1,16 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(400);
+const r={};
+await p.click('.tab[data-v="routing"]'); await p.locator('.routeseg button',{hasText:'Tracks'}).click(); await p.waitForTimeout(200);
+r.heads=(await p.locator('.mx thead th').allTextContents()).slice(-3); r.panels=await p.locator('#view .panel').count();
+r.row1=await p.evaluate(()=>V["trackmix.matrix"][0][0].slice(0,10).join('')); r.row3=await p.evaluate(()=>V["trackmix.matrix"][0][2].slice(0,10).join(''));
+const c=p.locator('.mx tbody tr').nth(10).locator('.cell').nth(4); const seq=[];
+for(let k=0;k<3;k++){await c.click(); seq.push([await c.textContent(), await p.evaluate(()=>V["trackmix.matrix"][0][10][4])]);} r.cycle=seq;
+await p.screenshot({path:'build/trk-prepost.png'});
+await p.click('.tab[data-v="home"]'); await p.waitForTimeout(600);
+r.meters=await p.evaluate(()=>[trackDb(0).toFixed(0),trackDb(2).toFixed(0)]);
+r.trim=await p.locator('.sinfo').nth(3).textContent();
+await p.locator('button.scrib',{hasText:'MIX L'}).click(); await p.waitForTimeout(200); r.mixPopup=await p.locator('.minput').count();
+console.log(JSON.stringify(r),errs);await b.close();})();

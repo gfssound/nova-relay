@@ -1,0 +1,16 @@
+{
+  "name": "nova-remote",
+  "version": "0.6.4",
+  "private": true,
+  "description": "Nova Relay cart app: control surface for a Nova recorder, usable from this computer and from phones and iPads on the same network.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "optionalDependencies": {
+    "serialport": "^12.0.0"
+  }
+}

@@ -1,0 +1,13 @@
+const { chromium } = require('playwright'); const path=require('path');
+(async()=>{ const b=await chromium.launch(); const errs=[], fails=[];
+const p=await b.newPage({viewport:{width:1400,height:900}}); p.on('pageerror',e=>errs.push(e.message)); p.on('requestfailed',r=>fails.push(r.url().slice(0,80)));
+await p.goto('file://'+path.join(__dirname,'../sidespro/sides-pro.html')); await p.waitForTimeout(1500);
+console.log('pdfjs', await p.evaluate(()=>!!window.pdfjsLib));
+const plan=await p.evaluate(()=>SidesPro.buildPlan()); console.log(JSON.stringify(plan.scenes.map(s=>[s.scene, s.lavs.map(l=>l.character+':'+l.fader).join(' ')])));
+await p.screenshot({path:path.join(__dirname,'sidespro-desk.png')});
+await p.setInputFiles('#f-pdf', path.join(__dirname,'../sidespro/test-sides.pdf')); await p.waitForTimeout(1500);
+console.log('pdf', await p.evaluate(()=>JSON.stringify(SidesPro.state.scenes.map(s=>[s.sceneNumber, s.heading, s.characters.map(c=>c.name)]))));
+await p.screenshot({path:path.join(__dirname,'sidespro-pdf.png')});
+await p.setViewportSize({width:390,height:844}); await p.waitForTimeout(300);
+console.log('phone width', await p.evaluate(()=>document.documentElement.scrollWidth));
+console.log(errs, fails); await b.close(); })();

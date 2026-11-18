@@ -1,0 +1,15 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(300);
+const vis=()=>p.evaluate(()=>[...document.querySelectorAll('#view p.hint, #view .help, #view .hint')].filter(e=>e.offsetParent!==null).map(e=>e.textContent.slice(0,30)));
+const r={};
+r.metersOff=await vis();
+await p.click('.tab[data-v="names"]'); r.namesOff=await vis();
+await p.click('.tab[data-v="arm"]'); await p.click('#bRec'); await p.waitForTimeout(200); r.lockOff=await vis(); await p.click('#bStop');
+await p.click('.tab[data-v="meta"]'); r.metaOff=await vis();
+await p.click('.tab[data-v="setup"]'); await p.locator('#view .panel',{hasText:'Display'}).locator('button.chip').click();
+r.setting=await p.evaluate(()=>[V["ui.helptext"],document.body.dataset.help]);
+await p.click('.tab[data-v="names"]'); r.namesOn=await vis();
+await p.click('.tab[data-v="home"]'); r.metersOn=await vis();
+console.log(JSON.stringify(r,null,0),errs);await b.close();})();

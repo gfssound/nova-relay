@@ -1,0 +1,503 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "Nova Relay",
+  "Description": "Keys for Nova Relay (Zaxcom Nova, through the Aria-8 or direct): transport, Slate and Com, logging (scene, take, notes), arming and arm sets, PFL, headphones, routing, input pages, jams, meters, receivers, drive/battery/mirror status, trim and headphone dials. Keys light up with the recorder's state.",
+  "Author": "GFS Sound",
+  "UUID": "com.gfssound.novaremote",
+  "Version": "1.5.2.0",
+  "Icon": "imgs/plugin",
+  "Category": "Nova Relay",
+  "CategoryIcon": "imgs/category",
+  "CodePath": "bin/plugin.js",
+  "PropertyInspectorPath": "ui/settings.html",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.5"
+  },
+  "Nodejs": {
+    "Version": "20"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "12"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Actions": [
+    {
+      "UUID": "com.gfssound.novaremote.rec",
+      "Name": "REC",
+      "Icon": "imgs/actions/rec",
+      "Tooltip": "Start recording (hold, like the REC button on screen). Red while recording, with the take time.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/keys/rec",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.stop",
+      "Name": "STOP",
+      "Icon": "imgs/actions/stop",
+      "Tooltip": "Stop recording (a short hold while recording, so a bump can't end a take).",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/keys/stop",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.tone",
+      "Name": "Tone",
+      "Icon": "imgs/actions/tone",
+      "Tooltip": "Tone on (hold) and off (tap). Green while tone is on.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/tone",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.scream",
+      "Name": "Scream trim",
+      "Icon": "imgs/actions/scream",
+      "Tooltip": "Panic button for loud screams: drops the transmitters chosen in Nova Relay (Setup › Scream trim) to the scream ZNet trim; tap again to put them back. Amber while on.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/scream",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.slate",
+      "Name": "Slate mic",
+      "Icon": "imgs/actions/slate",
+      "Tooltip": "The slate mic, like holding the Aria's Slate button: on while the key is held (or tap on, tap off).",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/keys/slate",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.com",
+      "Name": "Com mic",
+      "Icon": "imgs/actions/com",
+      "Tooltip": "The com mic, like holding the Aria's Com button (learn it once in Nova Relay › Setup › Stream Deck).",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/keys/com",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.hp",
+      "Name": "Headphones",
+      "Icon": "imgs/actions/hp",
+      "Tooltip": "Next, previous or a chosen headphone preset. Shows the preset's name.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/hp",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.arm",
+      "Name": "Arm track",
+      "Icon": "imgs/actions/arm",
+      "Tooltip": "Arm or disarm a track (or all tracks). Shows the track's name; red when armed. New Arm keys take the next free track, so a folder fills up 1, 2, 3…",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/arm",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.pfl",
+      "Name": "PFL",
+      "Icon": "imgs/actions/pfl",
+      "Tooltip": "PFL the input on an Aria fader (or turn every PFL off). Yellow while on. New PFL keys take the next free fader.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/pfl",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.status",
+      "Name": "Timecode & take",
+      "Icon": "imgs/actions/status",
+      "Tooltip": "Shows timecode, record state, scene and take. Press to open Nova Relay.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/status",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.drive",
+      "Name": "Drive time left",
+      "Icon": "imgs/actions/drive",
+      "Tooltip": "Recording time left on the drive at the armed track count. Amber under 1 hour, red under 15 minutes (adjustable).",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/drive",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.battery",
+      "Name": "Battery",
+      "Icon": "imgs/actions/battery",
+      "Tooltip": "The Nova's battery voltage. Amber under 14.0 V, red under 13.0 V (adjustable for your batteries).",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/battery",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.primary",
+      "Name": "Primary free",
+      "Icon": "imgs/actions/primary",
+      "Tooltip": "Free space on the primary drive. Amber under 20 GB, red under 5 GB (adjustable).",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/primary",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.mirror",
+      "Name": "Mirror",
+      "Icon": "imgs/actions/mirror",
+      "Tooltip": "Mirror mode and progress. Amber when 3 files behind or mirroring is off, red when 10 behind (adjustable).",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/mirror",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.scene",
+      "Name": "Next scene",
+      "Icon": "imgs/actions/scene",
+      "Tooltip": "Next scene number (075A → 076) or next letter (075 → 075A); a new scene starts at take 1. Shows the scene it will set.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/scene",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.take",
+      "Name": "Take +1 / −1",
+      "Icon": "imgs/actions/take",
+      "Tooltip": "Moves the next take up or down by one. Shows the next take.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/take",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.note",
+      "Name": "Note",
+      "Icon": "imgs/actions/note",
+      "Tooltip": "A note preset (or your own words) on the take: the one recording, else the next. Press again to clear it. Purple while it's on.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/note",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.lasttake",
+      "Name": "Last take",
+      "Icon": "imgs/actions/lasttake",
+      "Tooltip": "Shows the last recorded take: scene, take, length and note.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/lasttake",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.armset",
+      "Name": "Arm set",
+      "Icon": "imgs/actions/armset",
+      "Tooltip": "Arms exactly a saved group of tracks (the others off). Red when exactly that set is armed. Locked while recording.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/armset",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.meter",
+      "Name": "Meter",
+      "Icon": "imgs/actions/meter",
+      "Tooltip": "A live level for a track or an output.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/meter",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.rx",
+      "Name": "Receiver",
+      "Icon": "imgs/actions/rx",
+      "Tooltip": "A receiver's frequency, transmitter state and ZNet trim. Amber when its transmitter is on standby, low power or waking.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/rx",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.page",
+      "Name": "Input page",
+      "Icon": "imgs/actions/page",
+      "Tooltip": "Opens (or closes) an input's page on the Nova, like the Aria's page buttons. Blue while open.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/page",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.route",
+      "Name": "Route",
+      "Icon": "imgs/actions/route",
+      "Tooltip": "Puts Tone, Slate, Com 1, Com 2, a track (OUT 5–8) or an input (OUT 1–4) on an output, or takes it off. Teal while routed.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/route",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.jam",
+      "Name": "Jam",
+      "Icon": "imgs/actions/jam",
+      "Tooltip": "Jams timecode from the reader (TC), user bits, the date or time of day. Hold to jam; not while recording.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/jam",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.trimdial",
+      "Name": "Trim (dial)",
+      "Icon": "imgs/actions/trimdial",
+      "Tooltip": "Turn to trim an input 1 dB per click, or a transmitter’s ZNet trim (gain) 1 step per click. The strip shows the input, its track and the value.",
+      "Controllers": [
+        "Encoder"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/trimdial",
+          "ShowTitle": false
+        }
+      ],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Trim ±1 dB"
+        }
+      }
+    },
+    {
+      "UUID": "com.gfssound.novaremote.faderdial",
+      "Name": "Fader (dial)",
+      "Icon": "imgs/actions/faderdial",
+      "Tooltip": "Turn to move an input's Aria fader; press to pull it all the way down, press again to bring it back. The strip shows the input, its track and where Nova Relay last put the fader.",
+      "Controllers": [
+        "Encoder"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/faderdial",
+          "ShowTitle": false
+        }
+      ],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Fader up / down",
+          "Push": "All the way down / back"
+        }
+      }
+    },
+    {
+      "UUID": "com.gfssound.novaremote.faderstep",
+      "Name": "Fader step",
+      "Icon": "imgs/actions/faderstep",
+      "Tooltip": "Nudges an input's Aria fader up or down a step; hold to keep going. Shows where Nova Relay last put it.",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/faderstep",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.gfssound.novaremote.hpdial",
+      "Name": "Headphones (dial)",
+      "Icon": "imgs/actions/hpdial",
+      "Tooltip": "Turn for the next or previous headphone preset. The strip shows its name.",
+      "Controllers": [
+        "Encoder"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/hpdial",
+          "ShowTitle": false
+        }
+      ],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Preset"
+        }
+      }
+    }
+  ]
+}

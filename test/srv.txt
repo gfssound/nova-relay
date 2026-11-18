@@ -1,0 +1,11 @@
+
+  Nova Remote 0.3.2 is running.
+
+  On this computer:   http://localhost:8140
+  On a phone or iPad (same Wi-Fi):
+    http://192.0.2.2:8140    (eth0)
+
+  Settings are saved in /tmp/tmp.gxz9wx7Sqg
+  Serial: using this computer's built-in serial tools
+  Leave this window open while you work. Close it (or press Ctrl+C) to stop.
+

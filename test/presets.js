@@ -1,0 +1,32 @@
+const { chromium, devices } = require('playwright'); const path = require('path');
+(async () => { const b = await chromium.launch(); const errs = [];
+  // desktop: mouse long-press and right-click
+  const p = await b.newPage({ viewport: { width: 1280, height: 900 } }); p.on('pageerror', e => errs.push(e.message));
+  await p.goto('file://' + path.resolve('build/cart-remote.html')); await p.waitForTimeout(500);
+  await p.evaluate(() => go('names')); await p.waitForTimeout(300);
+  console.log('tabs:', await p.$$eval('.phsecs button', bs => bs.map(b => b.textContent).join(' / ')));
+  const sent = []; await p.exposeFunction('rec', m => sent.push(m)); await p.evaluate(() => { const o = link.send.bind(link); link.send = m => { if (m.op === 'SET') rec(`${m.k}[${m.idx}]=${m.val}`); o(m); }; });
+  const f = p.locator('#f-track-name-3');
+  const box = await f.boundingBox(); await p.mouse.move(box.x + 20, box.y + 10); await p.mouse.down(); await p.waitForTimeout(700); await p.mouse.up();
+  console.log('long-press list:', await p.$$eval('.presetlist button', bs => bs.map(b => b.textContent).slice(0, 5).join(' | ')));
+  await p.screenshot({ path: 'test/presets-list.png' });
+  await p.locator('.presetlist button', { hasText: 'MARCUS' }).click(); await p.waitForTimeout(200);
+  console.log('track 4 now', await p.evaluate(() => get('track.name', [3])), '| sent', sent.splice(0).join(', '));
+  await f.click({ button: 'right' }); await p.waitForTimeout(200);
+  console.log('right-click opens list:', await p.locator('.presetlist').count());
+  await p.keyboard.press('Escape');
+  await f.click(); await p.waitForTimeout(200); console.log('short click focuses field, no list:', await p.evaluate(() => document.activeElement.id), await p.locator('.presetlist').count());
+  await p.locator('.phsecs button', { hasText: 'Presets' }).click(); await p.waitForTimeout(200);
+  await p.fill('#f-names-preset-name-12', 'luke'); await p.keyboard.press('Enter'); await p.waitForTimeout(100);
+  console.log('preset 13 =', await p.evaluate(() => get('names.preset.name', [12])), '| sent', sent.splice(0).join(', '));
+  await p.screenshot({ path: 'test/presets-tab.png' });
+  // phone: touch long-press
+  const ctx = await b.newContext({ ...devices['iPhone 13'] }); const q = await ctx.newPage(); q.on('pageerror', e => errs.push(e.message));
+  await q.goto('file://' + path.resolve('build/cart-remote.html')); await q.waitForTimeout(500); await q.evaluate(() => go('names')); await q.waitForTimeout(300);
+  const g = q.locator('#f-track-name-5'); const bb = await g.boundingBox();
+  const cdp = await ctx.newCDPSession(q);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: bb.x + 15, y: bb.y + 10 }] }); await q.waitForTimeout(700);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await q.waitForTimeout(200);
+  console.log('phone long-press list:', await q.locator('.presetlist button').count());
+  await q.screenshot({ path: 'test/presets-phone.png' });
+  console.log(errs); await b.close(); })();

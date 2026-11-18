@@ -1,0 +1,14 @@
+const { chromium } = require('playwright'); const path=require('path');
+(async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1280,height:900}}); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+path.join(__dirname,'../build/cart-remote.html')); await p.waitForTimeout(400);
+await p.evaluate(()=>{localStorage.removeItem("cart-remote-phtabs");localStorage.removeItem("cart-remote-phsec");});
+await p.click('#phoneBtn'); await p.waitForTimeout(1500);
+const f=p.frames().find(fr=>fr!==p.mainFrame());
+await f.evaluate(()=>go("home")); await p.waitForTimeout(500);
+await p.screenshot({path:path.join(__dirname,'phoneview.png')});
+await p.click('.phoneopts button:has-text("Bottom")'); await p.waitForTimeout(600);
+await f.evaluate(()=>go("names"));
+await p.click('.phoneopts button:has-text("Scroll")'); await p.waitForTimeout(600);
+console.log(await f.evaluate(()=>[document.body.dataset.phtabs, document.body.dataset.phsec, current]));
+await p.screenshot({path:path.join(__dirname,'phoneview-b.png')});
+console.log(errs); await b.close(); })();

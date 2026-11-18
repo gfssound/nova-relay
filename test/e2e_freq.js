@@ -1,0 +1,20 @@
+const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs = require('fs'); const os = require('os'); const path = require('path');
+const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  const fake = spawn('python3', [path.join(DIR, 'fake_nova.py'), path.join(ROOT, 'cap/live17_conv.log'), path.join(DIR, 'fake_freq.txt'), '60', '8']);
+  const pty = await new Promise(r => fake.stdout.once('data', d => r(String(d).trim())));
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'nr-'));
+  const srv = spawn('node', [path.join(ROOT, 'nova-remote/server.js'), '--port', '8139', '--no-open', '--data', data]);
+  await sleep(800);
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 860 } });
+  await p.goto('http://localhost:8139/'); await p.waitForFunction(() => cart.ready);
+  await p.evaluate(() => set('ui.rxfreq', [], ['','','','','','','',''])); await sleep(300); console.log('blank', JSON.stringify(await p.evaluate(() => V['ui.rxfreq'])));
+  await p.evaluate(path => net.send({ t: 'serialOpen', path, baud: 38400, parity: 'odd' }), pty);
+  await sleep(35000);
+  console.log('rxfreq', JSON.stringify(await p.evaluate(() => V['ui.rxfreq'])));
+  await p.evaluate(() => { go('inputs'); set('input.channel', [], 16, 'local'); }); await sleep(500);
+  console.log('header:', await p.locator('.bigmeter h3').first().textContent());
+  console.log((await p.evaluate(() => LOG.filter(e => /frequency|MHz/.test(e.line)).map(e => e.line))).join('\n'));
+  await p.screenshot({ path: path.join(DIR, 'freq.png'), clip: { x: 0, y: 140, width: 1280, height: 300 } });
+  await b.close(); srv.kill(); fake.kill();
+})().catch(e => { console.error(e); process.exit(1); });

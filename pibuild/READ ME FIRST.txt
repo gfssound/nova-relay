@@ -1,0 +1,22 @@
+Nova Relay Box (Raspberry Pi)
+==============================
+
+Turns a Raspberry Pi into a stand-alone Nova Relay: plug the Aria into the Pi, power it from the cart,
+and phones/iPads join its Wi-Fi network "NOVA-REMOTE" and open http://nova.local. No laptop needed.
+
+Full steps and parts list: "Nova Relay Box Guide.pdf" in this folder.
+
+Short version:
+  1. On your Mac (with internet): edit "Pi box settings.txt" if you want another Wi-Fi name or password,
+     then double-click "Build Pi Image.command" (first time: right-click > Open > Open).
+     It makes Nova-Relay-<version>-Pi.img.gz next to it.
+  2. Raspberry Pi Imager: Choose OS > Use custom > that file, choose the microSD card, write it.
+     When it asks about OS customisation, choose No.
+  3. Card in the Pi, Aria in a USB port, power on. After about 3 minutes join Wi-Fi NOVA-REMOTE
+     (password: novaremote) and open http://nova.local or http://10.42.0.1.
+
+The box's Wi-Fi is 5 GHz (channel 36) by default, to keep clear of ZaxNet, which uses 2.4 GHz.
+
+Updating a box and keeping its settings: copy this zip to the Pi (scp ... pi@nova.local:~), then on the Pi
+unzip it, cd into the folder and run: sudo ./install-pi.sh
+(Options: --ssid NAME --password PASS --country US --name nova --band 5|2.4 --channel N --no-hotspot --uninstall)

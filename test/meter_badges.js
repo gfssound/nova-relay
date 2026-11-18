@@ -1,0 +1,15 @@
+const { chromium } = require('playwright'); const path = require('path');
+(async () => { const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 800 } }); const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.goto('file://' + path.resolve('build/cart-remote.html')); await p.waitForTimeout(500);
+  const count = () => p.evaluate(() => ({ z: [...document.querySelectorAll('.strip .szid:not([hidden]) .zi')].length, zt: [...document.querySelectorAll('.strip .szid:not([hidden]) .zt')].length, tx: [...document.querySelectorAll('.strip .stx, .strip .stxn')].filter(e => !e.hidden && e.offsetParent).length }));
+  console.log('meters before:', await count());
+  await p.evaluate(() => { setupSec = 'meters'; go('setup'); }); await p.waitForTimeout(200);
+  await p.locator('.vtile[data-key="ui.meters.znet"]').click(); await p.locator('.vtile[data-key="ui.meters.tx"]').click();
+  await p.screenshot({ path: 'build/setup-meter-badges.png' });
+  console.log('tiles:', await p.locator('.vtile[data-key^="ui.meters"]').allInnerTexts());
+  await p.evaluate(() => go('home')); await p.waitForTimeout(300);
+  console.log('meters after off:', await count());
+  await p.screenshot({ path: 'build/meters-badges-off.png' });
+  await p.waitForTimeout(800); await p.reload(); await p.waitForTimeout(500); console.log('after reload (kept):', await count());
+  await p.evaluate(() => { set('ui.meters.znet', [], 1); set('ui.meters.tx', [], 1); }); await p.waitForTimeout(100);
+  console.log('back on:', await count(), 'errors:', errs.length ? errs : 'none'); await b.close(); })();

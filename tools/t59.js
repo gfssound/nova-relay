@@ -1,0 +1,14 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(300);
+const r={};
+await p.locator('button.scrib',{hasText:'ANNA'}).click(); await p.waitForTimeout(200);
+r.solo=await p.evaluate(()=>soloCh); r.note=await p.locator('.solonote').textContent(); r.tile=await p.textContent('#hpCur');
+await p.screenshot({path:'build/solo.png'});
+await p.keyboard.press('Escape'); await p.waitForTimeout(100); r.after=await p.evaluate(()=>soloCh); r.tile2=await p.textContent('#hpCur');
+await p.locator('button.scrib',{hasText:'MIX L'}).click(); await p.waitForTimeout(150); r.mix0=await p.evaluate(()=>soloCh);
+await p.locator('.minput').nth(6).click(); r.mix6=await p.evaluate(()=>soloCh); r.note2=await p.locator('.solonote').textContent();
+await p.locator('.modal button',{hasText:'All settings for this input'}).click(); await p.waitForTimeout(100); r.afterNav=await p.evaluate(()=>[soloCh,current]);
+r.log=await p.evaluate(()=>LOG.filter(e=>e.line.includes('SOLO')).map(e=>e.line.slice(14)));
+console.log(JSON.stringify(r,null,0),errs);await b.close();})();

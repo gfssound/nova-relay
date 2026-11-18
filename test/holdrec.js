@@ -1,0 +1,12 @@
+const { chromium } = require('playwright'); const path=require('path');
+(async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844},hasTouch:true}); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+path.join(__dirname,'../build/cart-remote.html')); await p.waitForTimeout(400);
+const st=()=>p.evaluate(()=>sim.state);
+const box=await p.locator('#bRec').boundingBox(); const x=box.x+box.width/2,y=box.y+box.height/2;
+await p.mouse.move(x,y); await p.mouse.down(); await p.waitForTimeout(200); await p.mouse.up(); await p.waitForTimeout(200);
+console.log('short tap ->', await st(), await p.evaluate(()=>document.body.innerText.includes('Hold REC to record')));
+await p.mouse.down(); await p.waitForTimeout(350); await p.screenshot({path:path.join(__dirname,'holdrec.png'), clip:{x:box.x-200,y:box.y-10,width:box.width+210,height:box.height+20}}); await p.waitForTimeout(400); await p.mouse.up(); await p.waitForTimeout(300);
+console.log('hold ->', await st());
+await p.click('#bStop'); await p.waitForTimeout(200); console.log('stop ->', await st());
+await p.focus('#bRec'); await p.keyboard.down('Enter'); await p.waitForTimeout(700); await p.keyboard.up('Enter'); await p.waitForTimeout(200); console.log('key hold ->', await st());
+console.log(errs); await b.close(); })();

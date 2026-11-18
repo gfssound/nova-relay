@@ -1,0 +1,16 @@
+const { chromium } = require('playwright'); const { spawn } = require('child_process'); const path=require('path');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{ const home=require('fs').mkdtempSync('/tmp/claude-0/-home-claude/10fb85d4-efc5-5dbf-a537-af46f5c1d13e/scratchpad/apihome-');
+ const srv=spawn('node',[path.join(__dirname,'../nova-remote/server.js'),'--port','8136','--no-open'],{env:{...process.env,HOME:home}});
+ await sleep(800); const b=await chromium.launch(); const errs=[];
+ const p=await b.newPage({viewport:{width:1280,height:900}}); p.on('pageerror',e=>errs.push(e.message)); await p.goto('http://localhost:8136/'); await sleep(1500);
+ const plan={source:"Sides Pro",project:"Test",scenes:[{scene:"42A",heading:"INT. KITCHEN - DAY",lavs:[{character:"ANNA",fader:"5"},{character:"DEV",fader:"7"}]},{scene:"43",lavs:[{character:"RUTH",fader:"8"}]}]};
+ const opt=await fetch('http://localhost:8136/api/lavs',{method:'OPTIONS'}); console.log('preflight', opt.status, opt.headers.get('access-control-allow-origin'));
+ const r=await fetch('http://localhost:8136/api/lavs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(plan)}); console.log('post', r.status, await r.text());
+ const bad=await fetch('http://localhost:8136/api/lavs',{method:'POST',body:'nope'}); console.log('bad', bad.status);
+ await sleep(400);
+ console.log('page has plan', await p.evaluate(()=>[lavPlan()?.scenes.length, document.querySelector('.wchip')?.textContent]));
+ const g=await fetch('http://localhost:8136/api/lavs'); console.log('get', (await g.json()).scenes.length);
+ const p2=await b.newPage(); p2.on('pageerror',e=>errs.push(e.message)); await p2.goto('http://localhost:8136/'); await sleep(1500);
+ console.log('late device has plan', await p2.evaluate(()=>lavPlan()?.scenes.length));
+ console.log(errs); await b.close(); srv.kill(); })();

@@ -1,0 +1,28 @@
+const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs = require('fs'); const os = require('os'); const path = require('path');
+const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  const fake = spawn('python3', [path.join(DIR, 'fake_nova.py'), path.join(ROOT, 'cap/tap5.log'), path.join(DIR, 'fake_rx8.txt'), '40']);
+  const pty = await new Promise(r => fake.stdout.once('data', d => r(String(d).trim())));
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'nr-'));
+  const srv = spawn('node', [path.join(ROOT, 'nova-remote/server.js'), '--port', '8137', '--no-open', '--no-auto', '--data', data]);
+  srv.stdout.on('data', d => { if (/rror/.test(d)) process.stdout.write('SRV ' + d); }); srv.stderr.on('data', d => process.stdout.write('SRVERR ' + d));
+  await sleep(800);
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.goto('http://localhost:8137/'); await p.waitForFunction(() => cart.ready);
+  console.log('sim outsrc', await p.evaluate(() => [V["ui.outsrc"], JSON.stringify(rowOf(0)), JSON.stringify(rowOf(4)), presetsList().map(p => p.name + ':' + p.kind).join(',')]));
+  await p.evaluate(path => net.send({ t: 'serialOpen', path, baud: 38400, parity: 'odd' }), pty);
+  await p.waitForFunction(() => cart.nova && cart.nova.connected, null, { timeout: 15000 }); await sleep(3000);
+  console.log('nova rows', await p.evaluate(() => [V["ui.outsrc"], ...[0,1,2,3,4,5].map(o => JSON.stringify(rowOf(o)))]));
+  await p.evaluate(() => { set('outputmix.matrix', [0, 0, 1], 1); set('trackmix.matrix', [0, 2, 15], 1); set('trackmix.matrix', [0, 13, 15], 1); set('outputmix.matrix', [0, 4, 31], 2); set('outputmix.matrix', [0, 5, 22], 1); set('input.trim.level', [15], 6); set('input.trim.level', [15], 5); set('input.trim.level', [2], 3); set('input.trim.mode', [16], 1); });
+  await sleep(1200);
+  await p.evaluate(() => { routeMode = "outputs"; go("routing"); }); await sleep(500); await p.evaluate(() => go("inputs")); await sleep(400); console.log('trim labels', await p.evaluate(() => [...document.querySelectorAll('.lbl')].map(e => e.textContent).filter(t => /trim|gain/i.test(t)).join(' | '))); await p.evaluate(() => go("routing"));
+  await p.screenshot({ path: path.join(DIR, 'out-matrix.png'), fullPage: true });
+  await p.evaluate(() => openOutputModal(0)); await sleep(300); await p.screenshot({ path: path.join(DIR, 'out-modal1.png') });
+  await p.evaluate(() => { closeModal(); openOutputModal(4); }); await sleep(300); await p.screenshot({ path: path.join(DIR, 'out-modal5.png') });
+  const log = await p.evaluate(() => [...document.querySelectorAll('*')].map(e => e.childElementCount ? '' : e.textContent).filter(t => /RX inputs|OUTPUTMIX_MATRIX|TRIM/.test(t)).slice(-10));
+  console.log(log.join('\n'));
+  console.log('errors', errs);
+  await b.close(); srv.kill(); fake.kill();
+  console.log(fs.readFileSync(path.join(DIR, 'fake_rx8.txt'), 'utf8').split('\n').filter(l => l && !/ 20 50 43/.test(l)).join('\n'));
+})().catch(e => { console.error(e); process.exit(1); });

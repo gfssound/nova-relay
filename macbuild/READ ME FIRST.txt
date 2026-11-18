@@ -1,0 +1,25 @@
+Nova Remote: Mac app builder
+============================
+
+This makes "Nova Remote.app" with Node.js built in, packed in a .dmg. The app needs nothing else installed
+and no internet.
+
+Build it (once, on any Mac with internet)
+  1. Double-click "Build Mac App.command".
+     The first time macOS may block it: right-click it, choose Open, then Open again.
+  2. A Terminal window downloads the official Node.js from nodejs.org (about 100 MB, for both Apple Silicon
+     and Intel Macs), checks it, and builds the app. Takes a minute or two.
+  3. "Nova-Remote-<version>.dmg" appears next to the builder.
+
+Install it (any Mac, no internet needed)
+  1. Open the .dmg and drag Nova Remote onto Applications.
+  2. Open Nova Remote from Applications. The first time, right-click it, choose Open, then Open again
+     (it isn't signed with an Apple Developer ID).
+  3. Nova Remote opens in its own window: no web browser and no Terminal window. Close the window or
+     press ⌘Q to stop it. View › Enter Full Screen (Control-⌘-F) gives the remote the whole screen, and
+     View › Zoom In / Zoom Out (⌘= / ⌘-) changes the size.
+     Phones and iPads: the addresses are in Setup › Cart & Recorder Link. They work while the app is open.
+     Nova Remote › Open in Web Browser (Shift-⌘-B) opens the remote in a browser too, if you ever want that.
+
+Settings are kept in ~/.nova-remote, the same place as the zip version, so nothing is lost.
+Keep the .dmg: copy it to any Mac (AirDrop, USB stick) to install there.

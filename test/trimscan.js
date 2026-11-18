@@ -1,0 +1,24 @@
+const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs=require('fs'),os=require('os'),path=require('path');
+const DIR=__dirname, ROOT=path.join(DIR,'..'); const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+  const out=path.join(DIR,'fake_ts.txt');
+  const fake=spawn('python3',[path.join(DIR,'fake_nova.py'),path.join(ROOT,'cap/live4_conv.log'),out,'70','1'],{env:{...process.env,ECHO_TRIM:'16:6,17:7,24:14,29:19'}});
+  const pty=await new Promise(r=>fake.stdout.once('data',d=>r(String(d).trim())));
+  const data=fs.mkdtempSync(path.join(os.tmpdir(),'nr-'));
+  const srv=spawn('node',[path.join(ROOT,'nova-remote/server.js'),'--port','8146','--no-open','--no-auto','--data',data]);
+  await sleep(800); const b=await chromium.launch(); const errs=[]; const p=await b.newPage({viewport:{width:1024,height:768}}); p.on('pageerror',e=>errs.push(e.message));
+  await p.goto('http://localhost:8146/'); await p.waitForFunction(()=>cart.ready);
+  await p.evaluate(path=>net.send({t:'serialOpen',path,baud:38400,parity:'odd'}),pty);
+  await p.waitForFunction(()=>cart.nova&&cart.nova.connected,null,{timeout:15000}); await sleep(1500);
+  await p.evaluate(()=>go("setup")); await sleep(200); await p.click('button:has-text("Recorder Link")'); await sleep(300);
+  const btn=p.locator('button:has-text("Find RX trim numbers")'); await btn.click(); await sleep(200);
+  console.log(await p.locator('.panel .panel:has-text("RX trim finder")').innerText());
+  await p.click('button:has-text("Tap again to start")'); await sleep(3000);
+  console.log('during:', await p.locator('button:has-text("Scanning")').innerText());
+  await sleep(30000);
+  console.log(await p.locator('.panel .panel:has-text("RX trim finder")').innerText());
+  await p.screenshot({path:path.join(DIR,'trimscan.png')}); console.log((await p.evaluate(()=>document.body.innerText)).split('\n').filter(l=>/Trim finder|INPUT_TRIM_LEVEL\[(2[89]|30)\]|RX 6/.test(l)).join('\n'));
+  await p.evaluate(()=>set("input.trim.level",[19],5)); await sleep(500);
+  await b.close(); srv.kill(); fake.kill(); await sleep(200);
+  console.log(fs.readFileSync(out,'utf8').split('\n').filter(l=>/ 55 4C 00/.test(l)).slice(-3).join('\n'), errs);
+})().catch(e=>{console.error(e);process.exit(1)});

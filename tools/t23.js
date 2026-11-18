@@ -1,0 +1,13 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:820}});p.on('pageerror',e=>errs.push(e.message));
+const html=require('fs').readFileSync('build/cart-remote.html','utf8');
+await p.setContent('<!doctype html><html><head><meta charset="utf-8"></head><body>'+html+'</body></html>');await p.waitForTimeout(400);
+const r={};
+r.panels=await p.locator('#view .panel h3').allTextContents();
+await p.locator('.routeseg button',{hasText:'Outputs'}).click(); await p.waitForTimeout(300); r.outStrips=await p.locator('.scrib').allTextContents();
+await p.locator('.routeseg button',{hasText:'Tracks'}).click(); await p.waitForTimeout(300); r.trackStrips=await p.locator('button.scrib').count();
+await p.screenshot({path:'build/meters-tabs.png'});
+await p.click('.tab[data-v="setup"]'); await p.waitForTimeout(200);
+r.setupRef=await p.locator('#view .row .lbl').allTextContents();
+await p.locator('#view button',{hasText:/^ON$/}).first().count();
+console.log(JSON.stringify(r),errs);await b.close();})();

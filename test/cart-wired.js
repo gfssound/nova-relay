@@ -1,0 +1,11 @@
+const { chromium } = require('playwright'); const { spawn } = require('child_process'); const path=require('path');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{ const home=require('fs').mkdtempSync('/tmp/claude-0/-home-claude/10fb85d4-efc5-5dbf-a537-af46f5c1d13e/scratchpad/apihome-');
+ const srv=spawn('node',[path.join(__dirname,'../nova-remote/server.js'),'--port','8135','--no-open'],{env:{...process.env,HOME:home}});
+ await sleep(800); const b=await chromium.launch(); const errs=[];
+ const mixer=await b.newPage({viewport:{width:1280,height:900}}); mixer.on('pageerror',e=>errs.push(e.message)); await mixer.goto('http://localhost:8135/'); await sleep(1500);
+ const util=await b.newPage({viewport:{width:390,height:844}}); util.on('pageerror',e=>errs.push(e.message)); await util.goto('http://localhost:8135/'); await sleep(1500);
+ await util.evaluate(()=>{go("home")}); await sleep(200); await util.click('.wchip'); await sleep(200); await util.click('.wrow >> nth=4'); await sleep(600);
+ console.log('mixer sees', await mixer.evaluate(()=>[JSON.stringify(get("ui.wired")), document.querySelector('.toast')?.textContent, document.querySelector('.wchip')?.textContent]));
+ await mixer.screenshot({path:path.join(__dirname,'cart-wired-mixer.png')});
+ console.log(errs); await b.close(); srv.kill(); })();

@@ -1,0 +1,12 @@
+const { chromium } = require('playwright'); const path=require('path');
+(async()=>{ const b=await chromium.launch(); const errs=[];
+const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,hasTouch:true}); p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+path.join(__dirname,'../build/cart-remote.html'));
+await p.evaluate(()=>{localStorage.setItem("cart-remote-phtabs","bottom");localStorage.setItem("cart-remote-phsec","1");applyPhoneOpts(true);go("home")}); await p.waitForTimeout(400);
+await p.screenshot({path:path.join(__dirname,'m3-bottom-home.png')});
+await p.click('.strip:not(.scale) >> nth=2 >> .scrib'); await p.waitForTimeout(400);
+await p.screenshot({path:path.join(__dirname,'m3-modal.png')});
+await p.click('.modal .phsecs .seg-b >> nth=1'); await p.waitForTimeout(200);
+await p.click('.modal .vtile >> text=HPF freq'); await p.waitForTimeout(300);
+await p.screenshot({path:path.join(__dirname,'m3-modal-edit.png')});
+console.log(errs); await b.close(); })();
