@@ -1,0 +1,2 @@
+Updates: Setup › Updates checks GitHub for new versions and installs one only when you press Install
+Install an update from a file on any device, and go back to the previous version

@@ -127,7 +127,7 @@ function onCart(m){
       cart.synced = true;
       if(m.live) sim.live(m.live);
       cart.urls = m.urls || []; cart.local = !!m.local; cart.desktop = !!m.desktop; cart.network = !!m.network; cart.here = !!m.here; cart.serial = m.serial || null; cart.devices = m.devices || 1; cart.nova = m.nova || null; if(cart.nova && cart.nova.model) novaModel = cart.nova.model;
-      cart.deck = m.deck || null; if(document.getElementById("deck-box")) net.send({t:"deckWatch", on:true});
+      cart.deck = m.deck || null; if(document.getElementById("deck-box")) net.send({t:"deckWatch", on:true}); cart.version = m.version || ""; if(m.update) updOnMessage({update:m.update});
       if(!cart.ready){ cart.ready = true; $("connecting").hidden = true; net.send({t:"clock", now:Date.now()}); log("ev", `Connected to the cart computer (Nova Relay ${m.version || ""}). Recorder: ${cart.nova && cart.nova.connected ? cart.nova.model || "Nova" : "simulated"}.`); }
       setCartStatus(true); cartChanged();
       break;
@@ -437,6 +437,67 @@ function testPanel(){
 }
 
 function presetPicker(''')
+
+# ---- 6c. Setup › Updates (Nov 18): the cart computer checks GitHub, downloads, checks the signature, installs and
+#      restarts; this page shows it and sends an update file. If the cart computer has no internet but this device
+#      does (a phone on cellular), this device checks GitHub itself and sends the update over.
+_i = s.index('let protoUpd = {'); _j = s.index('const updAgo = t =>')
+s = s[:_i] + r"""let updDraw = null, updDev = null, updLocal = null;
+const updCmp = (a, b) => { const pa = String(a).split(".").map(n => parseInt(n, 10) || 0), pb = String(b).split(".").map(n => parseInt(n, 10) || 0);
+  for(let i = 0; i < Math.max(pa.length, pb.length); i++){ const d = (pa[i] || 0) - (pb[i] || 0); if(d) return d < 0 ? -1 : 1; } return 0; };
+function updState(){
+  const u = {...(cart.update || {running:cart.version || "", appVersion:"", auto:true})};
+  u.recording = !!u.recording || sim.state === "RECORDING";
+  if(updLocal) u.busy = updLocal;
+  if(!u.available && updDev && updCmp(updDev.version, u.running) > 0){ u.available = true; u.latest = updDev; u.viaDevice = true; u.error = null; }
+  return u;
+}
+function updChanged(){ updDraw && updDraw(); const b = document.querySelector('.secbtn .secdot'); if(current === "setup" && !!b !== !!updState().available) go("setup"); }
+async function updDeviceCheck(){
+  const url = cart.update && cart.update.latestUrl; if(!url) return;
+  try{ const r = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), {cache:"no-store"}); if(!r.ok) return;
+    const j = await r.json(); if(!j || !j.version || !j.file) return;
+    updDev = {version:String(j.version), file:String(j.file), url:new URL(j.file, url).href, sha256:j.sha256 || null, size:+j.size || null, notes:Array.isArray(j.notes) ? j.notes.map(String) : [], date:j.date || null};
+    updChanged();
+  }catch(_){ }
+}
+function updCheckNow(){ net.send({t:"updateCheck"}); }
+function updSetAuto(on){ net.send({t:"updateAuto", on}); }
+function updSend(blob, name){
+  updLocal = "sending"; updChanged();
+  const x = new XMLHttpRequest(); x.open("POST", "/update/file"); x.setRequestHeader("Content-Type", "application/zip"); x.setRequestHeader("X-Nova-Device", deviceName());
+  x.upload.onprogress = e => { if(e.lengthComputable){ updLocal = "sending " + Math.round(e.loaded * 100 / e.total) + "%"; updDraw && updDraw(); } };
+  x.onload = () => { updLocal = null; let j = {}; try{ j = JSON.parse(x.responseText); }catch(_){ }
+    if(!j.ok) toast(j.error || "The update wasn't installed."); updChanged(); };
+  x.onerror = () => { updLocal = null; toast("Couldn't send the update to the cart computer."); updChanged(); };
+  x.send(blob);
+}
+async function updInstallLatest(){
+  const u = updState();
+  if(!u.viaDevice){ net.send({t:"updateInstall"}); return; }
+  updLocal = "downloading"; updChanged();
+  try{ const r = await fetch(u.latest.url, {cache:"no-store"}); if(!r.ok) throw new Error("HTTP " + r.status);
+    const blob = await r.blob(); updSend(blob, u.latest.file); }
+  catch(e){ updLocal = null; toast("Couldn't download the update on this device (" + e.message + ")."); updChanged(); }
+}
+function updInstallFile(file){
+  if(!/\.zip$/i.test(file.name)){ toast("That isn't a Nova Relay update (a .zip)"); return; }
+  updSend(file, file.name);
+}
+function updGoBack(){ net.send({t:"updateBack"}); }
+function updOnMessage(m){
+  cart.update = m.update || cart.update;
+  if(m.fail) toast("Update not installed: " + m.fail);
+  if(m.done) toast(m.done.back ? `Going back to Nova Relay ${m.done.version}… this page reconnects by itself.` : `Installing Nova Relay ${m.done.version}… this page reconnects by itself.`);
+  if(cart.update && cart.update.offline && !updDev) updDeviceCheck();
+  const u = updState();
+  if(u.available){ let seen = null; try{ seen = localStorage.getItem("novaUpdateSeen"); }catch(_){ }
+    if(seen !== u.latest.version){ try{ localStorage.setItem("novaUpdateSeen", u.latest.version); }catch(_){ } toast(`Nova Relay ${u.latest.version} is available: Setup › Updates`); } }
+  updChanged();
+}
+""" + s[_j:]
+rep('    case "deckPress": deckOnPress("k" + m.key); break;', '    case "deckPress": deckOnPress("k" + m.key); break;\n    case "update": updOnMessage(m); break;')
+
 rep('function go(v){\n', 'function go(v){\n  cartSubs.clear();\n')
 
 # ---- 6b. meters come from the Nova while it's connected

@@ -1,4 +1,4 @@
-/* Nova Remote desktop window (Linux). Starts the cart server for this computer only and shows the remote in its
+/* Nova Relay desktop window (Linux). Starts the cart server for this computer only and shows the remote in its
    own window. No browser, phones or iPads. Closing the window stops everything. */
 "use strict";
 const { app, BrowserWindow, Menu, dialog, shell } = require("electron");
@@ -22,28 +22,37 @@ const tryPort = want => new Promise((res, rej) => {
 const freePort = () => tryPort(8080).catch(() => tryPort(0));
 const waitFor = (url, ms) => new Promise((res, rej) => {
   const end = Date.now() + ms;
-  const tryOnce = () => http.get(url, r => { r.resume(); res(); }).on("error", () => Date.now() > end ? rej(new Error("The Nova Remote server didn't start.")) : setTimeout(tryOnce, 150));
+  const tryOnce = () => http.get(url, r => { r.resume(); res(); }).on("error", () => Date.now() > end ? rej(new Error("The Nova Relay server didn't start.")) : setTimeout(tryOnce, 150));
   tryOnce();
 });
 
-async function start() {
-  const port = await freePort();
+function spawnServer(port) {
   let log = "";
   /* Electron's own binary runs the server as plain Node. */
   server = spawn(process.execPath, [SERVER, "--port", String(port), "--no-open", "--local"], {
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" }, cwd: path.dirname(SERVER), stdio: ["ignore", "pipe", "pipe"]
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", NOVA_PARENT_RESTARTS: "1" }, cwd: path.dirname(SERVER), stdio: ["ignore", "pipe", "pipe"]
   });
   server.stdout.on("data", d => { log += d; process.stdout.write(d); });
   server.stderr.on("data", d => { log += d; process.stderr.write(d); });
   server.on("exit", code => {
     if (quitting) return;
-    dialog.showErrorBox("Nova Remote stopped", `The Nova Remote server stopped (code ${code}).\n\n${log.slice(-1500)}`);
+    /* Nov 18: 75 = an update was installed (Setup › Updates): start the server again (it runs the new version) and reload */
+    if (code === 75) { restart(port).catch(e => { dialog.showErrorBox("Nova Relay", String(e && e.message || e)); app.quit(); }); return; }
+    dialog.showErrorBox("Nova Relay stopped", `The Nova Relay server stopped (code ${code}).\n\n${log.slice(-1500)}`);
     app.quit();
   });
+}
+async function restart(port) {
+  spawnServer(port); const url = `http://127.0.0.1:${port}/`;
+  await waitFor(url, 20000); if (win) await win.loadURL(url);
+}
+async function start() {
+  const port = await freePort();
+  spawnServer(port);
   const url = `http://127.0.0.1:${port}/`;
   await waitFor(url, 15000);
   win = new BrowserWindow({
-    width: 1280, height: 800, minWidth: 900, minHeight: 600, title: "Nova Remote", backgroundColor: "#0a0b0c",
+    width: 1280, height: 800, minWidth: 900, minHeight: 600, title: "Nova Relay", backgroundColor: "#0a0b0c",
     icon: path.join(__dirname, "icon.png"), autoHideMenuBar: true,
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
   });
@@ -55,10 +64,10 @@ async function start() {
 }
 
 Menu.setApplicationMenu(Menu.buildFromTemplate([
-  { label: "Nova Remote", submenu: [{ role: "reload" }, { role: "togglefullscreen" }, { type: "separator" }, { role: "quit" }] },
+  { label: "Nova Relay", submenu: [{ role: "reload" }, { role: "togglefullscreen" }, { type: "separator" }, { role: "quit" }] },
   { label: "View", submenu: [{ role: "zoomIn" }, { role: "zoomOut" }, { role: "resetZoom" }, { type: "separator" }, { role: "toggleDevTools" }] }
 ]));
 
-app.whenReady().then(start).catch(e => { dialog.showErrorBox("Nova Remote", String(e && e.message || e)); app.quit(); });
+app.whenReady().then(start).catch(e => { dialog.showErrorBox("Nova Relay", String(e && e.message || e)); app.quit(); });
 app.on("window-all-closed", () => app.quit());
 app.on("before-quit", () => { quitting = true; if (server && server.exitCode == null) server.kill("SIGTERM"); });

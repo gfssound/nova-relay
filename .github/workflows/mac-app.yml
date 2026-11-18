@@ -1,0 +1,35 @@
+# Nov 18 (Ferris: "Is there a way to make the Mac version both easier to install and easier to update?"):
+# GitHub's own Mac build machine makes the ready-to-install "Nova Relay.app" (.dmg) whenever a new version is
+# published to updates/ (each print), or by hand from the Actions tab (Run workflow). It runs the same
+# "Build Mac App.command" as before, on the signed app folder from updates/, and puts the .dmg and the update zip
+# on the Releases page as "Nova Relay <version>".
+name: Mac app
+on:
+  push:
+    branches: [main]
+    paths: ['updates/latest.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  dmg:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Nova Relay.app and the .dmg
+        run: |
+          V=$(node -p "require('./updates/latest.json').version")
+          F=$(node -p "require('./updates/latest.json').file")
+          echo "V=$V" >> "$GITHUB_ENV"; echo "F=$F" >> "$GITHUB_ENV"
+          rm -rf build-mac && mkdir build-mac && cd build-mac
+          unzip -q "../updates/$F"
+          cp "../macbuild/Build Mac App.command" .
+          NOVA_NO_PAUSE=1 bash "./Build Mac App.command"
+          ls -la
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node -e 'const j=require("./updates/latest.json");console.log((j.notes||[]).map(n=>"- "+n).join("\n")+"\n\nMac: open the .dmg and drag Nova Relay onto Applications. The first time, macOS asks: System Settings › Privacy & Security › Open Anyway.\nEvery version: Setup › Updates installs Nova-Relay-"+j.version+"-update.zip (it finds it here by itself).")' > notes.md
+          gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" --target "$GITHUB_SHA" --title "Nova Relay $V" --notes-file notes.md
+          gh release upload "v$V" "build-mac/Nova-Relay-$V.dmg" "updates/$F" --clobber

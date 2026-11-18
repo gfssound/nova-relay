@@ -14,6 +14,13 @@
  * (npm install), it is used for serial; otherwise the computer's own tools are used.
  */
 "use strict";
+/* Updates (Nov 18): a newer version installed from Setup › Updates lives in the data folder; the app's own copy starts
+   it instead of itself (update.js launch(): only when it's newer than this copy, and not after 3 failed starts). */
+if (!process.env.NOVA_UPDATE_RUNNING) {
+  let entry = null; try { entry = require("./update.js").launch(__dirname, process.argv); } catch (_) { }
+  process.env.NOVA_UPDATE_BUNDLED = __dirname;
+  if (entry) { process.env.NOVA_UPDATE_RUNNING = "1"; require(entry); return; }
+}
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -1360,7 +1367,7 @@ function networkUrls() {
   return out;
 }
 function welcome(c) {
-  send(c, { t: "state", V, live: liveMsg(), serial, nova: nova.status(), urls: networkUrls(), local: localOnly(), desktop: DESKTOP, network: shareNet, here: !!c.here, version: VERSION, clientId: c.id, devices: clients.size, deck: deck.info() });
+  send(c, { t: "state", V, live: liveMsg(), serial, nova: nova.status(), urls: networkUrls(), local: localOnly(), desktop: DESKTOP, network: shareNet, here: !!c.here, version: VERSION, clientId: c.id, devices: clients.size, deck: deck.info(), update: updStatus() });
 }
 function onMessage(c, m) {
   switch (m.t) {
@@ -1468,7 +1475,12 @@ function onMessage(c, m) {
       helloMode = m.mode; helloChosen = true; saveLink(); broadcast({ t: "nova", nova: nova.status() });
       logAll("ev", `Nova link: the next Connect says hello as ${helloMode === "touch" ? "NovaTouch (PCnovaT-0.92.03)" : `Nova Relay (${HELLO_OWN.split("#")[0]})`} (set by ${c.name || "a device"}).`);
       break;
-    case "clock": clockFromClient(+m.now, c.name || "a device"); break;   /* Pi box: set the clock from a device (--set-clock) */
+    case "clock": clockFromClient(+m.now, c.name || "a device"); break;
+    /* Setup › Updates (Nov 18) */
+    case "updateCheck": updCheck(c.name || "a device"); break;
+    case "updateAuto": if (typeof m.on === "boolean") { upd.auto = m.on; updSave(); updBroadcast(); logAll("ev", `Updates: checking ${m.on ? "on" : "off"} (${c.name || "a device"}).`); if (m.on) updCheck(); } break;
+    case "updateInstall": updFromRepo(c.name || "a device").catch(e => { logAll("er", "Update not installed: " + e.message); send(c, { t: "update", update: updStatus(), fail: e.message }); }); break;
+    case "updateBack": try { updBack(c.name || "a device"); } catch (e) { send(c, { t: "update", update: updStatus(), fail: e.message }); } break;   /* Pi box: set the clock from a device (--set-clock) */
     /* Nov 14: Stream Deck plugged into this computer: switch, brightness, layouts; key pictures for the Setup page. */
     case "deck": deck.set(m, c.name || "a device"); break;
     case "deckWatch": deck.watch(c, !!m.on); break;
@@ -1904,12 +1916,28 @@ function openManual(req, res) {
     setTimeout(() => finish(true), 4000).unref(); ch.unref();
   } catch (e) { finish(false, e.message); }
 }
+/* Setup › Updates › Install from a file (Nov 18): the zip, sent as the request body from any device's page. */
+function updUpload(req, res) {
+  const reply = (code, o) => res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }).end(JSON.stringify(o));
+  if (req.method !== "POST") return reply(405, { ok: false, error: "Use POST" });
+  const who = String(req.headers["x-nova-device"] || "a device").slice(0, 40);
+  const no = updRefuse(); if (no) { req.resume(); return reply(409, { ok: false, error: no }); }
+  const chunks = []; let n = 0, over = false;
+  req.on("data", d => { n += d.length; if (n > 40 * 1024 * 1024) { over = true; req.destroy(); } else chunks.push(d); });
+  req.on("end", () => {
+    if (over) return;
+    try { updFromFile(Buffer.concat(chunks), who); reply(200, { ok: true }); }
+    catch (e) { logAll("er", "Update not installed: " + e.message); reply(400, { ok: false, error: e.message }); }
+  });
+  req.on("close", () => { if (over) try { reply(413, { ok: false, error: "That file is too big to be a Nova Relay update." }); } catch (_) { } });
+}
 const TYPES = { ".html": "text/html; charset=utf-8", ".pdf": "application/pdf", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json",
   ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".woff2": "font/woff2" };
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent((req.url || "/").split("?")[0]);
   if (p === "/api" || p.startsWith("/api/")) { apiRoute(req, res, p); return; }
   if (p === "/manual/open") { openManual(req, res); return; }
+  if (p === "/update/file") { updUpload(req, res); return; }
   if (p === "/") p = "/index.html";
   const file = path.normalize(path.join(PUBLIC, p));
   if (!file.startsWith(PUBLIC + path.sep)) { res.writeHead(403).end(); return; }
@@ -1937,9 +1965,10 @@ setInterval(() => { for (const c of clients) if (!c.socket.destroyed) c.socket.w
 /* Every open connection, so switching phones and iPads off can drop theirs. */
 const sockets = new Set();
 server.on("connection", s => { sockets.add(s); s.on("close", () => sockets.delete(s)); });
-let started = false;
+let started = false, listenTries = 0;
 server.on("error", e => {
   if (started) { logAll("er", `Couldn't change who can connect (${e.code || e.message}). Restart Nova Relay.`); return; }
+  if (e.code === "EADDRINUSE" && process.env.NOVA_RESTARTED && (listenTries = (listenTries || 0) + 1) < 40) { setTimeout(() => server.listen(PORT, localOnly() ? "127.0.0.1" : "0.0.0.0"), 250); return; }
   if (e.code === "EADDRINUSE") console.error(`\nPort ${PORT} is already in use. Nova Relay may already be running, or start it on another port:  node server.js --port 8090\n`);
   else console.error(e);
   process.exit(1);
@@ -1976,5 +2005,90 @@ server.listen(PORT, localOnly() ? "127.0.0.1" : "0.0.0.0", () => {
     try { spawn(cmd, cargs, { stdio: "ignore", detached: true, windowsHide: true }).unref(); } catch (_) { }
   }
 });
-const shutdown = () => { closeSerial(true); if (saveT) { clearTimeout(saveT); saveT = null; if (V) { const out = {}; for (const k in V) if (!DEVICE_KEYS.has(k)) out[k] = V[k]; try { fs.writeFileSync(STATE_FILE, JSON.stringify({ app: "nova-remote", version: VERSION, saved: new Date().toISOString(), V: out })); } catch (_) { } } } process.exit(0); };
+const saveNow = () => { if (saveT) { clearTimeout(saveT); saveT = null; if (V) { const out = {}; for (const k in V) if (!DEVICE_KEYS.has(k)) out[k] = V[k]; try { fs.writeFileSync(STATE_FILE, JSON.stringify({ app: "nova-remote", version: VERSION, saved: new Date().toISOString(), V: out })); } catch (_) { } } } };
+const shutdown = () => { closeSerial(true); saveNow(); process.exit(0); };
 process.on("SIGINT", shutdown); process.on("SIGTERM", shutdown);
+
+/* ---------------------------------------------------------------- updates (Nov 18, see update.js)
+   Setup › Updates: what's running, a check of github.com/gfssound/nova-relay (at start and every 6 hours while
+   "Check for updates" is on, or on demand), Install (only when someone presses it: never by itself), an update file
+   from any device, and Go back. Never while the Nova records. After installing, Nova Relay restarts itself:
+   systemd restarts the box's service; the AppImage window restarts its server (exit 75); otherwise (the Mac app,
+   plain node) it starts the new copy itself and exits. */
+const UPD = require("./update.js");
+const UPD_BUNDLED = process.env.NOVA_UPDATE_BUNDLED || __dirname;
+const UPD_FILE = path.join(DATA, "updates.json");
+const upd = { auto: true, checking: false, latest: null, error: null, offline: false, checkedAt: 0, busy: null, announced: null };
+try { const j = JSON.parse(fs.readFileSync(UPD_FILE, "utf8")); if (typeof j.auto === "boolean") upd.auto = j.auto; if (j.announced) upd.announced = j.announced; } catch (_) { }
+const updSave = () => { try { fs.writeFileSync(UPD_FILE, JSON.stringify({ auto: upd.auto, announced: upd.announced })); } catch (_) { } };
+const updCtx = () => ({ data: DATA, running: VERSION, bundledDir: UPD_BUNDLED });
+function updStatus() {
+  let i = {}; try { i = UPD.info(updCtx()); } catch (_) { i = { running: VERSION }; }
+  return { ...i, auto: upd.auto, checking: upd.checking, checkedAt: upd.checkedAt, error: upd.error, offline: upd.offline, busy: upd.busy,
+    latest: upd.latest, available: !!(upd.latest && UPD.cmp(upd.latest.version, VERSION) > 0), recording: nova.connected && nova.state === "RECORDING", latestUrl: UPD.latestUrl() };
+}
+const updBroadcast = () => broadcast({ t: "update", update: updStatus() });
+async function updCheck(who) {
+  if (upd.checking) return;
+  upd.checking = true; updBroadcast();
+  try {
+    upd.latest = await UPD.checkLatest(); upd.error = null; upd.offline = false;
+    if (UPD.cmp(upd.latest.version, VERSION) > 0 && upd.announced !== upd.latest.version) {
+      upd.announced = upd.latest.version; updSave();
+      logAll("ev", `Nova Relay ${upd.latest.version} is available (this is ${VERSION}). Setup \u203a Updates installs it when you choose; nothing changes until then.`);
+    } else if (who) logAll("ev", UPD.cmp(upd.latest.version, VERSION) > 0 ? `Nova Relay ${upd.latest.version} is available (this is ${VERSION}).` : `Nova Relay ${VERSION} is the newest version (checked by ${who}).`);
+  } catch (e) { upd.error = e.message; upd.offline = !!e.offline; if (who) logAll("ev", "Updates: " + e.message); }
+  upd.checking = false; upd.checkedAt = Date.now(); updBroadcast();
+}
+function updRefuse() {
+  if (upd.busy) return "An update is already being installed.";
+  if (nova.connected && nova.state === "RECORDING") return "The Nova is recording. Updates wait until it stops.";
+  return null;
+}
+function updInstalled(r, who) {
+  logAll("ev", `Nova Relay ${r.version} installed by ${who}. Restarting into it now; every device reconnects by itself. Settings stay.`);
+  upd.busy = "restarting"; broadcast({ t: "update", update: updStatus(), done: { version: r.version, notes: r.notes || [] } });
+  setTimeout(() => updRestart(), 1500);
+}
+async function updFromRepo(who) {
+  const no = updRefuse(); if (no) throw new Error(no);
+  upd.busy = "downloading"; updBroadcast();
+  try {
+    const latest = upd.latest && UPD.cmp(upd.latest.version, VERSION) > 0 ? upd.latest : await UPD.checkLatest();
+    if (UPD.cmp(latest.version, VERSION) <= 0) throw new Error(`Nova Relay ${VERSION} is already the newest version.`);
+    logAll("ev", `Updates: downloading Nova Relay ${latest.version} (asked by ${who})…`);
+    const buf = await UPD.download(latest);
+    const no2 = updRefuse.call(null); if (no2 && no2 !== "An update is already being installed.") throw new Error(no2);
+    upd.busy = "installing"; updBroadcast();
+    updInstalled(UPD.install(buf, updCtx()), who);
+  } catch (e) { upd.busy = null; updBroadcast(); throw e; }
+}
+function updFromFile(buf, who) {
+  const no = updRefuse(); if (no) throw new Error(no);
+  upd.busy = "installing"; updBroadcast();
+  try { updInstalled(UPD.install(buf, updCtx()), who); }
+  catch (e) { upd.busy = null; updBroadcast(); throw e; }
+}
+function updBack(who) {
+  const no = updRefuse(); if (no) throw new Error(no);
+  const r = UPD.rollback(updCtx());
+  logAll("ev", `Going back to Nova Relay ${r.version} (asked by ${who}). Restarting now.`);
+  upd.busy = "restarting"; broadcast({ t: "update", update: updStatus(), done: { version: r.version, back: true } });
+  setTimeout(() => updRestart(), 1500);
+}
+function updRestart() {
+  closeSerial(true); saveNow();
+  try { server.close(); } catch (_) { }
+  for (const s of sockets) try { s.destroy(); } catch (_) { }
+  if (process.env.INVOCATION_ID) { console.log("Restarting (systemd starts Nova Relay again)."); process.exit(0); }   /* the box: Restart=always */
+  if (process.env.NOVA_PARENT_RESTARTS === "1") process.exit(75);   /* the AppImage window starts its server again */
+  const argv = process.argv.slice(1); if (!argv.includes("--no-open")) argv.push("--no-open");
+  const env = { ...process.env, NOVA_RESTARTED: "1" }; delete env.NOVA_UPDATE_RUNNING; delete env.NOVA_UPDATE_BUNDLED;
+  try { spawn(process.execPath, argv, { cwd: process.cwd(), env, detached: true, stdio: "inherit" }).unref(); }
+  catch (e) { console.error("Couldn't restart Nova Relay: " + e.message + ". Start it again by hand."); }
+  setTimeout(() => process.exit(0), 200);
+}
+/* running from an update: once it has served for 20 s it counts as working (no more fallback counting) */
+if (process.env.NOVA_UPDATE_RUNNING) setTimeout(() => { try { UPD.markGood(DATA, VERSION); } catch (_) { } }, 20000).unref();
+setTimeout(() => { if (upd.auto) updCheck(); }, 20000).unref();
+setInterval(() => { if (upd.auto) updCheck(); }, 6 * 3600 * 1000).unref();

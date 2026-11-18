@@ -17,6 +17,11 @@ Short version:
 
 The box's Wi-Fi is 5 GHz (channel 36) by default, to keep clear of ZaxNet, which uses 2.4 GHz.
 
-Updating a box and keeping its settings: copy this zip to the Pi (scp ... pi@nova.local:~), then on the Pi
-unzip it, cd into the folder and run: sudo ./install-pi.sh
+Updating a box (from 0.6.6 on): open Setup › Updates on any phone, iPad or computer. It says when a new version
+is on GitHub and installs it only when you press Install (never by itself, never while recording); the box
+restarts in a few seconds and keeps its settings. No internet at the box: the phone fetches the update itself,
+or send Nova-Relay-<version>-update.zip from Setup › Updates › Install from a file.
+
+Updating a box the old way (and for the box's own settings): copy this zip to the Pi (scp ... pi@nova.local:~),
+then on the Pi unzip it, cd into the folder and run: sudo ./install-pi.sh
 (Options: --ssid NAME --password PASS --country US --name nova --band 5|2.4 --channel N --no-hotspot --uninstall)

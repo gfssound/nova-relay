@@ -17,10 +17,12 @@ WORK="$(mktemp -d "${TMPDIR:-/tmp}/nova-remote-build.XXXXXX")"
 APP="$WORK/dmg/Nova Relay.app"
 DMG="$HERE/Nova-Relay-$VERSION.dmg"
 
-fail(){ echo; echo "Build stopped: $*"; echo; read -r -p "Press Return to close this window." || true; exit 1; }
+# Nov 18: NOVA_NO_PAUSE=1 (GitHub's Mac build machine, .github/workflows/mac-app.yml) runs it unattended.
+pause(){ [ -t 0 ] && [ -z "${NOVA_NO_PAUSE:-}" ] && { read -r -p "Press Return to close this window." || true; }; return 0; }
+fail(){ echo; echo "Build stopped: $*"; echo; pause; exit 1; }
 trap 'fail "an unexpected error on line $LINENO."' ERR
 
-clear
+{ [ -t 1 ] && [ -z "${NOVA_NO_PAUSE:-}" ] && clear; } || true
 echo "Building Nova Relay $VERSION for Mac (Node.js $NODE_VERSION inside)"
 echo
 [ "$(uname -s)" = "Darwin" ] || fail "this has to run on a Mac."
@@ -345,5 +347,5 @@ echo
 echo "To install: open the .dmg and drag Nova Relay onto Applications."
 echo "Nova Relay opens in its own window; quitting it (⌘Q or closing the window) stops it."
 echo "Copy the .dmg to the cart Mac to install it there; no internet needed."
-open -R "$DMG"
-read -r -p "Press Return to close this window." || true
+[ -z "${NOVA_NO_PAUSE:-}" ] && { open -R "$DMG" || true; }
+pause

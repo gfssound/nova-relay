@@ -742,6 +742,10 @@ input,textarea,select,[contenteditable="true"],.log,.log *,code,.deckurl{-webkit
 @media (max-width:600px){ .txrow{grid-template-columns:minmax(0,1fr) auto 64px} .txrow .seg{grid-column:1 / -1;display:flex} .txrow .seg-b{flex:1;min-height:40px} }
 @media (max-width:600px){ .deckrow{grid-template-columns:minmax(0,1fr) auto} .deckurl{grid-column:1 / -1;grid-row:2} }
 .secbtn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;text-align:left;min-height:52px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--line);background:var(--raised);color:var(--fg);cursor:pointer}
+.secname .secdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle}
+.updnotes{margin:0;padding-left:20px;color:var(--muted);line-height:1.5}
+.chk{display:flex;gap:10px;align-items:flex-start;line-height:1.4;cursor:pointer}.chk input{margin-top:3px;width:18px;height:18px;flex:none}
+.btn.armed{background:var(--warn);border-color:var(--warn);color:#1d1300}
 .secbtn[aria-pressed="true"]{border-color:var(--accent-line);box-shadow:0 0 0 1px var(--accent-line) inset;background:var(--raised-2)}
 .secname{font-family:var(--f-display);font-weight:700;font-size:var(--t-md);letter-spacing:.06em;text-transform:uppercase}
 .secsum{font-size:var(--t-xs);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -1432,7 +1436,7 @@ function onCart(m){
       cart.synced = true;
       if(m.live) sim.live(m.live);
       cart.urls = m.urls || []; cart.local = !!m.local; cart.desktop = !!m.desktop; cart.network = !!m.network; cart.here = !!m.here; cart.serial = m.serial || null; cart.devices = m.devices || 1; cart.nova = m.nova || null; if(cart.nova && cart.nova.model) novaModel = cart.nova.model;
-      cart.deck = m.deck || null; if(document.getElementById("deck-box")) net.send({t:"deckWatch", on:true});
+      cart.deck = m.deck || null; if(document.getElementById("deck-box")) net.send({t:"deckWatch", on:true}); cart.version = m.version || ""; if(m.update) updOnMessage({update:m.update});
       if(!cart.ready){ cart.ready = true; $("connecting").hidden = true; net.send({t:"clock", now:Date.now()}); log("ev", `Connected to the cart computer (Nova Relay ${m.version || ""}). Recorder: ${cart.nova && cart.nova.connected ? cart.nova.model || "Nova" : "simulated"}.`); }
       setCartStatus(true); cartChanged();
       break;
@@ -1457,6 +1461,7 @@ function onCart(m){
     case "deck": cart.deck = m.deck || null; if(deckBoxDraw && document.getElementById("deck-box")) try{ deckBoxDraw(); }catch(e){} break;
     case "deckImg": if(!document.getElementById("deck-box")){ net.send({t:"deckWatch", on:false}); break; } deckImgs[m.id] = m.svg; deckOnImg(m.id); break;
     case "deckPress": deckOnPress("k" + m.key); break;
+    case "update": updOnMessage(m); break;
   }
 }
 /* Connected to a real Nova: meters, timecode and takes come from it, and REC/STOP send the Aria's buttons. */
@@ -3926,18 +3931,123 @@ function setupTiles(onlyId){
 }
 /* Sections: a menu of sections on the left, one section's settings on the right. */
 function setupSections(connPanel, connTitle){
-  const secs = [...SETUP_GROUPS, {id:"conn", title:connTitle, items:[]}, {id:"deck", title:"Stream Deck", items:[]}];
+  const secs = [...SETUP_GROUPS, {id:"conn", title:connTitle, items:[]}, {id:"deck", title:"Stream Deck", items:[]}, {id:"update", title:"Updates", items:[]}];
   const nav = h("nav", {class:"secnav", "aria-label":"Setup sections"}, secs.map(g => {
-    return h("button", {type:"button", class:"secbtn", "aria-pressed":setupSec === g.id ? "true" : "false", onclick:() => { setupSec = g.id; go("setup"); }}, h("span", {class:"secname"}, g.title));
+    const dot = g.id === "update" && updState().available ? h("i", {class:"secdot", "aria-label":"update available"}) : null;
+    return h("button", {type:"button", class:"secbtn", "aria-pressed":setupSec === g.id ? "true" : "false", onclick:() => { setupSec = g.id; go("setup"); }}, h("span", {class:"secname"}, g.title, dot));
   }));
   const g = secs.find(x => x.id === setupSec) || secs[0];
   if(setupEdit && !g.items.some(([k]) => k === setupEdit.k)) setupEdit = null;
   /* The link log lives under Connection (moved from its own tab, Oct 26). */
   const body = g.id === "conn" ? h("div", {class:"stack"}, connPanel, h("div", {class:"panel"}, h("h3", null, "Link log"), RENDER.log()))
-    : g.id === "deck" ? streamDeckPanels() : g.id === "scream" ? screamPanel()
+    : g.id === "deck" ? streamDeckPanels() : g.id === "scream" ? screamPanel() : g.id === "update" ? updatesPanel()
     : false ? h("div", {class:"stack"}, setupTiles(g.id), h("p", {class:"hint keep"}, "Faders on meters: strips with a PFL key get a fader. Drag the cap to move that input's Aria fader, the same as pushing it on the Aria (it works while recording). The Nova doesn't report fader positions, so the cap shows where Nova Relay last put it, and stays hollow until then. Touching that fader on the Aria takes over. After changing the Aria's bank, press its page buttons again, as for PFL."))
     : setupTiles(g.id);
   return h("div", {class:"secsplit"}, nav, body);
+}
+
+/* ---------- Setup › Updates (Nov 18, Ferris: "make Updates its own setting menu, and make it read from the repository
+   so that it alerts to an update and gives them the option to install it or not. Relay should never auto-update in
+   the event something gets broken accidentally") ----------
+   What's running; Check for updates (GitHub, github.com/gfssound/nova-relay); Install (two taps; never by itself);
+   an update file from this device (a cart without internet); Go back to the version before. The prototype pretends:
+   the installed app asks the cart computer, which checks, downloads, checks the signature and restarts. */
+const PROTO_VERSION = "0.6.6";
+let updDraw = null, updDev = null, updLocal = null;
+const updCmp = (a, b) => { const pa = String(a).split(".").map(n => parseInt(n, 10) || 0), pb = String(b).split(".").map(n => parseInt(n, 10) || 0);
+  for(let i = 0; i < Math.max(pa.length, pb.length); i++){ const d = (pa[i] || 0) - (pb[i] || 0); if(d) return d < 0 ? -1 : 1; } return 0; };
+function updState(){
+  const u = {...(cart.update || {running:cart.version || "", appVersion:"", auto:true})};
+  u.recording = !!u.recording || sim.state === "RECORDING";
+  if(updLocal) u.busy = updLocal;
+  if(!u.available && updDev && updCmp(updDev.version, u.running) > 0){ u.available = true; u.latest = updDev; u.viaDevice = true; u.error = null; }
+  return u;
+}
+function updChanged(){ updDraw && updDraw(); const b = document.querySelector('.secbtn .secdot'); if(current === "setup" && !!b !== !!updState().available) go("setup"); }
+async function updDeviceCheck(){
+  const url = cart.update && cart.update.latestUrl; if(!url) return;
+  try{ const r = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), {cache:"no-store"}); if(!r.ok) return;
+    const j = await r.json(); if(!j || !j.version || !j.file) return;
+    updDev = {version:String(j.version), file:String(j.file), url:new URL(j.file, url).href, sha256:j.sha256 || null, size:+j.size || null, notes:Array.isArray(j.notes) ? j.notes.map(String) : [], date:j.date || null};
+    updChanged();
+  }catch(_){ }
+}
+function updCheckNow(){ net.send({t:"updateCheck"}); }
+function updSetAuto(on){ net.send({t:"updateAuto", on}); }
+function updSend(blob, name){
+  updLocal = "sending"; updChanged();
+  const x = new XMLHttpRequest(); x.open("POST", "/update/file"); x.setRequestHeader("Content-Type", "application/zip"); x.setRequestHeader("X-Nova-Device", deviceName());
+  x.upload.onprogress = e => { if(e.lengthComputable){ updLocal = "sending " + Math.round(e.loaded * 100 / e.total) + "%"; updDraw && updDraw(); } };
+  x.onload = () => { updLocal = null; let j = {}; try{ j = JSON.parse(x.responseText); }catch(_){ }
+    if(!j.ok) toast(j.error || "The update wasn't installed."); updChanged(); };
+  x.onerror = () => { updLocal = null; toast("Couldn't send the update to the cart computer."); updChanged(); };
+  x.send(blob);
+}
+async function updInstallLatest(){
+  const u = updState();
+  if(!u.viaDevice){ net.send({t:"updateInstall"}); return; }
+  updLocal = "downloading"; updChanged();
+  try{ const r = await fetch(u.latest.url, {cache:"no-store"}); if(!r.ok) throw new Error("HTTP " + r.status);
+    const blob = await r.blob(); updSend(blob, u.latest.file); }
+  catch(e){ updLocal = null; toast("Couldn't download the update on this device (" + e.message + ")."); updChanged(); }
+}
+function updInstallFile(file){
+  if(!/\.zip$/i.test(file.name)){ toast("That isn't a Nova Relay update (a .zip)"); return; }
+  updSend(file, file.name);
+}
+function updGoBack(){ net.send({t:"updateBack"}); }
+function updOnMessage(m){
+  cart.update = m.update || cart.update;
+  if(m.fail) toast("Update not installed: " + m.fail);
+  if(m.done) toast(m.done.back ? `Going back to Nova Relay ${m.done.version}… this page reconnects by itself.` : `Installing Nova Relay ${m.done.version}… this page reconnects by itself.`);
+  if(cart.update && cart.update.offline && !updDev) updDeviceCheck();
+  const u = updState();
+  if(u.available){ let seen = null; try{ seen = localStorage.getItem("novaUpdateSeen"); }catch(_){ }
+    if(seen !== u.latest.version){ try{ localStorage.setItem("novaUpdateSeen", u.latest.version); }catch(_){ } toast(`Nova Relay ${u.latest.version} is available: Setup › Updates`); } }
+  updChanged();
+}
+const updAgo = t => { if(!t) return "not yet"; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "just now" : m < 60 ? `${m} min ago` : `${Math.round(m / 60)} h ago`; };
+const updSize = b => b ? ` (${(b / 1048576).toFixed(1)} MB)` : "";
+function updatesPanel(){
+  const body = h("div", {class:"stack", style:"gap:10px"});
+  let armInstall = false, armBack = false, armT = null;
+  const arm = which => { armInstall = which === "install"; armBack = which === "back"; clearTimeout(armT); armT = setTimeout(() => { armInstall = armBack = false; draw(); }, 3000); draw(); };
+  const fileIn = h("input", {type:"file", accept:".zip,application/zip", style:"display:none"});
+  fileIn.addEventListener("change", () => { const f = fileIn.files && fileIn.files[0]; fileIn.value = ""; if(f) updInstallFile(f); });
+  const draw = () => {
+    const u = updState(), busy = u.busy, rec = u.recording;
+    const busyText = {downloading:"Downloading and checking the update\u2026", installing:"Checking and installing the update\u2026", restarting:"Restarting Nova Relay\u2026 This page reconnects by itself."}[busy];
+    const status = u.checking ? "Checking GitHub\u2026"
+      : u.available ? `Nova Relay ${u.latest.version} is available${u.latest.date ? " (" + u.latest.date + ")" : ""}${updSize(u.latest.size)}.`
+      : u.error ? u.error
+      : u.latest ? `This is the newest version (checked ${updAgo(u.checkedAt)}).` : "Not checked yet.";
+    body.replaceChildren(...[
+      h("div", {class:"deckrow"}, h("span", {class:"decklbl"}, "Running"),
+        h("span", null, `Nova Relay ${u.running}`, h("span", {class:"hint"}, u.fromUpdate ? ` \u00b7 installed as an update (the app itself is ${u.appVersion})` : " \u00b7 the app's own version")), h("span")),
+      u.failed ? h("p", {class:"hint keep", style:"color:var(--warn)"}, `The update to ${u.failed} didn't start, so Nova Relay went back to ${u.running} by itself. Nothing else changed.`) : null,
+      h("div", {class:"deckrow"}, h("span", {class:"decklbl"}, "GitHub"), h("span", {role:"status"}, status),
+        h("button", {type:"button", class:"btn small", disabled:u.checking || !!busy, onclick:() => updCheckNow()}, "Check now")),
+      u.available && u.latest.notes && u.latest.notes.length ? h("ul", {class:"updnotes"}, u.latest.notes.map(n => h("li", null, n))) : null,
+      u.available ? h("div", {class:"flex", style:"gap:8px;flex-wrap:wrap"},
+        h("button", {type:"button", class:"btn primary" + (armInstall ? " armed" : ""), disabled:!!busy || rec,
+          onclick:() => { if(!armInstall){ arm("install"); return; } armInstall = false; clearTimeout(armT); updInstallLatest(); draw(); }},
+          armInstall ? `Tap again: install ${u.latest.version}` : `Install ${u.latest.version}`),
+        h("span", {class:"hint"}, rec ? "Updates wait until recording stops." : "Nova Relay restarts (a few seconds). Settings stay; you can go back.")) : null,
+      busyText ? h("p", {class:"hint keep", role:"status"}, busyText) : null,
+      h("label", {class:"chk"}, (() => { const c = h("input", {type:"checkbox"}); c.checked = !!u.auto; c.addEventListener("change", () => updSetAuto(c.checked)); return c; })(),
+        h("span", null, "Check for updates when Nova Relay starts and every 6 hours (it only tells you; nothing installs by itself)")),
+      u.back ? h("div", {class:"deckrow"}, h("span", {class:"decklbl"}, "Go back"), h("span", null, `To Nova Relay ${u.back}, the version before this one.`),
+        h("button", {type:"button", class:"btn small" + (armBack ? " armed" : ""), disabled:!!busy || rec,
+          onclick:() => { if(!armBack){ arm("back"); return; } armBack = false; clearTimeout(armT); updGoBack(); draw(); }}, armBack ? "Tap again" : `Go back to ${u.back}`)) : null].filter(Boolean));
+  };
+  updDraw = draw; draw();
+  return h("div", {class:"stack"},
+    h("div", {class:"panel"}, h("h3", null, "Updates"),
+      h("p", {class:"hint keep"}, "Nova Relay looks for new versions on GitHub and tells you when one is there. It never installs one by itself: you choose when (between takes is fine; never while recording). Every update is checked against Nova Relay's own signature before it installs."),
+      body),
+    h("div", {class:"panel"}, h("h3", null, "Install from a file"),
+      h("p", {class:"hint keep"}, "No internet on the cart? Download Nova-Relay-<version>-update.zip (or the Mac or Pi download) on any phone, iPad or computer, then send it from here. The same checks apply."),
+      h("div", {class:"flex"}, h("button", {type:"button", class:"btn", onclick:() => { const u = updState(); if(u.recording){ toast("Updates wait until recording stops"); return; } fileIn.click(); }}, "Choose the update file\u2026"), fileIn)));
 }
 
 /* ---------- Setup › Stream Deck (Nov 7, Ferris: "make this simpler") ----------

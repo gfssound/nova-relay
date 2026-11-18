@@ -1,25 +1,33 @@
-Nova Remote: Mac app builder
-============================
+Nova Relay for Mac
+==================
 
-This makes "Nova Remote.app" with Node.js built in, packed in a .dmg. The app needs nothing else installed
-and no internet.
+Nova Relay.app has Node.js built in. It needs nothing else installed and no internet to run.
 
-Build it (once, on any Mac with internet)
-  1. Double-click "Build Mac App.command".
-     The first time macOS may block it: right-click it, choose Open, then Open again.
-  2. A Terminal window downloads the official Node.js from nodejs.org (about 100 MB, for both Apple Silicon
-     and Intel Macs), checks it, and builds the app. Takes a minute or two.
-  3. "Nova-Remote-<version>.dmg" appears next to the builder.
+Install the ready-made app (easiest)
+  1. Download Nova-Relay-<version>.dmg from the Releases page of github.com/gfssound/nova-relay.
+  2. Open the .dmg and drag Nova Relay onto Applications.
+  3. Open Nova Relay from Applications. The first time, macOS says it can't check the app (it isn't signed
+     with an Apple Developer ID): click Done, then open System Settings › Privacy & Security, scroll down and
+     click Open Anyway next to Nova Relay. It opens normally from then on.
 
-Install it (any Mac, no internet needed)
-  1. Open the .dmg and drag Nova Remote onto Applications.
-  2. Open Nova Remote from Applications. The first time, right-click it, choose Open, then Open again
-     (it isn't signed with an Apple Developer ID).
-  3. Nova Remote opens in its own window: no web browser and no Terminal window. Close the window or
-     press ⌘Q to stop it. View › Enter Full Screen (Control-⌘-F) gives the remote the whole screen, and
-     View › Zoom In / Zoom Out (⌘= / ⌘-) changes the size.
-     Phones and iPads: the addresses are in Setup › Cart & Recorder Link. They work while the app is open.
-     Nova Remote › Open in Web Browser (Shift-⌘-B) opens the remote in a browser too, if you ever want that.
+Or build the app yourself (any Mac with internet)
+  1. Double-click "Build Mac App.command" (the first time: right-click it, choose Open, then Open again).
+  2. It downloads the official Node.js from nodejs.org (about 100 MB, for Apple Silicon and Intel Macs),
+     checks it, and makes "Nova-Relay-<version>.dmg" next to it in a minute or two.
+  3. Install it as above. An app you build yourself opens without the Open Anyway step.
 
-Settings are kept in ~/.nova-remote, the same place as the zip version, so nothing is lost.
+Using it
+  Nova Relay opens in its own window: no web browser and no Terminal window. Close the window or press ⌘Q to
+  stop it. View › Enter Full Screen (Control-⌘-F) gives the remote the whole screen; View › Zoom In / Zoom Out
+  (⌘= / ⌘-) changes the size. Phones and iPads: the addresses are in Setup › Cart & Recorder Link; they work
+  while the app is open. Nova Relay › Open in Web Browser (Shift-⌘-B) opens it in a browser too.
+
+Updates
+  Setup › Updates says when a new version is on GitHub and installs it only when you press Install (never by
+  itself, never while recording). It restarts in a few seconds; settings stay, and Go back returns to the
+  version before. No internet on the cart: download Nova-Relay-<version>-update.zip on any phone, iPad or
+  computer and send it from Setup › Updates › Install from a file. A new .dmg is only needed when Nova Relay
+  says so (a new Node.js).
+
+Settings are kept in ~/.nova-remote, so nothing is lost when you update or reinstall.
 Keep the .dmg: copy it to any Mac (AirDrop, USB stick) to install there.

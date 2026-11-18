@@ -21,3 +21,7 @@ node_modules/
 __pycache__/
 *.bak
 *.tmp
+
+# the update signing key never goes into the repository (it signs updates; see signing/README in the session)
+signing/
+*.pem
