@@ -1462,6 +1462,8 @@ function onCart(m){
     case "deckImg": if(!document.getElementById("deck-box")){ net.send({t:"deckWatch", on:false}); break; } deckImgs[m.id] = m.svg; deckOnImg(m.id); break;
     case "deckPress": deckOnPress("k" + m.key); break;
     case "update": updOnMessage(m); break;
+    case "captureSaved": diagOnSaved(m); break;
+    case "novaDiff": toast(`${m.count} of the Nova's settings ${m.count === 1 ? "is" : "are"} different from the last session: see Setup \u203a Connection \u203a Link log`); break;
   }
 }
 /* Connected to a real Nova: meters, timecode and takes come from it, and REC/STOP send the Aria's buttons. */
@@ -3939,11 +3941,43 @@ function setupSections(connPanel, connTitle){
   const g = secs.find(x => x.id === setupSec) || secs[0];
   if(setupEdit && !g.items.some(([k]) => k === setupEdit.k)) setupEdit = null;
   /* The link log lives under Connection (moved from its own tab, Oct 26). */
-  const body = g.id === "conn" ? h("div", {class:"stack"}, connPanel, h("div", {class:"panel"}, h("h3", null, "Link log"), RENDER.log()))
+  const body = g.id === "conn" ? h("div", {class:"stack"}, connPanel, h("div", {class:"panel"}, h("h3", null, "Link log"), RENDER.log()), diagPanel())
     : g.id === "deck" ? streamDeckPanels() : g.id === "scream" ? screamPanel() : g.id === "update" ? updatesPanel()
     : false ? h("div", {class:"stack"}, setupTiles(g.id), h("p", {class:"hint keep"}, "Faders on meters: strips with a PFL key get a fader. Drag the cap to move that input's Aria fader, the same as pushing it on the Aria (it works while recording). The Nova doesn't report fader positions, so the cap shows where Nova Relay last put it, and stays hollow until then. Touching that fader on the Aria takes over. After changing the Aria's bank, press its page buttons again, as for PFL."))
     : setupTiles(g.id);
   return h("div", {class:"secsplit"}, nav, body);
+}
+
+/* ---------- Setup › Connection › Something went wrong? (Nov 18, Ferris: "Let's work on 1, 2, 3") ----------
+   Nova Relay keeps the last 30 minutes of the Nova's line in memory, across reconnects. Save the last 5 / 10 / 30
+   minutes right after something odd happens, with a note; a problem report puts everything needed to look into it in
+   one zip. (The comparison with the last session is in the Link log when the Nova connects.) The prototype pretends;
+   the installed app saves on the cart computer and downloads from it. */
+let diagSaved = [], diagDraw = null;
+function diagSave(minutes, note){ net.send({t:"captureSave", minutes, note}); }
+const diagReportHref = () => "/api/problem-report?who=" + encodeURIComponent(deviceName());
+function diagOnSaved(m){
+  if(Array.isArray(m.saved)) diagSaved = m.saved.map(f => ({name:f.name, url:"/api/capture/saved/" + f.name}));
+  if(m.name) toast(`Saved the last ${m.minutes} minutes (${m.name})`);
+  diagDraw && diagDraw();
+}
+function diagPanel(){
+  const mins = h("select", {class:"sel", "aria-label":"How much to save"}, [5, 10, 30].map(m => h("option", {value:m}, `last ${m} minutes`)));
+  mins.value = "10";
+  const note = h("input", {type:"text", class:"txt", placeholder:"What happened? (e.g. HP routing changed as it connected)", "aria-label":"Note", style:"flex:1;min-width:200px"});
+  const list = h("div", {class:"stack", style:"gap:4px"});
+  const draw = () => list.replaceChildren(...(diagSaved.length ? [h("span", {class:"lbl"}, "Saved"), ...diagSaved.map(f => h("div", {class:"deckrow"},
+    h("code", null, f.name), f.url ? h("a", {class:"btn small", href:f.url, download:f.name}, "Download") : h("span")))] : []));
+  diagDraw = draw; draw(); net.send({t:"capturesSaved"});
+  const href = diagReportHref();
+  return h("div", {class:"panel"}, h("h3", null, "Something went wrong?"),
+    h("p", {class:"hint keep"}, "Nova Relay keeps the last 30 minutes of everything on the Nova's line. Right after something odd happens, save it with a note of what you saw. When the Nova connects, the Link log also lists anything on it that's different from the last session."),
+    h("div", {class:"flex", style:"gap:8px;flex-wrap:wrap;align-items:center"}, mins, note,
+      h("button", {type:"button", class:"btn primary", onclick:() => { diagSave(+mins.value, note.value.trim()); note.value = ""; }}, "Save")),
+    list,
+    h("div", {class:"deckrow", style:"margin-top:6px"}, h("span", {class:"decklbl"}, "Problem report"),
+      h("span", {class:"hint"}, "One file: versions, the Link log, the last 30 minutes of the line, saved captures and settings. Send it along with what happened."),
+      href ? h("a", {class:"btn small", href, download:""}, "Download") : h("button", {type:"button", class:"btn small", onclick:() => toast("The installed app makes the report on the cart computer")}, "Download")));
 }
 
 /* ---------- Setup › Updates (Nov 18, Ferris: "make Updates its own setting menu, and make it read from the repository

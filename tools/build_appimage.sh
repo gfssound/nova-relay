@@ -36,7 +36,7 @@ cp linuxbuild/desktop/main.js "$APP/"
 printf '{\n  "name": "nova-remote-desktop",\n  "productName": "Nova Relay",\n  "version": "%s",\n  "main": "main.js"\n}\n' "$V" > "$APP/package.json"
 cp nova-remote/public/icon-512.png "$APP/icon.png"
 if [ -n "${NOVA_APP_STAGE:-}" ]; then cp -R "$ROOT/$NOVA_APP_STAGE/." "$APP/server/"   # the signed app folder (package.sh, Nov 18)
-else (cd nova-remote && cp -R server.js nova.js schema.json package.json public deck update.js "$APP/server/"); fi
+else (cd nova-remote && cp -R server.js nova.js schema.json package.json public deck update.js diag.js "$APP/server/"); fi
 cp nova-remote/public/icon-512.png "$AD/nova-remote.png"; ln -s nova-remote.png "$AD/.DirIcon"
 cat > "$AD/nova-remote.desktop" <<DESK
 [Desktop Entry]

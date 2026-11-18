@@ -498,6 +498,23 @@ function updOnMessage(m){
 """ + s[_j:]
 rep('    case "deckPress": deckOnPress("k" + m.key); break;', '    case "deckPress": deckOnPress("k" + m.key); break;\n    case "update": updOnMessage(m); break;')
 
+
+# ---- 6d. Setup › Connection › Something went wrong? (Nov 18): saved on the cart computer, downloaded from it
+_i = s.index('function diagSave(minutes, note){'); _j = s.index('const diagReportHref = () => "";') + len('const diagReportHref = () => "";')
+s = s[:_i] + """function diagSave(minutes, note){ net.send({t:"captureSave", minutes, note}); }
+const diagReportHref = () => "/api/problem-report?who=" + encodeURIComponent(deviceName());
+function diagOnSaved(m){
+  if(Array.isArray(m.saved)) diagSaved = m.saved.map(f => ({name:f.name, url:"/api/capture/saved/" + f.name}));
+  if(m.name) toast(`Saved the last ${m.minutes} minutes (${m.name})`);
+  diagDraw && diagDraw();
+}""" + s[_j:]
+rep("""  diagDraw = draw; draw();
+  const href = diagReportHref();""", """  diagDraw = draw; draw(); net.send({t:"capturesSaved"});
+  const href = diagReportHref();""")
+rep('    case "update": updOnMessage(m); break;', """    case "update": updOnMessage(m); break;
+    case "captureSaved": diagOnSaved(m); break;
+    case "novaDiff": toast(`${m.count} of the Nova's settings ${m.count === 1 ? "is" : "are"} different from the last session: see Setup \\u203a Connection \\u203a Link log`); break;""")
+
 rep('function go(v){\n', 'function go(v){\n  cartSubs.clear();\n')
 
 # ---- 6b. meters come from the Nova while it's connected

@@ -25,3 +25,7 @@ __pycache__/
 # the update signing key never goes into the repository (it signs updates; see signing/README in the session)
 signing/
 *.pem
+test/upd-*/
+test/updd-*/
+test/dg-*/
+test/*.zip

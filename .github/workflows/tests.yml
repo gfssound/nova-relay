@@ -1,0 +1,33 @@
+# Nov 18 (Ferris: "Run the tests automatically on GitHub"): every push that changes the app, the page, the tools or
+# the tests runs the regression tests (test/run_all.js) on a Linux machine: fake Novas replaying the cart captures,
+# the real page in Chromium. A red X on the commit means something broke; the run's summary lists each test.
+# Run it by hand from the Actions tab too (Run workflow). The update tests need the signing key: add it as the
+# repository secret NOVA_SIGNING_KEY (Settings › Secrets and variables › Actions) to run them here; without it
+# they're skipped.
+name: Tests
+on:
+  push:
+    branches: [main]
+    paths: ['nova-remote/**', 'build/**', 'tools/**', 'test/**', 'cap/**', '.github/workflows/tests.yml']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+          sudo apt-get install -y -qq zip unzip fonts-dejavu-core >/dev/null
+      - name: Signing key (only if the secret is set)
+        env:
+          KEY: ${{ secrets.NOVA_SIGNING_KEY }}
+        run: |
+          if [ -n "$KEY" ]; then mkdir -p signing && printf '%s\n' "$KEY" > signing/update-signing-key.pem && chmod 600 signing/update-signing-key.pem; fi
+      - name: Run the tests
+        run: node test/run_all.js

@@ -5,7 +5,7 @@ const { spawn, execFileSync } = require('child_process'); const { chromium } = r
 const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Promise(r => setTimeout(r, ms));
 let fails = 0; const check = (ok, what) => { console.log((ok ? 'ok   ' : 'FAIL ') + what); if (!ok) fails++; };
 const W = fs.mkdtempSync(path.join(DIR, 'updd-')), PORT = 8331, URL0 = 'http://127.0.0.1:8339/updates/latest.json';   /* nothing listens on 8339 */
-const FILES = ['README.md', 'nova.js', 'package.json', 'public', 'schema.json', 'server.js', 'deck', 'update.js'];
+const FILES = ['README.md', 'nova.js', 'package.json', 'public', 'schema.json', 'server.js', 'deck', 'update.js', 'diag.js'];
 function makeApp(dest, version, sign) {
   fs.mkdirSync(dest, { recursive: true }); for (const f of FILES) fs.cpSync(path.join(ROOT, 'nova-remote', f), path.join(dest, f), { recursive: true });
   const pj = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8')); pj.version = version; fs.writeFileSync(path.join(dest, 'package.json'), JSON.stringify(pj));

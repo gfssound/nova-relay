@@ -45,6 +45,9 @@ if (EXIT_WITH > 0) setInterval(() => { try { process.kill(EXIT_WITH, 0); } catch
 const PUBLIC = path.join(__dirname, "public");
 const DATA = process.env.NOVA_REMOTE_DATA || argVal("--data", path.join(os.homedir(), ".nova-remote"));
 fs.mkdirSync(DATA, { recursive: true });
+/* Diagnostics (Nov 18): rolling capture, saved captures, the Nova's settings since the last session, the problem report. */
+const DIAG = require("./diag.js");
+const diag = DIAG.createDiag({ DATA, VERSION });
 /* --local: the Linux desktop app and AppImage. Its own window always works; phones and iPads can connect only when
    "Let phones and iPads connect" is on (Setup › Cart & Recorder Link, Nov 2). The choice is kept in desktop.json.
    While it's off the server listens on 127.0.0.1 only, so nothing on the network can reach it. */
@@ -256,6 +259,8 @@ let SerialPortLib = null;
 try { SerialPortLib = require("serialport"); } catch (_) { /* optional */ }
 const serial = { status: "closed", path: null, baud: null, error: null, capture: null, bytes: 0, via: SerialPortLib ? "serialport" : "system" };
 let serialHandle = null, rxBuf = [], rxStart = 0, rxT = null, captureStream = null;
+/* Every capture line also goes into the rolling 30-minute capture (Nov 18), across port re-openings. */
+function capWrite(line) { diag.capLine(line); if (captureStream) captureStream.write(line); }
 
 function listPorts() {
   return new Promise(resolve => {
@@ -286,7 +291,7 @@ function flushRx() {
     const chunk = rxBuf.slice(i, i + 32);
     const line = `${chunk.map(hex2).join(" ")}   |${asText(chunk)}|`;
     if (!nova.connected) logAll("raw", line);
-    if (captureStream) captureStream.write(`${new Date().toISOString()}  RAW ${line}\n`);
+    capWrite(`${new Date().toISOString()}  RAW ${line}\n`);
   }
   rxBuf = [];
 }
@@ -374,6 +379,7 @@ async function openSerial(p, baud, parity) {
     }
     captureStream = fs.createWriteStream(serial.capture, { flags: "a" });
     captureStream.write(`# Nova Relay ${VERSION} serial capture\n# Port ${p} at ${baud} baud (${frame}), opened ${new Date().toString()}\n`);
+    diag.capLine(`# ${new Date().toISOString()}  port ${p} opened at ${baud} baud (${frame})\n`);
     serial.status = "open";
     broadcast({ t: "serial", serial });
     logAll("ev", `Serial port ${p} open at ${baud} baud ${frame}. Raw bytes are saved to ${serial.capture}`);
@@ -553,7 +559,7 @@ const nova = {
     if (cmd !== NOVA.CMD.HELLO && this.connected && !this.loaded) this.sentEarly = (this.sentEarly || 0) + 1;
     const f = NOVA.frame(cmd, data);
     try { serialHandle.write(f); } catch (e) { logAll("er", `Nova link: couldn't write to the port (${e.message})`); return false; }
-    if (captureStream) captureStream.write(`${new Date().toISOString()}  TX ${[...f].map(hex2).join(" ")}\n`);
+    capWrite(`${new Date().toISOString()}  TX ${[...f].map(hex2).join(" ")}\n`);
     if (text) logAll("tx", `${text}   [${[...f].map(hex2).join(" ")}]`);
     return true;
   },
@@ -613,6 +619,7 @@ const nova = {
         this.namesCleared = true; V["input.name"] = Array(22).fill(""); this.markDirty("input.name");
       }
     } else {
+      if (this.loaded) try { diag.snapSave(snapValues(), this.model || savedModel); } catch (_) { }   /* the Nova as it was when the link went (Nov 18) */
       this.trk.fill(-120); this.out.fill(-120); this.inp.fill(-120); this.state = "STOPPED";
       /* Nov 18: back from a dropout, the Nova's settings are read again before anything is sent (the Nova sends them
          all to a computer it had dropped; if it didn't drop us, the full-set check asks it to). */
@@ -641,6 +648,7 @@ const nova = {
     if (this.loaded) return;
     if (!this.connected) { this.loadedEarly = how || true; return; }   /* the settings came before the meters: done when they start */
     this.loaded = true; clearTimeout(this._loadT);
+    setTimeout(() => { try { sinceLastSession(); } catch (e) { console.error("since last session:", e); } }, 50);
     logAll("ev", `Nova link: the Nova's settings are read (${this.setIds ? this.setIds.size : 0} settings${how ? ", " + how : ""}). Nothing was sent to it but hellos${this.sentEarly ? ` and ${this.sentEarly} button press${this.sentEarly === 1 ? "" : "es"} from a device` : ""}. Changes go to the Nova from now on.`);
     broadcast({ t: "nova", nova: this.status() });
   },
@@ -1327,7 +1335,7 @@ function frame(op, payload) {
 function sendText(c, text) { if (!c.socket.destroyed) c.socket.write(frame(1, Buffer.from(text))); }
 const send = (c, obj) => sendText(c, JSON.stringify(obj));
 function broadcast(obj, except) { const text = JSON.stringify(obj); for (const c of clients) if (c !== except && c.ready) sendText(c, text); }
-function logAll(dir, text, except) { broadcast({ t: "log", dir, text }, except); }
+function logAll(dir, text, except) { diag.logLine(dir, text); broadcast({ t: "log", dir, text }, except); }
 /* Nov 14: a Stream Deck plugged straight into this computer (Linux / the Nova Relay box; --deck = on until switched off
    in Setup). deck/host.js runs the Stream Deck plugin's own key code against it; see deck/manager.js. */
 const deck = require("./deck/manager.js").createDeck({ DATA, PORT, FADERS, onByDefault: args.includes("--deck"), logAll, broadcast,
@@ -1454,7 +1462,7 @@ function onMessage(c, m) {
     case "novaConfigure": if (Number.isInteger(m.n) && m.n >= 0 && m.n < 32) {
         if (!nova.connected) { logAll("ev", `Page finder: not connected to the Nova, so page ${m.n} wasn't sent.`); break; }
         nova.confSent = null; nova.sendConfigure(m.n, "page finder");
-        if (captureStream) captureStream.write(`${new Date().toISOString()}  EV page finder: open page ${m.n} (${c.name})\n`);
+        capWrite(`${new Date().toISOString()}  EV page finder: open page ${m.n} (${c.name})\n`);
       } break;
     case "pageMap": if (Number.isInteger(m.n) && m.n >= 0 && m.n < 32) {
         if (Number.isInteger(m.ch) && m.ch >= 0 && m.ch < 22) savedConf[m.n] = m.ch; else delete savedConf[m.n];
@@ -1476,6 +1484,9 @@ function onMessage(c, m) {
       logAll("ev", `Nova link: the next Connect says hello as ${helloMode === "touch" ? "NovaTouch (PCnovaT-0.92.03)" : `Nova Relay (${HELLO_OWN.split("#")[0]})`} (set by ${c.name || "a device"}).`);
       break;
     case "clock": clockFromClient(+m.now, c.name || "a device"); break;
+    case "captureSave": try { const r = saveCaptureFor(m.minutes, m.note, c.name || "a device"); send(c, { t: "captureSaved", ...r, url: "/api/capture/saved/" + r.name, saved: diag.savedList().slice(0, 5) }); }
+      catch (e) { send(c, { t: "log", dir: "er", text: "Couldn't save the capture: " + e.message }); } break;
+    case "capturesSaved": send(c, { t: "captureSaved", saved: diag.savedList().slice(0, 5) }); break;
     /* Setup › Updates (Nov 18) */
     case "updateCheck": updCheck(c.name || "a device"); break;
     case "updateAuto": if (typeof m.on === "boolean") { upd.auto = m.on; updSave(); updBroadcast(); logAll("ev", `Updates: checking ${m.on ? "on" : "off"} (${c.name || "a device"}).`); if (m.on) updCheck(); } break;
@@ -1488,7 +1499,7 @@ function onMessage(c, m) {
     case "captureNote": {
       /* Nov 1: notes typed during a tap ("pressed MENU", "opened Input 3") go into the capture file and Link log. */
       const txt = String(m.text || "").replace(/[\r\n]+/g, " ").slice(0, 200).trim(); if (!txt) break;
-      if (captureStream) captureStream.write(`${new Date().toISOString()}  NOTE ${txt}\n`);
+      capWrite(`${new Date().toISOString()}  NOTE ${txt}\n`);
       logAll("ev", `NOTE  ${txt}  (from ${c.name})`);
       break;
     }
@@ -1514,6 +1525,9 @@ const API_HELP = [
   ["/api/arm/set/3,4,5", "arm exactly tracks 3, 4 and 5 (the others off)"],
   ["/api/meters", "track and output meter levels in dB (for meter buttons)"],
   ["/api/capture", "the newest serial capture (the raw link log), as a file"],
+  ["/api/capture/save?minutes=10&note=…", "save the last 5–30 minutes of the Nova's line (kept for 30 minutes, across reconnects), with a note"],
+  ["/api/capture/saved", "the saved captures (download one: /api/capture/saved/<name>)"],
+  ["/api/problem-report", "one zip to send with a problem: versions, the Link log, the last 30 minutes of the line, saved captures, settings"],
   ["/api/report.csv", "sound report: every take with file number, start timecode, length, user bits, tracks and note (CSV)"],
   ["/api/page/15", "open (or close) input 15's page on the Nova (inputs 1-22: Analog 1-4, Return 1-2, AES 1-8, RX 1-8)"],
   ["/api/route/3/com1", "Com 1 on OUT 3 on or off (also tone, slate, com2, track-5 for OUT 5-8, input-15 for OUT 1-4; add /on or /off)"],
@@ -1935,6 +1949,7 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".pdf": "application/pdf", 
   ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".woff2": "font/woff2" };
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent((req.url || "/").split("?")[0]);
+  if ((p === "/api/problem-report" || p.startsWith("/api/capture/s")) && diagRoute(req, res, p)) return;
   if (p === "/api" || p.startsWith("/api/")) { apiRoute(req, res, p); return; }
   if (p === "/manual/open") { openManual(req, res); return; }
   if (p === "/update/file") { updUpload(req, res); return; }
@@ -2008,6 +2023,137 @@ server.listen(PORT, localOnly() ? "127.0.0.1" : "0.0.0.0", () => {
 const saveNow = () => { if (saveT) { clearTimeout(saveT); saveT = null; if (V) { const out = {}; for (const k in V) if (!DEVICE_KEYS.has(k)) out[k] = V[k]; try { fs.writeFileSync(STATE_FILE, JSON.stringify({ app: "nova-remote", version: VERSION, saved: new Date().toISOString(), V: out })); } catch (_) { } } } };
 const shutdown = () => { closeSerial(true); saveNow(); process.exit(0); };
 process.on("SIGINT", shutdown); process.on("SIGTERM", shutdown);
+
+/* ---------------------------------------------------------------- diagnostics (Nov 18, see diag.js) */
+/* 1. The Nova's settings since the last session. Only settings the Nova reported this time are kept and compared
+   (not takes, timecode, drives or the remote's own display choices). */
+const SNAP_SKIP = /^(metadata\.history|status\.|drive\.|battery\.|about\.|timecode\.(generator|reader)\.tc|ui\.)/;
+function snapValues() {
+  const out = {};
+  if (!V || !nova.setIds) return out;
+  for (const id of nova.setIds) { const sc = BY_ID.get(id); if (!sc || SNAP_SKIP.test(sc.k) || DEVICE_KEYS.has(sc.k) || !(sc.k in V)) continue; out[sc.k] = JSON.parse(JSON.stringify(V[sc.k])); }
+  return out;
+}
+const FRIENDLY = { "hpmix": "Headphones", "hpmix2": "Headphones 2nd bus", "trackmix": "Track routing", "outputmix": "Output routing", "record.tracks": "Arm", "track.name": "Track name",
+  "scene.current": "Scene", "take.current": "Take", "scene.next": "Next scene", "take.next": "Next take", "sample.rate": "Sample rate", "note.current": "Note", "note.next": "Next note" };
+function friendlyName(sc) {
+  if (FRIENDLY[sc.k]) return FRIENDLY[sc.k];
+  const [g, ...rest] = sc.k.split("."); const head = FRIENDLY[g] || (g.charAt(0).toUpperCase() + g.slice(1));
+  return [head, ...rest].join(" ").replace(/\b(\w)/g, (m, c, i) => i ? m : c.toUpperCase());
+}
+function showValue(sc, v) {
+  if (v == null) return "(none)";
+  if (MATRIX.has(sc.k)) return ["off", "pre-fade", "on", "post-fade"][v] ?? String(v);
+  if (sc.t === "Text") return v === "" ? "(blank)" : JSON.stringify(v);
+  if (sc.t === "Menu" && sc.m) { const t = sc.m[v]; return t === "" ? "off" : t === "X" ? "on" : (t ?? String(v)); }
+  return String(v) + (sc.u ? " " + sc.u : "");
+}
+function describeChange(x) {
+  const sc = BY_KEY.get(x.k), i = x.idx; let where;
+  if (x.k === "trackmix.matrix") where = `Track routing, preset ${i[0] + 1}: track ${i[1] + 1} from ${inName(i[2])}`;
+  else if (x.k === "outputmix.matrix") where = `Output routing: OUT ${i[1] + 1}, source ${i[2] + 1}`;
+  else if (/^hpmix\.(tracks|outputs|returns)$/.test(x.k)) where = `Headphones ${i[0] + 1}${(get("hpmix.names", [i[0]]) || "") ? " (" + get("hpmix.names", [i[0]]) + ")" : ""}: ${{ tracks: "track", outputs: "OUT", returns: "return" }[x.k.split(".")[1]]} ${i[1] + 1}`;
+  else if (/^hpmix2\.(tracks|outputs|returns)$/.test(x.k)) where = `Headphones 2nd bus: ${{ tracks: "track", outputs: "OUT", returns: "return" }[x.k.split(".")[1]]} ${i[0] + 1}`;
+  else if (/^hpmix\./.test(x.k) && i.length) where = `${friendlyName(sc)}, headphones ${i[0] + 1}`;
+  else if (x.k === "record.tracks" || x.k === "track.name" || /^track\./.test(x.k)) where = `${friendlyName(sc)}, track ${i[0] + 1}`;
+  else if (/^input\./.test(x.k) && i.length) where = `${friendlyName(sc)}, ${inName(i[0])}${i.length > 1 ? idxText(i.slice(1)) : ""}`;
+  else where = friendlyName(sc) + (i.length ? " " + idxText(i) : "");
+  return `${where}: ${showValue(sc, x.from)} \u2192 ${showValue(sc, x.to)}`;
+}
+let lastDiff = null; const diffHistory = [];   /* every comparison since Nova Relay started (each connect) */
+function sinceLastSession() {
+  const prev = diag.snapRead(), now = snapValues();
+  if (Object.keys(now).length < 20) return;   /* the Nova didn't send enough to compare */
+  if (prev && prev.values) {
+    const sn = s => (/\bsn\s*(\w+)/i.exec(s || "") || [])[1];
+    const when = new Date(prev.saved).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    const curModel = nova.model || savedModel;
+    if (sn(prev.model) && sn(curModel) && sn(prev.model) !== sn(curModel)) {
+      logAll("ev", `Since the last session: this is a different Nova (${curModel}) from last time's (${prev.model}), so its settings aren't compared.`);
+      lastDiff = { at: Date.now(), since: prev.saved, other: true, lines: [] }; diffHistory.push(lastDiff);
+    } else {
+      const d = DIAG.diffValues(prev.values, now, Object.keys(now)).map(describeChange);
+      const fw = prev.model && curModel && prev.model !== curModel ? ` (the Nova now reports ${curModel}; last time ${prev.model})` : "";
+      lastDiff = { at: Date.now(), since: prev.saved, lines: d }; diffHistory.push(lastDiff);
+      if (!d.length) logAll("ev", `Since the last session (${when}): the Nova's settings are as Nova Relay last saw them${fw}.`);
+      else {
+        logAll("ev", `Since the last session (${when}), ${d.length} of the Nova's settings ${d.length === 1 ? "is" : "are"} different${fw}. Nova Relay didn't send these: they were changed on the Nova (or the Aria) while Nova Relay wasn't connected, or on the way in:`);
+        for (const l of d.slice(0, 40)) logAll("ev", "  \u2022 " + l);
+        if (d.length > 40) logAll("ev", `  \u2026 and ${d.length - 40} more (all of them are in the problem report).`);
+        broadcast({ t: "novaDiff", count: d.length, since: prev.saved });
+      }
+    }
+  }
+  diag.snapSave(now, nova.model || savedModel);
+}
+setInterval(() => { if (nova.connected && nova.loaded) try { diag.snapSave(snapValues(), nova.model || savedModel); } catch (_) { } }, 15000).unref();
+
+/* 2 + 3. Saved captures and the problem report. */
+function saveCaptureFor(minutes, note, who) {
+  const header = `# Nova: ${nova.model || savedModel || "unknown"} \u00b7 ${nova.connected ? "connected" : nova.active ? "port open, no answer" : "not connected"} \u00b7 port ${serial.path || "-"} \u00b7 hello ${nova.helloText || "-"}\n`;
+  const r = diag.saveCapture({ minutes, note, who, header });
+  logAll("ev", `Saved the last ${r.minutes} minutes of the Nova's line (${r.name}) for ${who}${note ? ": \u201c" + String(note).slice(0, 120) + "\u201d" : ""}.`);
+  return r;
+}
+function buildReport(who) {
+  const files = [];
+  const add = (name, data) => { if (data != null) files.push({ name, data }); };
+  const readIf = (f, max = 8 * 1024 * 1024) => { try { const st = fs.statSync(f); if (st.size > max) { const fd = fs.openSync(f, "r"), b = Buffer.alloc(max); fs.readSync(fd, b, 0, max, st.size - max); fs.closeSync(fd); return b; } return fs.readFileSync(f); } catch (_) { return null; } };
+  let u = {}; try { u = updStatus(); } catch (_) { }
+  const ri = diag.ringInfo(), dk = (() => { try { return deck.info(); } catch (_) { return {}; } })();
+  const devs = [...clients].filter(x => x.ready).map(x => x.name);
+  const lines = [
+    `Nova Relay problem report`, `Made ${new Date().toString()} by ${who}`, ``,
+    `Nova Relay ${VERSION}${u.fromUpdate ? ` (installed as an update; the app itself is ${u.appVersion})` : ""} \u00b7 Node.js ${process.version} \u00b7 ${process.platform} ${process.arch} \u00b7 ${os.release()} \u00b7 ${os.hostname()}`,
+    `Running for ${Math.round(process.uptime() / 60)} min \u00b7 data folder ${DATA}`,
+    `Devices connected: ${devs.length ? devs.join(", ") : "none"}`, ``,
+    `Nova link: ${nova.connected ? "connected" : nova.active ? "port open, no answer" : "not connected"}${nova.listenOnly ? " (Listen only)" : ""} \u00b7 settings ${nova.loaded ? "read" : nova.connected ? "being read" : "-"}`,
+    `Nova: ${nova.model || savedModel || "unknown"} \u00b7 hello ${nova.helloText || "-"} (chosen: ${helloMode}) \u00b7 state ${nova.state}`,
+    `Port: ${serial.path || "-"} \u00b7 ${serial.status || "-"}${serial.error ? " \u00b7 " + serial.error : ""} \u00b7 ${serial.bytes || 0} bytes \u00b7 auto-connect ${auto.on ? "on" : "off"}`,
+    `Box power: ${power.known ? (power.under ? "LOW now" : power.since ? "ran low since start" : "ok") : "not a Pi (or unknown)"}`,
+    `Stream Deck on this computer: ${dk.supported ? `${dk.enabled ? "on" : "off"}, ${dk.state || "-"}${dk.name ? " (" + dk.name + ")" : ""}${dk.error ? " \u00b7 " + dk.error : ""}` : "not offered here"}`,
+    `Updates: ${u.available ? `${u.latest.version} available` : u.error ? u.error : u.latest ? "newest" : "not checked"}${u.failed ? ` \u00b7 update ${u.failed} failed to start` : ""}`,
+    `Rolling capture: ${ri.lines} lines${ri.since ? " since " + new Date(ri.since).toISOString() : ""}`, ``,
+    ...(diffHistory.length ? diffHistory.flatMap(h => [
+      `Since the last session, at the connect of ${new Date(h.at).toLocaleTimeString("en-US")} (compared with ${h.since}): ${h.other ? "a different Nova" : h.lines.length ? h.lines.length + " settings different" : "no differences"}`,
+      ...h.lines.map(l => "  - " + l)]) : ["Since the last session: not compared yet (needs a connect with the settings read)"]), ``,
+    `Saved captures: ${diag.savedList().slice(0, 10).map(f => f.name).join(", ") || "none"}`
+  ];
+  add("report.txt", lines.join("\n") + "\n");
+  add("link-log.txt", diag.logs().join("\n") + "\n");
+  add("capture-last-30-minutes.log", diag.captureText(30) || "# (nothing on the line in the last 30 minutes)\n");
+  let cap = serial.capture && fs.existsSync(serial.capture) ? serial.capture : null;
+  if (!cap) try { cap = fs.readdirSync(DATA).filter(n => /^serial-capture-.*\.log$/.test(n)).map(n => path.join(DATA, n)).sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0] || null; } catch (_) { }
+  if (cap) add("newest-port-capture/" + path.basename(cap), readIf(cap));
+  for (const f of diag.savedList().slice(0, 5)) add("saved-captures/" + f.name, readIf(diag.savedPath(f.name)));
+  for (const f of ["state.json", "nova-link.json", "nova-snapshot.json", "desktop.json", "deck.json", "updates.json", "history-edits.json", "app/current.json", "app.log"]) add("data/" + f, readIf(path.join(DATA, f), 2 * 1024 * 1024));
+  return DIAG.writeZip(files);
+}
+function diagRoute(req, res, p) {
+  const CORS = { "Access-Control-Allow-Origin": "*" };
+  const out = (code, obj) => res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...CORS }).end(JSON.stringify(obj));
+  const q = new URL(req.url, "http://x").searchParams, who = String(q.get("who") || req.headers["x-nova-device"] || "a device").slice(0, 40);
+  if (p === "/api/problem-report") {
+    let zip; try { zip = buildReport(who); } catch (e) { return out(500, { ok: false, error: "Couldn't make the report: " + e.message }); }
+    const name = `Nova-Relay-report-${new Date().toISOString().replace(/[:]/g, "-").replace(/\..+$/, "")}.zip`;
+    logAll("ev", `Problem report made for ${who} (${Math.round(zip.length / 1024)} KB).`);
+    res.writeHead(200, { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${name}"`, "Cache-Control": "no-store", ...CORS }).end(zip);
+    return true;
+  }
+  if (p === "/api/capture/save") {   /* POST or GET: ?minutes=10&note=… (also for a Stream Deck or Companion key) */
+    try { const r = saveCaptureFor(+q.get("minutes") || 10, q.get("note") || "", who); out(200, { ok: true, ...r, url: "/api/capture/saved/" + r.name }); }
+    catch (e) { out(500, { ok: false, error: e.message }); }
+    return true;
+  }
+  if (p === "/api/capture/saved") { out(200, { ok: true, saved: diag.savedList() }); return true; }
+  const m = /^\/api\/capture\/saved\/([^/]+)$/.exec(p);
+  if (m) {
+    const f = diag.savedPath(m[1]); if (!f) { out(404, { ok: false, error: "No such saved capture." }); return true; }
+    res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8", "Content-Disposition": `attachment; filename="${m[1]}"`, "Cache-Control": "no-store", ...CORS });
+    fs.createReadStream(f).pipe(res); return true;
+  }
+  return false;
+}
 
 /* ---------------------------------------------------------------- updates (Nov 18, see update.js)
    Setup › Updates: what's running, a check of github.com/gfssound/nova-relay (at start and every 6 hours while

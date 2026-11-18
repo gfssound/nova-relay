@@ -9,7 +9,7 @@ MANUAL="nova-remote/Nova Relay User Manual.pdf"
 cp "$MANUAL" nova-remote/public/manual.pdf
 # Nov 7: the Stream Deck plugin ships inside every app (Setup › Stream Deck › Download) and as out/Nova-Relay.streamDeckPlugin.
 node tools/build_streamdeck.js
-APPFILES=(nova-remote/README.md nova-remote/nova.js nova-remote/package.json nova-remote/public nova-remote/schema.json nova-remote/server.js nova-remote/deck nova-remote/update.js)   # deck: Stream Deck on Linux / the Pi box (Nov 14); update.js: Setup › Updates (Nov 18)
+APPFILES=(nova-remote/README.md nova-remote/nova.js nova-remote/package.json nova-remote/public nova-remote/schema.json nova-remote/server.js nova-remote/deck nova-remote/update.js nova-remote/diag.js)   # deck: Stream Deck on Linux / the Pi box (Nov 14); update.js: Setup › Updates (Nov 18)
 # Nov 18: one app folder for every package, signed for Setup › Updates (tools/sign_update.js; release notes from
 # tools/release_notes.txt, one per line). The same signed folder goes into the Mac and Pi kits, the AppImage and
 # Nova-Relay-<v>-update.zip; out/latest.json tells every Nova Relay which version is newest (the print copies both

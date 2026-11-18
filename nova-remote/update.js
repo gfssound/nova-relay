@@ -29,7 +29,7 @@ const REPO = "gfssound/nova-relay";
 const LATEST_URL = process.env.NOVA_UPDATE_URL || `https://raw.githubusercontent.com/${REPO}/main/updates/latest.json`;
 const MANIFEST = "nova-update.json", SIG = "nova-update.sig";
 const MAX_ZIP = 40 * 1024 * 1024, MAX_UNZIPPED = 120 * 1024 * 1024;
-const NEEDED = ["server.js", "nova.js", "update.js", "package.json", "schema.json", "public/index.html"];
+const NEEDED = ["server.js", "nova.js", "update.js", "diag.js", "package.json", "schema.json", "public/index.html"];
 
 function dataDir(argv) {
   const a = argv.slice(2), i = a.indexOf("--data");
