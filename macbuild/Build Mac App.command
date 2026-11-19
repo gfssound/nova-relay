@@ -323,7 +323,7 @@ plutil -lint "$PL" >/dev/null || fail "the app's Info.plist didn't come out righ
 cat > "$RES/Nova Relay.command" <<'RUN'
 #!/bin/bash
 RES="$(cd "$(dirname "$0")" && pwd)"
-if [ "$(uname -m)" = "arm64" ]; then NODE="$RES/node/arm64/node"; else NODE="$RES/node/x64/node"; fi
+if [ "$(uname -m)" = "arm64" ] && [ -x "$RES/node/arm64/node" ]; then NODE="$RES/node/arm64/node"; else NODE="$RES/node/x64/node"; fi
 printf '\033]0;Nova Relay\007'
 clear
 cd "$RES/app"
@@ -331,7 +331,7 @@ cd "$RES/app"
 echo
 read -r -p "Nova Relay has stopped. Press Return to close this window." || true
 RUN
-chmod +x "$RES/Nova Relay.command" "$RES/node/arm64/node" "$RES/node/x64/node"
+chmod +x "$RES/Nova Relay.command"; for arch in $ARCHS; do chmod +x "$RES/node/$arch/node"; done
 
 # 3. Icon from the remote's own icon
 echo "3/5  Making the icon…"

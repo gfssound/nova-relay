@@ -4,7 +4,9 @@ Nova Relay for Mac
 Nova Relay.app has Node.js built in. It needs nothing else installed and no internet to run.
 
 Install the ready-made app (easiest)
-  1. Download Nova-Relay-<version>.dmg from the Releases page of github.com/gfssound/nova-relay.
+  1. From the Releases page of github.com/gfssound/nova-relay, download the one for your Mac
+     (Apple menu > About This Mac): "Apple M..." -> Nova-Relay-<version>-AppleSilicon.dmg,
+     "Intel" -> Nova-Relay-<version>-Intel.dmg.
   2. Open the .dmg and drag Nova Relay onto Applications.
   3. Open Nova Relay from Applications. The first time, macOS says it can't check the app (it isn't signed
      with an Apple Developer ID): click Done, then open System Settings › Privacy & Security, scroll down and
@@ -14,7 +16,8 @@ Or build the app yourself (any Mac with internet)
   1. Double-click "Build Mac App.command" (the first time: right-click it, choose Open, then Open again).
   2. It downloads the official Node.js from nodejs.org (about 100 MB, for Apple Silicon and Intel Macs),
      checks it, and makes "Nova-Relay-<version>.dmg" next to it in a minute or two.
-  3. Install it as above. An app you build yourself opens without the Open Anyway step.
+  3. Install it as above. An app you build yourself works on both kinds of Mac and opens without the
+     Open Anyway step.
 
 Using it
   Nova Relay opens in its own window: no web browser and no Terminal window. Close the window or press ⌘Q to
