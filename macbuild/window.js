@@ -26,7 +26,11 @@ function startServer() {
   var pid = $.NSProcessInfo.processInfo.processIdentifier;
   sh('mkdir -p ' + q(DATA) + '; L=' + q(LOG) + '; ' +
      'if [ -f "$L" ] && [ "$(stat -f%z "$L")" -gt 5000000 ]; then mv -f "$L" "$L.old"; fi; ' +
-     'if [ "$(uname -m)" = arm64 ]; then N=' + q(RES + '/node/arm64/node') + '; else N=' + q(RES + '/node/x64/node') + '; fi; ' +
+     // Nov 18: an app built for one kind of Mac carries only that Node.js (Apple Silicon or Intel); an Apple Silicon Mac
+     // runs the Intel one through Rosetta; an Intel Mac can't run the Apple Silicon one, and the log says which to get.
+     'A=' + q(RES + '/node/arm64/node') + '; X=' + q(RES + '/node/x64/node') + '; ' +
+     'if [ "$(uname -m)" = arm64 ] && [ -x "$A" ]; then N="$A"; elif [ -x "$X" ]; then N="$X"; else N="$A"; ' +
+     'echo "This Nova Relay is the Apple Silicon version and this Mac has an Intel processor: download the Intel version (Nova-Relay-<version>-Intel.dmg)." >> "$L"; fi; ' +
      'cd ' + q(RES + '/app') + ' || exit 1; { echo; echo "== Nova Relay app opened $(date)"; } >> "$L"; ' +
      // only the server itself goes to the background, with every output closed, so this returns at once
      'nohup "$N" server.js --no-open --port ' + PORT + ' --exit-with ' + pid + ' >> "$L" 2>&1 < /dev/null &');

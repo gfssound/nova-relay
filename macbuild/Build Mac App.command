@@ -15,7 +15,12 @@ SRC="$HERE/app"
 VERSION="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$SRC/package.json" | head -1)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/nova-remote-build.XXXXXX")"
 APP="$WORK/dmg/Nova Relay.app"
-DMG="$HERE/Nova-Relay-$VERSION.dmg"
+# Nov 18 (Ferris: "dmg is taking forever to download ... do separate downloads, and compress better"):
+# NOVA_MAC_ARCH=arm64 or x64 builds for one kind of Mac only (about half the size): Nova-Relay-<v>-AppleSilicon.dmg /
+# Nova-Relay-<v>-Intel.dmg. Without it (building on your own Mac) the app works on both kinds.
+MAC_ARCH="${NOVA_MAC_ARCH:-both}"
+case "$MAC_ARCH" in arm64) ARCHS="arm64"; DMG="$HERE/Nova-Relay-$VERSION-AppleSilicon.dmg" ;; x64) ARCHS="x64"; DMG="$HERE/Nova-Relay-$VERSION-Intel.dmg" ;;
+  *) ARCHS="arm64 x64"; DMG="$HERE/Nova-Relay-$VERSION.dmg" ;; esac
 
 # Nov 18: NOVA_NO_PAUSE=1 (GitHub's Mac build machine, .github/workflows/mac-app.yml) runs it unattended.
 pause(){ [ -t 0 ] && [ -z "${NOVA_NO_PAUSE:-}" ] && { read -r -p "Press Return to close this window." || true; }; return 0; }
@@ -76,7 +81,11 @@ function startServer() {
   var pid = $.NSProcessInfo.processInfo.processIdentifier;
   sh('mkdir -p ' + q(DATA) + '; L=' + q(LOG) + '; ' +
      'if [ -f "$L" ] && [ "$(stat -f%z "$L")" -gt 5000000 ]; then mv -f "$L" "$L.old"; fi; ' +
-     'if [ "$(uname -m)" = arm64 ]; then N=' + q(RES + '/node/arm64/node') + '; else N=' + q(RES + '/node/x64/node') + '; fi; ' +
+     // Nov 18: an app built for one kind of Mac carries only that Node.js (Apple Silicon or Intel); an Apple Silicon Mac
+     // runs the Intel one through Rosetta; an Intel Mac can't run the Apple Silicon one, and the log says which to get.
+     'A=' + q(RES + '/node/arm64/node') + '; X=' + q(RES + '/node/x64/node') + '; ' +
+     'if [ "$(uname -m)" = arm64 ] && [ -x "$A" ]; then N="$A"; elif [ -x "$X" ]; then N="$X"; else N="$A"; ' +
+     'echo "This Nova Relay is the Apple Silicon version and this Mac has an Intel processor: download the Intel version (Nova-Relay-<version>-Intel.dmg)." >> "$L"; fi; ' +
      'cd ' + q(RES + '/app') + ' || exit 1; { echo; echo "== Nova Relay app opened $(date)"; } >> "$L"; ' +
      // only the server itself goes to the background, with every output closed, so this returns at once
      'nohup "$N" server.js --no-open --port ' + PORT + ' --exit-with ' + pid + ' >> "$L" 2>&1 < /dev/null &');
@@ -274,9 +283,8 @@ function reopen() { if (win) win.makeKeyAndOrderFront(null); }
 JXA
 osacompile -l JavaScript -s -o "$APP" "$WORK/window.js" || fail "macOS couldn't make the app's window (osacompile)."
 RES="$APP/Contents/Resources"
-mkdir -p "$RES/node/arm64" "$RES/node/x64" "$RES/app"
-cp "$WORK/node-arm64/bin/node" "$RES/node/arm64/node"
-cp "$WORK/node-x64/bin/node" "$RES/node/x64/node"
+mkdir -p "$RES/app"
+for arch in $ARCHS; do mkdir -p "$RES/node/$arch"; cp "$WORK/node-$arch/bin/node" "$RES/node/$arch/node"; done
 # Nov 18 (Ferris's app.log: "Cannot find module './deck/manager.js'"): copy the whole app folder, not a list of
 # files: the list missed deck/ (0.6.3), so Macs built from 0.6.3 to 0.6.5 couldn't start. Then check that every
 # file the server loads is there, so a missing one stops the build instead of the app.
@@ -344,7 +352,9 @@ codesign --verify "$APP" >/dev/null 2>&1 || echo "     (the local signature didn
 echo "5/5  Making the .dmg…"
 ln -s /Applications "$WORK/dmg/Applications"
 rm -f "$DMG"
-hdiutil create -volname "Nova Relay $VERSION" -srcfolder "$WORK/dmg" -ov -format UDZO "$DMG" >/dev/null || fail "hdiutil couldn't make the .dmg."
+# LZMA (ULMO, macOS 10.15+; the app needs 11) packs noticeably smaller than the usual zlib (UDZO).
+hdiutil create -volname "Nova Relay $VERSION" -srcfolder "$WORK/dmg" -ov -format ULMO "$DMG" >/dev/null || \
+  hdiutil create -volname "Nova Relay $VERSION" -srcfolder "$WORK/dmg" -ov -format UDZO "$DMG" >/dev/null || fail "hdiutil couldn't make the .dmg."
 rm -rf "$WORK"
 trap - ERR
 

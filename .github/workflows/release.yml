@@ -3,7 +3,7 @@
 # whenever a new version is published to updates/ (each print), or by hand from the Actions tab (Run workflow),
 # GitHub's own machines build the ready-to-install downloads from the signed app folder in updates/ and put them on
 # the Releases page as "Nova Relay <version>":
-#   - Nova-Relay-<v>.dmg            Mac (built on a Mac, with the same Build Mac App.command)
+#   - Nova-Relay-<v>-AppleSilicon.dmg / -Intel.dmg   Mac, one per kind of Mac (built on a Mac, with Build Mac App.command)
 #   - Nova-Relay-<v>-Pi.img.xz      the Nova Relay box's card, for Raspberry Pi Imager on Windows, Mac or Linux;
 #                                   its settings (Wi-Fi, name, login, time zone) are edited on the card afterwards
 #   - Nova-Relay-<v>-x86_64.AppImage  Linux
@@ -41,13 +41,16 @@ jobs:
           node -e '
           const j=require("./updates/latest.json");
           const n=(j.notes||[]).map(x=>"- "+x).join("\n");
-          console.log(n+"\n\n**Mac:** open Nova-Relay-"+j.version+".dmg and drag Nova Relay onto Applications. The first time, macOS asks: System Settings › Privacy & Security › Open Anyway.\n\n**Nova Relay box (Raspberry Pi):** write Nova-Relay-"+j.version+"-Pi.img.xz to a microSD card with Raspberry Pi Imager (Windows, Mac or Linux; choose No to OS customisation). Then open the card’s bootfs drive, edit nova-remote › settings.txt (Wi-Fi name and password, box name, login, time zone), save, eject, and power up the Pi.\n\n**Linux:** Nova-Relay-"+j.version+"-x86_64.AppImage, make it executable, double-click.\n\n**Already running Nova Relay 0.6.6 or newer:** Setup › Updates installs "+j.file+" (it finds it here by itself).")' > notes.md
+          console.log(n+"\n\n**Mac:** Apple menu › About This Mac says Apple M… (Apple Silicon: Nova-Relay-"+j.version+"-AppleSilicon.dmg) or Intel (Nova-Relay-"+j.version+"-Intel.dmg). Open it and drag Nova Relay onto Applications. The first time, macOS asks: System Settings › Privacy & Security › Open Anyway.\n\n**Nova Relay box (Raspberry Pi):** write Nova-Relay-"+j.version+"-Pi.img.xz to a microSD card with Raspberry Pi Imager (Windows, Mac or Linux; choose No to OS customisation). Then open the card’s bootfs drive, edit nova-remote › settings.txt (Wi-Fi name and password, box name, login, time zone), save, eject, and power up the Pi.\n\n**Linux:** Nova-Relay-"+j.version+"-x86_64.AppImage, make it executable, double-click.\n\n**Already running Nova Relay 0.6.6 or newer:** Setup › Updates installs "+j.file+" (it finds it here by itself).")' > notes.md
           gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" --target "$GITHUB_SHA" --title "Nova Relay $V" --notes-file notes.md
           gh release upload "v$V" "updates/$F" --clobber
   mac:
     needs: release
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.only == 'all' || inputs.only == 'mac' }}
     runs-on: macos-15
+    strategy:
+      matrix:
+        arch: [arm64, x64]   # Nova-Relay-<v>-AppleSilicon.dmg, Nova-Relay-<v>-Intel.dmg (about half the size of one for both)
     steps:
       - uses: actions/checkout@v4
       - name: Build Nova Relay.app and the .dmg
@@ -57,12 +60,13 @@ jobs:
           rm -rf build-mac && mkdir build-mac && cd build-mac
           unzip -q "../updates/$F"
           cp "../macbuild/Build Mac App.command" .
-          NOVA_NO_PAUSE=1 bash "./Build Mac App.command"
+          NOVA_NO_PAUSE=1 NOVA_MAC_ARCH=${{ matrix.arch }} bash "./Build Mac App.command"
+          ls -la
       - name: Upload
         env:
           GH_TOKEN: ${{ github.token }}
           V: ${{ needs.release.outputs.version }}
-        run: gh release upload "v$V" "build-mac/Nova-Relay-$V.dmg" --clobber
+        run: gh release upload "v$V" build-mac/Nova-Relay-$V-*.dmg --clobber
   pi:
     needs: release
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.only == 'all' || inputs.only == 'pi' }}
