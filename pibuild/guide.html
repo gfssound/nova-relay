@@ -37,7 +37,9 @@ pre{font-family:Menlo,Consolas,monospace;font-size:8.8pt;background:var(--tint);
 <tr><td><b>USB cable to the Aria</b></td><td>The same cable you use from the Aria to the computer today.</td><td class="q">—</td></tr>
 </table>
 
-<h2>1 · Make the card image (on your Mac, about 10 minutes, once per version)</h2>
+<h2>1 · Get the card image</h2>
+<p><b>Ready-made (any computer: Windows, Mac or Linux):</b> download <b>Nova-Relay-&lt;version&gt;-Pi.img.xz</b> from the Releases page of github.com/gfssound/nova-relay. Its Wi-Fi, name, login and time zone are set on the card after writing it (step 3).</p>
+<p><b>Or make it yourself</b> (on a Mac, about 10 minutes, once per version), with your settings built in:</p>
 <ol>
 <li>Unzip <b>Nova-Relay-&lt;version&gt;-Pi.zip</b>. To change the box's Wi-Fi name, password or country, its name or its login, open <b>Pi box settings.txt</b> in TextEdit first and save it.</li>
 <li>Double-click <b>Build Pi Image.command</b> (the first time: right-click › Open › Open). It downloads Raspberry Pi OS Lite (64-bit, about 500 MB) and Node.js for the Pi, checks both against their published checksums, and makes <b>Nova-Relay-&lt;version&gt;-Pi.img.gz</b> next to it. The downloads are kept in a <code>downloads</code> folder for the next build.</li>
@@ -47,16 +49,19 @@ pre{font-family:Menlo,Consolas,monospace;font-size:8.8pt;background:var(--tint);
 <h2>2 · Write the card (about 5 minutes)</h2>
 <ol>
 <li>Install <b>Raspberry Pi Imager</b> from raspberrypi.com/software and open it.</li>
-<li>Choose Device: your Pi. Choose OS › <b>Use custom</b> › the <b>.img.gz</b> file. Choose Storage: the microSD card.</li>
+<li>Choose Device: your Pi. Choose OS › <b>Use custom</b> › the <b>.img.xz</b> (or <b>.img.gz</b>) file. Choose Storage: the microSD card.</li>
 <li>When Imager asks whether to apply OS customisation settings, choose <b>No</b>: they would replace the box's own setup.</li>
 </ol>
 <p>One image makes as many cards as you like. balenaEtcher works too.</p>
 
-<h2>3 · First power-up (about 3 minutes, no internet needed)</h2>
-<p>Put the card in the Pi, plug the Aria into any USB port and power the Pi on. It sets itself up from the card: Nova Relay, its Wi-Fi network and its name. Then <b>NOVA-REMOTE</b> appears.</p>
-<div class="note">If NOVA-REMOTE hasn't appeared after 5 minutes, power the Pi off and put the card in your Mac: <b>bootfs › nova-remote › setup-log.txt</b> says what happened.</div>
+<h2>3 · The box's settings (on the card, any computer)</h2>
+<p>Before the first power-up, take the card out and put it back in: a drive called <b>bootfs</b> appears (on Windows, choose <b>Cancel</b> if it offers to format another part of the card). Open <b>nova-remote › settings.txt</b> in Notepad, TextEdit or any text editor and set <b>WIFI_NAME</b> and <b>WIFI_PASSWORD</b> (8 characters or more), <b>WIFI_COUNTRY</b>, <b>BOX_NAME</b> (the box is then <code>http://&lt;name&gt;.local</code>), <b>LOGIN_NAME</b> and <b>LOGIN_PASSWORD</b> (for SSH) and <b>TIME_ZONE</b> (for example America/Chicago). Save, eject the card. The ready-made image starts as NOVA-REMOTE / novaremote: change at least the Wi-Fi and login passwords.</p>
 
-<h2>4 · On the cart</h2>
+<h2>4 · First power-up (about 3 minutes, no internet needed)</h2>
+<p>Put the card in the Pi, plug the Aria into any USB port and power the Pi on. It sets itself up from the card: Nova Relay, its Wi-Fi network, its name and login. Then its Wi-Fi (NOVA-REMOTE, or the name you set) appears.</p>
+<div class="note">If the box's Wi-Fi hasn't appeared after 5 minutes, power the Pi off and put the card in a computer: <b>bootfs › nova-remote › setup-log.txt</b> says what happened.</div>
+
+<h2>5 · On the cart</h2>
 <ol>
 <li>Plug the Aria into any USB port on the Pi and power the Pi from the cart.</li>
 <li>On a phone or iPad, join Wi-Fi <b>NOVA-REMOTE</b> (password <span class="mono">novaremote</span> unless you changed it).</li>
@@ -65,7 +70,7 @@ pre{font-family:Menlo,Consolas,monospace;font-size:8.8pt;background:var(--tint);
 </ol>
 <div class="two">
 <div><h3>Stream Deck</h3><p>Plug it straight into one of the box's USB ports: its keys work like the Stream Deck plugin's, with no Stream Deck app. Choose what each key does in Setup › Stream Deck. (A box set up before 0.6.3 needs the installer run again, below, or a new card.) A Stream Deck on a Mac or PC can use the plugin instead, with the address <code>nova.local:80</code>.</p></div>
-<div><h3>Updating</h3><p>Keeping its settings: join NOVA-REMOTE with your Mac, copy the new Pi zip to the box and run the installer: <code>scp Nova-Relay-&lt;version&gt;-Pi.zip pi@nova.local:~</code>, then <code>ssh pi@nova.local</code>, unzip it, <code>cd</code> into it and run <code>sudo ./install-pi.sh</code>. Or write a new card from the new image, which starts the box fresh.</p></div>
+<div><h3>Updating</h3><p>From 0.6.6: <b>Setup › Updates</b> on any phone, iPad or computer says when a new version is on GitHub and installs it only when you press Install (never by itself, never while recording); the box restarts in a few seconds and keeps its settings. No internet at the box: the phone fetches it, or send <b>Nova-Relay-&lt;version&gt;-update.zip</b> from Setup › Updates › Install from a file. Older boxes: update once with <code>sudo ./install-pi.sh</code> from the new Pi zip (over SSH), or write a new card.</p></div>
 </div>
 
 <h2>Good to know</h2>

@@ -1,5 +1,9 @@
-# Nova Relay box settings. Change these before running Build Pi Image.command; every card made from the image
-# uses them. Lines starting with # are notes.
+# Nova Relay box settings. Lines starting with # are notes.
+# Change them in either place:
+#  - before running Build Pi Image.command (every card made from that image gets them), or
+#  - on the card after writing it, on any computer (Windows, Mac or Linux): open the card's "bootfs" drive, then
+#    nova-remote > settings.txt, edit and save, eject the card, and put it in the Pi. They're applied at its first
+#    power-up. (Windows may offer to format the card's other part: choose Cancel.)
 
 # The box's own Wi-Fi network, for phones, iPads and laptops (password: 8 characters or more).
 WIFI_NAME=NOVA-REMOTE
@@ -23,5 +27,6 @@ BOX_NAME=nova
 LOGIN_NAME=pi
 LOGIN_PASSWORD=novaremote
 
-# Time zone for the box's clock (log times, sound report dates). Empty = the same as this Mac.
+# Time zone for the box's clock (log times, sound report dates), e.g. America/Chicago, America/Los_Angeles,
+# Europe/London. Empty = the computer that built the image (UTC for the ready-made image).
 TIME_ZONE=

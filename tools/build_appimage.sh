@@ -78,7 +78,7 @@ RUN
 chmod +x "$AD/AppRun"
 
 mkdir -p out
-OUT="$ROOT/out/Nova-Relay-$V-$ARCH.AppImage"; rm -f "$OUT"
+mkdir -p "$ROOT/out"; OUT="$ROOT/out/Nova-Relay-$V-$ARCH.AppImage"; rm -f "$OUT"
 ARCH="$ARCH" "$TOOL" --no-appstream --runtime-file "$DL/runtime-$ARCH" "$AD" "$OUT" >/dev/null 2>"$ROOT/appimg/build/appimagetool-$ARCH.log" || { cat "$ROOT/appimg/build/appimagetool-$ARCH.log"; exit 1; }
 chmod +x "$OUT"
 echo "$(basename "$OUT")  $(du -h "$OUT" | cut -f1)"

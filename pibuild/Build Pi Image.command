@@ -106,6 +106,7 @@ STAGE="$WORK/stage"; mkdir -p "$STAGE/nova-remote"
 cp -R "$SRC" "$STAGE/nova-remote/app"
 cp "$HERE/install-pi.sh" "$HERE/firstboot.sh" "$STAGE/nova-remote/"
 cp "$HERE/Pi box settings.txt" "$STAGE/nova-remote/settings.txt"
+printf '%s\n' "$LOGIN_NAME" > "$STAGE/nova-remote/built-login"   # the login cloud-init makes; firstboot.sh renames it if settings.txt changes
 cp "$CACHE/$NODE_FILE" "$STAGE/nova-remote/"
 cat > "$STAGE/nova-remote/README.txt" <<README
 Nova Relay $VERSION box. At the first power-up the Pi installs Nova Relay from this folder (no internet needed)
@@ -115,8 +116,9 @@ q(){ printf "'%s'" "$(printf '%s' "$1" | sed "s/'/''/g")"; }
 cat > "$STAGE/user-data" <<USERDATA
 #cloud-config
 # Nova Relay box, made by Build Pi Image.command (Nova Relay $VERSION). Applied once, at the first power-up.
-hostname: $BOX_NAME
-manage_etc_hosts: true
+# The box's name and time zone are set by firstboot.sh from nova-remote/settings.txt (which can be changed on the card
+# after writing it); cloud-init leaves the name alone so it can't put it back on later power-ups.
+preserve_hostname: true
 timezone: $(q "$TIME_ZONE")
 users:
   - name: $LOGIN_NAME
@@ -168,10 +170,10 @@ else
   mcopy -o -i "$P" "$STAGE/user-data" "::/user-data" || fail "couldn't write the first-power-up setup."
 fi
 
-# 5. Compress for Raspberry Pi Imager / balenaEtcher
+# 5. Compress for Raspberry Pi Imager / balenaEtcher (NOVA_COMPRESS=xz: smaller .img.xz, used for the GitHub release)
 echo "5/5  Compressing (a few minutes)…"
-rm -f "$OUT"
-gzip -c "$IMG" > "$OUT.part" && mv "$OUT.part" "$OUT" || fail "couldn't write $(basename "$OUT")."
+if [ "${NOVA_COMPRESS:-}" = "xz" ] && command -v xz >/dev/null; then OUT="${OUT%.gz}"; OUT="$OUT.xz"; rm -f "$OUT"; xz -T0 -6 -c "$IMG" > "$OUT.part" && mv "$OUT.part" "$OUT" || fail "couldn't write $(basename "$OUT")."
+else rm -f "$OUT"; gzip -c "$IMG" > "$OUT.part" && mv "$OUT.part" "$OUT" || fail "couldn't write $(basename "$OUT")."; fi
 cleanup
 trap - ERR
 

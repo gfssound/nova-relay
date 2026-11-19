@@ -1,0 +1,16 @@
+{
+ "version": "0.6.6",
+ "file": "Nova-Relay-0.6.6-update.zip",
+ "sha256": "f2c8bed611be1f0fb6b4015129f5ca9b1bc087b1e9a0a06d53f5a4a46eb4ac49",
+ "size": 758030,
+ "date": "2026-11-19",
+ "notes": [
+  "Updates: Setup › Updates checks GitHub for new versions and installs one only when you press Install (never by itself, never while recording); install from a file, go back to the version before",
+  "Reads the Nova's settings before sending anything; only the NovaTouch hello is sent (no switching that brought up the demo screen); a lone port stays open for a faster first connection",
+  "Since the last session: the Link log lists any of the Nova's settings that changed while Nova Relay wasn't connected",
+  "Something went wrong? (Setup › Connection): save the last 5, 10 or 30 minutes of the Nova's line with a note, and download a one-file problem report",
+  "TX power on each RX input's page and All TX on the Meters page (two taps); the Meters page never scrolls; no zoom or text highlighting on phones",
+  "Mac: the app starts again (the builder missed the Stream Deck folder in 0.6.3 to 0.6.5)",
+  "Nova Relay box: ready-made card image on GitHub; its settings can be edited on the card from Windows, Mac or Linux"
+ ]
+}

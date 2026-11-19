@@ -1,0 +1,98 @@
+# Nov 18 (Ferris: "Is there a way to make the Mac version both easier to install ... raspberry pi won't always be
+# created via a mac so how do we make that easier? Some users are on windows, some linux"):
+# whenever a new version is published to updates/ (each print), or by hand from the Actions tab (Run workflow),
+# GitHub's own machines build the ready-to-install downloads from the signed app folder in updates/ and put them on
+# the Releases page as "Nova Relay <version>":
+#   - Nova-Relay-<v>.dmg            Mac (built on a Mac, with the same Build Mac App.command)
+#   - Nova-Relay-<v>-Pi.img.xz      the Nova Relay box's card, for Raspberry Pi Imager on Windows, Mac or Linux;
+#                                   its settings (Wi-Fi, name, login, time zone) are edited on the card afterwards
+#   - Nova-Relay-<v>-x86_64.AppImage  Linux
+#   - Nova-Relay-<v>-update.zip     what Setup › Updates installs
+name: Release
+on:
+  push:
+    branches: [main]
+    paths: ['updates/latest.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      file: ${{ steps.v.outputs.file }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: |
+          echo "version=$(node -p "require('./updates/latest.json').version")" >> "$GITHUB_OUTPUT"
+          echo "file=$(node -p "require('./updates/latest.json').file")" >> "$GITHUB_OUTPUT"
+      - name: Release page
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.v.outputs.version }}
+          F: ${{ steps.v.outputs.file }}
+        run: |
+          node -e '
+          const j=require("./updates/latest.json");
+          const n=(j.notes||[]).map(x=>"- "+x).join("\n");
+          console.log(n+"\n\n**Mac:** open Nova-Relay-"+j.version+".dmg and drag Nova Relay onto Applications. The first time, macOS asks: System Settings › Privacy & Security › Open Anyway.\n\n**Nova Relay box (Raspberry Pi):** write Nova-Relay-"+j.version+"-Pi.img.xz to a microSD card with Raspberry Pi Imager (Windows, Mac or Linux; choose No to OS customisation). Then open the card’s bootfs drive, edit nova-remote › settings.txt (Wi-Fi name and password, box name, login, time zone), save, eject, and power up the Pi.\n\n**Linux:** Nova-Relay-"+j.version+"-x86_64.AppImage, make it executable, double-click.\n\n**Already running Nova Relay 0.6.6 or newer:** Setup › Updates installs "+j.file+" (it finds it here by itself).")' > notes.md
+          gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" --target "$GITHUB_SHA" --title "Nova Relay $V" --notes-file notes.md
+          gh release upload "v$V" "updates/$F" --clobber
+  mac:
+    needs: release
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Nova Relay.app and the .dmg
+        env:
+          F: ${{ needs.release.outputs.file }}
+        run: |
+          rm -rf build-mac && mkdir build-mac && cd build-mac
+          unzip -q "../updates/$F"
+          cp "../macbuild/Build Mac App.command" .
+          NOVA_NO_PAUSE=1 bash "./Build Mac App.command"
+      - name: Upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ needs.release.outputs.version }}
+        run: gh release upload "v$V" "build-mac/Nova-Relay-$V.dmg" --clobber
+  pi:
+    needs: release
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Nova Relay box card image
+        env:
+          F: ${{ needs.release.outputs.file }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq mtools xz-utils >/dev/null
+          rm -rf build-pi && mkdir build-pi && cd build-pi
+          unzip -q "../updates/$F"
+          cp "../pibuild/Build Pi Image.command" ../pibuild/install-pi.sh ../pibuild/firstboot.sh "../pibuild/Pi box settings.txt" .
+          NOVA_NO_PAUSE=1 NOVA_COMPRESS=xz bash "./Build Pi Image.command"
+          ls -la
+      - name: Upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ needs.release.outputs.version }}
+        run: gh release upload "v$V" "build-pi/Nova-Relay-$V-Pi.img.xz" --clobber
+  linux:
+    needs: release
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the AppImage
+        env:
+          F: ${{ needs.release.outputs.file }}
+          V: ${{ needs.release.outputs.version }}
+        run: |
+          rm -rf pkg && mkdir -p "pkg/u" && (cd pkg/u && unzip -q "../../updates/$F") && mv pkg/u/app "pkg/app-$V"
+          NOVA_APP_STAGE="pkg/app-$V" bash tools/build_appimage.sh x86_64
+          ls -la out
+      - name: Upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ needs.release.outputs.version }}
+        run: gh release upload "v$V" "out/Nova-Relay-$V-x86_64.AppImage" --clobber

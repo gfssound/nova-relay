@@ -6,7 +6,12 @@ and phones/iPads join its Wi-Fi network "NOVA-REMOTE" and open http://nova.local
 
 Full steps and parts list: "Nova Relay Box Guide.pdf" in this folder.
 
-Short version:
+No Mac? Download the ready-made card image Nova-Relay-<version>-Pi.img.xz from the Releases page of
+github.com/gfssound/nova-relay, write it with Raspberry Pi Imager (Windows, Mac or Linux; choose No to OS
+customisation), then open the card's "bootfs" drive and edit nova-remote > settings.txt (Wi-Fi name and password,
+box name, login, time zone) before the first power-up.
+
+Short version (making the image yourself on a Mac, with your settings built in):
   1. On your Mac (with internet): edit "Pi box settings.txt" if you want another Wi-Fi name or password,
      then double-click "Build Pi Image.command" (first time: right-click > Open > Open).
      It makes Nova-Relay-<version>-Pi.img.gz next to it.
