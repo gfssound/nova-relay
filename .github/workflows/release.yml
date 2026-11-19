@@ -42,7 +42,7 @@ jobs:
           gh release upload "v$V" "updates/$F" --clobber
   mac:
     needs: release
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Build Nova Relay.app and the .dmg
