@@ -30,3 +30,4 @@ test/updd-*/
 test/dg-*/
 test/*.zip
 apihome-*/
+test/pkgs-*/

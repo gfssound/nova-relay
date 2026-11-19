@@ -277,7 +277,14 @@ RES="$APP/Contents/Resources"
 mkdir -p "$RES/node/arm64" "$RES/node/x64" "$RES/app"
 cp "$WORK/node-arm64/bin/node" "$RES/node/arm64/node"
 cp "$WORK/node-x64/bin/node" "$RES/node/x64/node"
-(cd "$SRC" && cp -R server.js nova.js schema.json package.json public README.md "$RES/app/")
+# Nov 18 (Ferris's app.log: "Cannot find module './deck/manager.js'"): copy the whole app folder, not a list of
+# files: the list missed deck/ (0.6.3), so Macs built from 0.6.3 to 0.6.5 couldn't start. Then check that every
+# file the server loads is there, so a missing one stops the build instead of the app.
+cp -R "$SRC/." "$RES/app/"
+for f in $(grep -ho 'require("\./[^"]*")' "$RES/app/"*.js "$RES/app/deck/"*.js 2>/dev/null | sed 's/require("\.\/\([^"]*\)")/\1/' | sort -u); do
+  case "$f" in *.js|*.json) ;; *) f="$f.js" ;; esac
+  [ -f "$RES/app/$f" ] || [ -f "$RES/app/deck/$f" ] || fail "the app folder is missing $f. Unzip the whole download again."
+done
 
 # Optional serial library (works without it, using the Mac's own serial tools).
 HOSTARCH="$( [ "$(uname -m)" = "arm64" ] && echo arm64 || echo x64 )"

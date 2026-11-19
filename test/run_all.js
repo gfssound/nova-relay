@@ -10,6 +10,7 @@ const TESTS = [
   /* the Nova link */ 'read_first', 'hands_off', 'hello_choice', 'nova523_settings', 'boot_guard', 'connect_quiet', 'safety', 'tx_power',
   /* the page */ 'e2e_net', 'api', 'conn', 'e2e_blank', 'help_cart', 'osk_installed', 'status_row', 'pfl_pages', 'meters_noscroll', 'small_screen', 'test_panel',
   /* Stream Deck, the box */ 'deck_proto', 'deck_pi', 'pi_clock',
+  /* packaging */ 'package_start',
   /* diagnostics, updates */ 'diag', 'updates', 'updates_device'];
 const NEEDS_KEY = new Set(['updates', 'updates_device']);
 const haveKey = !!process.env.NOVA_SIGNING_KEY || fs.existsSync(path.join(ROOT, 'signing', 'update-signing-key.pem'));
