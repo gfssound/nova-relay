@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       only:
-        description: "Build only one download (all, mac, pi, linux)"
+        description: "Build only one download (all, mac, pi, linux; none = just the release notes)"
         default: all
 permissions:
   contents: write
@@ -42,7 +42,9 @@ jobs:
           const j=require("./updates/latest.json");
           const n=(j.notes||[]).map(x=>"- "+x).join("\n");
           console.log(n+"\n\n**Mac:** Apple menu › About This Mac says Apple M… (Apple Silicon: Nova-Relay-"+j.version+"-AppleSilicon.dmg) or Intel (Nova-Relay-"+j.version+"-Intel.dmg). Open it and drag Nova Relay onto Applications. The first time, macOS asks: System Settings › Privacy & Security › Open Anyway.\n\n**Nova Relay box (Raspberry Pi):** write Nova-Relay-"+j.version+"-Pi.img.xz to a microSD card with Raspberry Pi Imager (Windows, Mac or Linux; choose No to OS customisation). Then open the card’s bootfs drive, edit nova-remote › settings.txt (Wi-Fi name and password, box name, login, time zone), save, eject, and power up the Pi.\n\n**Linux:** Nova-Relay-"+j.version+"-x86_64.AppImage, make it executable, double-click.\n\n**Already running Nova Relay 0.6.6 or newer:** Setup › Updates installs "+j.file+" (it finds it here by itself).")' > notes.md
-          gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" --target "$GITHUB_SHA" --title "Nova Relay $V" --notes-file notes.md
+          if gh release view "v$V" >/dev/null 2>&1; then gh release edit "v$V" --notes-file notes.md; else gh release create "v$V" --target "$GITHUB_SHA" --title "Nova Relay $V" --notes-file notes.md; fi
+          # one .dmg for both kinds of Mac was replaced by -AppleSilicon / -Intel (Nov 18)
+          gh release delete-asset "v$V" "Nova-Relay-$V.dmg" -y 2>/dev/null || true
           gh release upload "v$V" "updates/$F" --clobber
   mac:
     needs: release
