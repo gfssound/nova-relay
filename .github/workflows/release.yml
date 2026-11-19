@@ -14,6 +14,10 @@ on:
     branches: [main]
     paths: ['updates/latest.json']
   workflow_dispatch:
+    inputs:
+      only:
+        description: "Build only one download (all, mac, pi, linux)"
+        default: all
 permissions:
   contents: write
 jobs:
@@ -42,6 +46,7 @@ jobs:
           gh release upload "v$V" "updates/$F" --clobber
   mac:
     needs: release
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.only == 'all' || inputs.only == 'mac' }}
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -60,6 +65,7 @@ jobs:
         run: gh release upload "v$V" "build-mac/Nova-Relay-$V.dmg" --clobber
   pi:
     needs: release
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.only == 'all' || inputs.only == 'pi' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -80,6 +86,7 @@ jobs:
         run: gh release upload "v$V" "build-pi/Nova-Relay-$V-Pi.img.xz" --clobber
   linux:
     needs: release
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.only == 'all' || inputs.only == 'linux' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
