@@ -33,7 +33,7 @@ const SCHEMA = JSON.parse(fs.readFileSync(path.join(__dirname, "schema.json"), "
 const BY_ID = new Map(SCHEMA.map(s => [s.id, s]));
 const BY_KEY = new Map(SCHEMA.map(s => [s.k, s]));
 
-const VERSION = "0.6.6";
+const VERSION = "0.6.7";
 const args = process.argv.slice(2);
 const argVal = (name, def) => { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
 const PORT = +(process.env.PORT || argVal("--port", 8080));
@@ -46,6 +46,7 @@ const PUBLIC = path.join(__dirname, "public");
 const DATA = process.env.NOVA_REMOTE_DATA || argVal("--data", path.join(os.homedir(), ".nova-remote"));
 fs.mkdirSync(DATA, { recursive: true });
 /* Diagnostics (Nov 18): rolling capture, saved captures, the Nova's settings since the last session, the problem report. */
+const TX_ONE = "One transmitter's power can't be set from a computer: the transmitters take this command as for all of them. Set it on the Nova's RX page, or use All TX (every transmitter).";
 const DIAG = require("./diag.js");
 const diag = DIAG.createDiag({ DATA, VERSION });
 /* --local: the Linux desktop app and AppImage. Its own window always works; phones and iPads can connect only when
@@ -664,12 +665,15 @@ const nova = {
     if (this.echoes === 2) logAll("er", `Nova link: Nova Relay's own messages are coming back on the cable (an echo), so the Nova can't be heard${POWER_HINT}. Nova Relay stays quiet until the line is clear.`);
   },
   /* Nov 15 (Ferris: "add transmitter global power commands / individual power commands"): cQRXTX sub 98 = power,
-     [98, 01, unit, 00, value, 0…]; value 0 On, 1 Wake, 2 Low; unit 0 = every transmitter (confirmed on the cart Nov 14),
-     1-30 = one transmitter by ZaxNet ID (the Nova passes it through with our unit byte; untested on hardware so far).
-     Returns true when sent, otherwise the reason. */
+     [98, 01, unit, 00, value, 0…]; value 0 On, 1 Wake, 2 Low; unit 0 = every transmitter (confirmed on the cart Nov 14).
+     Nov 19 (Ferris: "The individual tx power commands are just sending the global. But the global works."): with a
+     ZaxNet ID the Nova does pass our unit byte on (firmware process_QRXTX_RX12), but 98 is SET_REMOTE_PWR in Zaxcom's
+     ZaxNet command list, a command the transmitters take as for all of them. So only unit 0 is sent; a ZaxNet ID is
+     refused rather than changing every transmitter. Returns true when sent, otherwise the reason. */
   txPower(unit, v, who) {
     const word = ["On", "Wake", "Low"][v];
-    if (word == null || !(Number.isInteger(unit) && unit >= 0 && unit <= 30)) return "Use on, wake or low, and a ZaxNet ID 1-30 (or none for every transmitter).";
+    if (word == null || !(Number.isInteger(unit) && unit >= 0 && unit <= 30)) return "Use on, wake or low.";
+    if (unit) return TX_ONE;
     if (this.listenOnly) return "Listen only is on, so nothing is sent.";
     if (!this.connected) return "No Nova connected, so the transmitters weren't changed.";
     const now = Date.now(), last = (this._txp || (this._txp = {}))[unit] || 0;
@@ -1536,8 +1540,8 @@ const API_HELP = [
   ["/api/znet/1/up", "RX 1 ZNet trim (transmitter gain) +1 (/down, /up/2, /set/25; 0-52)"],
   ...(FADERS ? [["/api/fader/15/set/200", "move an input's Aria fader (0-255): /set/200, /up, /down, /up/8, /toggle (all the way down and back). Works while recording"]] : []),
   ["/api/scream", "Scream trim on/off: the chosen transmitters drop to the scream ZNet trim, then go back (/on, /off)"],
-  ["/api/tx/power/on", "transmitter power for every transmitter: /on, /wake or /low; add a ZaxNet ID for one transmitter (/api/tx/power/low/3)"],
-  ["/api/test/power/wake", "EXPERIMENTAL: transmitters On/Wake/Low (cQRXTX 98): /api/test/power/wake for all, /api/test/power/wake/3 for ZaxNet ID 3. Also /api/test/fader|trim|out/<ch>/<0-255> and /api/test/enc/<-63..63>. Not while recording."],
+  ["/api/tx/power/on", "transmitter power for every transmitter: /on, /wake or /low (one transmitter can't be set from a computer)"],
+  ["/api/test/power/wake", "EXPERIMENTAL: every transmitter On/Wake/Low (cQRXTX 98): /api/test/power/wake. Also /api/test/fader|trim|out/<ch>/<0-255> and /api/test/enc/<-63..63>. Not while recording."],
   ["/api/com/down", "Com mic on (the Aria's Com button, once learned in Setup \u203a Stream Deck); /api/com/up lets it go (/api/com: on or off)"],
 ];
 /* Scream trim (Nov 12): the same steps as the Meters page button, for the Stream Deck and button boxes. */
@@ -1801,7 +1805,7 @@ function apiRoute(req, res, p) {
     /* Nov 10: transmitter gain (ZNet trim, 0–52) for RX 1–8: /api/znet/1/up, /down, /up/2, /set/25. */
     case "tx": {   /* Nov 15: /api/tx/power/<on|wake|low>[/<ZaxNet ID>] */
       const v = { on: 0, wake: 1, low: 2 }[b];
-      if (a !== "power" || v == null) return out(400, { ok: false, error: "Use /api/tx/power/on, /wake or /low, then optionally /<ZaxNet ID 1-30> for one transmitter." });
+      if (a !== "power" || v == null) return out(400, { ok: false, error: "Use /api/tx/power/on, /wake or /low (every transmitter)." });
       const unit = c === undefined ? 0 : +c;
       const r = nova.txPower(Number.isInteger(unit) ? unit : -1, v, "button API");
       if (r !== true) return out(409, { ...apiStatus(), ok: false, error: r });
@@ -1828,8 +1832,9 @@ function apiRoute(req, res, p) {
         /* Nov 14 (0.6.1): an optional unit = one transmitter's ZaxNet ID (1-30); 0 or none = every transmitter. The Nova
            passes cQRXTX sub-commands other than gain/frequency straight through with our unit byte (firmware
            process_QRXTX_RX12), so whether one transmitter obeys an addressed 98 is up to the transmitter. */
-        const map = { on: 0, wake: 1, low: 2 }; if (!(b in map)) return out(400, { ok: false, error: "Use /api/test/power/on, /wake or /low (then optionally /<ZaxNet ID 1-30>)." });
-        const unit = c === undefined ? 0 : num(c, 0, 30); if (unit == null) return out(400, { ok: false, error: "The transmitter is a ZaxNet ID, 1-30 (0 = every transmitter)." });
+        const map = { on: 0, wake: 1, low: 2 }; if (!(b in map)) return out(400, { ok: false, error: "Use /api/test/power/on, /wake or /low." });
+        const unit = c === undefined ? 0 : num(c, 0, 30); if (unit == null) return out(400, { ok: false, error: "Use /api/test/power/on, /wake or /low." });
+        if (unit) return out(409, { ok: false, error: TX_ONE });   /* Nov 19: an addressed 98 changes every transmitter */
         send(NOVA.CMD.STATUS, [0x98, 0x01, unit, 0x00, map[b], 0, 0, 0, 0, 0, 0], `power ${unit ? "Z" + unit : "ALL"} = ${b.toUpperCase()}  (cQRXTX 98 unit ${unit})`); return later();
       }
       if (a === "fader" || a === "trim" || a === "out") {

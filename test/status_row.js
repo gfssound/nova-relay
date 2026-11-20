@@ -1,4 +1,4 @@
-// Nov 13 (Ferris): the Mirror reading must not push Daylight onto a second row or move the page. Installed app.
+// Nov 19: Help moved to Setup; the Mirror reading is never cut above 780 px wide (Ferris's photo). Nov 13 (Ferris): the Mirror reading must not push Daylight onto a second row or move the page. Installed app.
 const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'), os = require('os');
 const ROOT = path.join(__dirname, '..'); const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
@@ -10,12 +10,13 @@ const ROOT = path.join(__dirname, '..'); const sleep = ms => new Promise(r => se
     const res = [];
     for (const t of ['', ' [Pri: 49GB :: Mirroring (7%)  :: File 3 of 16]', ' [Pri: 49GB :: Mirroring (99%)  :: File 16 of 16]', ' [Pri: 49GB :: Mirroring (100%)  :: Mirror = Cont]', ' [Pri: 1849GB :: Mirroring (100%)  :: File 116 of 116]']) {
       await p.evaluate(t => { set('status.text', [], t, 'remote'); paintDrives(); }, t); await sleep(120);
-      res.push(await p.evaluate(() => { const s = document.getElementById('status'), d = document.getElementById('dayBtn').getBoundingClientRect(), hb = document.getElementById('helpBtn').getBoundingClientRect();
-        return { m: document.getElementById('stMirror').textContent, h: Math.round(s.getBoundingClientRect().height), dayTop: Math.round(d.top), dayRight: Math.round(d.right), main: Math.round(document.querySelector('main').getBoundingClientRect().top), fits: d.right <= innerWidth + 0.5 && hb.left >= 0 }; }));
+      res.push(await p.evaluate(() => { const s = document.getElementById('status'), d = document.getElementById('dayBtn').getBoundingClientRect(), mb = document.getElementById('stMirror');
+        return { m: document.getElementById('stMirror').textContent, h: Math.round(s.getBoundingClientRect().height), dayTop: Math.round(d.top), dayRight: Math.round(d.right), main: Math.round(document.querySelector('main').getBoundingClientRect().top), fits: d.right <= innerWidth + 0.5 && !document.querySelector('#status #helpBtn'), cut: mb.scrollWidth > mb.clientWidth + 1 }; }));
     }
-    const steady = new Set(res.map(r => `${r.h}/${r.dayTop}/${r.main}`)).size === 1, fits = res.every(r => r.fits);
+    const steady = new Set(res.map(r => `${r.h}/${r.dayTop}/${r.main}`)).size === 1, fits = res.every(r => r.fits), whole = w <= 780 || res.every(r => !r.cut);
+    if (!whole) bad++;
     if (!steady || !fits) bad++;
-    console.log(`${w}x${h}`, steady ? 'steady' : 'MOVES', fits ? 'fits' : 'OVERFLOWS', res.map(r => `"${r.m}" h${r.h} day@${r.dayTop},${r.dayRight} main@${r.main}`).join(' | '));
+    console.log(`${w}x${h}`, steady ? 'steady' : 'MOVES', fits ? 'fits' : 'OVERFLOWS', whole ? 'mirror whole' : 'MIRROR CUT', res.map(r => `"${r.m}" h${r.h} day@${r.dayTop},${r.dayRight} main@${r.main}`).join(' | '));
     await p.screenshot({ path: path.join(ROOT, `shots/status_${w}.png`), clip: { x: 0, y: 0, width: w, height: 70 } });
     await p.close();
   }

@@ -589,6 +589,7 @@ main{padding-block:clamp(8px,1.6vh,18px) clamp(12px,2.4vh,28px)}
   .strip .sinfo .u{display:none}
   .strip .scrib{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-rows:minmax(0,1fr);align-items:center;column-gap:3px;padding:1px 3px 1px 6px}
   .strip .scrib .snm{grid-column:1;grid-row:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+  .strip .scrib .zpill{display:none}
   .strip .scrib .rtag{grid-column:2;grid-row:1;justify-self:end;display:inline-flex;align-items:center;gap:3px;padding:2px 4px;border-radius:3px;background:#0a0b0c;border:1px solid var(--line);font-family:var(--f-mono);font-size:8.5px;line-height:1;white-space:nowrap}
   .strip .scrib .rtag:not(:has(> :not([hidden]))){display:none}
   .strip .scrib .rtag .szid.inname{position:static;display:inline;background:none;border:0;padding:0;font-size:inherit}
@@ -596,6 +597,12 @@ main{padding-block:clamp(8px,1.6vh,18px) clamp(12px,2.4vh,28px)}
   .strip .scrib .rtag .stx{position:static;order:-1;background:none;border:0;padding:0;font-size:8.5px;color:var(--warn)}
   /* ON in green; STBY / LOW / WAKE in amber. */
   .strip .scrib .rtag .stx[data-st="On"]{color:var(--ok)}
+  /* Nov 19, 18:50 (Ferris: "The Horizontal meter view should move the commands and such back to bottom row, left
+     oriented"): rows tall enough for two lines (.stack, 32 px and up) put the power / ZNet ID / trim pill on a line
+     under the name, at the left; shorter rows keep it beside the name. */
+  .strips-wrap.stack .strip .scrib:has(.rtag > :not([hidden])){grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;align-content:center;row-gap:3px}
+  .strips-wrap.stack .strip .scrib:has(.rtag > :not([hidden])) .snm{grid-column:1;grid-row:1;line-height:1.05}
+  .strips-wrap.stack .strip .scrib .rtag{grid-column:1;grid-row:2;justify-self:start;font-size:clamp(9px,calc(var(--rowh,34px) * .2),12px)}
   .strips-wrap.tight .strip .scrib .szid .zi:not(:only-child){display:none}
   .strips-wrap.tight .strip .scrib .rtag{padding:1px 4px}
   .strip .scrib .snm{font-size:clamp(12px,calc(var(--rowh,34px) * .45),18px);font-weight:800}
@@ -721,6 +728,7 @@ input,textarea,select,[contenteditable="true"],.log,.log *,code,.deckurl{-webkit
 .txtile{grid-column:1 / -1;display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--raised)}
 .txtile .tl{font-size:var(--t-xs);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
 .txtile .txseg{margin-left:auto}
+.txtile .txnote{margin-left:auto;font-size:var(--t-xs);color:var(--muted);text-align:right;flex:1 1 220px}
 .txseg .seg-b:disabled{opacity:.35;cursor:default}
 .txall{display:flex;align-items:center;gap:8px}
 .txall-l{font-family:var(--f-display);font-size:var(--t-xs);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -975,18 +983,18 @@ main.secs-all .phsec-panel > h3:first-child{display:none}
   .strip:not(.scale) .scrib .rtag{display:none}
   /* Nov 13 (Ferris: "the pill doesn't look as nice when shrunken"): one pill, one font, one height, a hairline
      between the power word and the numbers, the ZNet ID quieter than the trim, the edge tinted by the state. */
-  .sinfo .zpill{display:inline-flex;align-items:center;gap:.42em;margin-left:.45em;padding:.2em .5em;border-radius:.45em;background:#0a0b0c;border:1px solid #2c3238;font-family:var(--f-mono);font-weight:700;line-height:1;vertical-align:.08em;white-space:nowrap}
-  .sinfo .zpill:not(:has(> :not([hidden]))){display:none}
-  .sinfo .zpill .stxn:not([hidden]){display:inline;font-family:inherit;font-size:inherit;font-weight:800;letter-spacing:.04em;color:var(--ok);padding-right:.42em;border-right:1px solid rgba(255,255,255,.16)}
-  .sinfo .zpill .stxn:not([hidden]):last-child{padding-right:0;border-right:0}
-  .sinfo .zpill .stxn[data-st="Standby"],.sinfo .zpill .stxn[data-st="Low power"],.sinfo .zpill .stxn[data-st="Wake"]{color:var(--warn)}
-  .sinfo .zpill:has(.stxn[data-st="On"]:not([hidden])){border-color:color-mix(in srgb,var(--ok) 45%,#2c3238)}
-  .sinfo .zpill:has(.stxn[data-st="Standby"]:not([hidden]),.stxn[data-st="Low power"]:not([hidden]),.stxn[data-st="Wake"]:not([hidden])){border-color:color-mix(in srgb,var(--warn) 60%,#2c3238)}
-  .sinfo .zpill .szid.innum{display:inline;margin:0;padding:0;background:none;border:0;border-radius:0;font-size:inherit;line-height:1;vertical-align:baseline}
-  .sinfo .zpill .szid.innum[hidden]{display:none}
-  .sinfo .zpill .szid .zi{color:#8d969e;font-weight:600}
-  .sinfo .zpill .szid .zt{color:#fff;font-weight:800;margin-left:.35em}
-  .sinfo .zpill .szid .zt:first-child{margin-left:0}
+  .zpill{display:inline-flex;align-items:center;gap:.42em;margin-left:.45em;padding:.2em .5em;border-radius:.45em;background:#0a0b0c;border:1px solid #2c3238;font-family:var(--f-mono);font-weight:700;line-height:1;vertical-align:.08em;white-space:nowrap}
+  .zpill:not(:has(> :not([hidden]))){display:none}
+  .zpill .stxn:not([hidden]){display:inline;font-family:inherit;font-size:inherit;font-weight:800;letter-spacing:.04em;color:var(--ok);padding-right:.42em;border-right:1px solid rgba(255,255,255,.16)}
+  .zpill .stxn:not([hidden]):last-child{padding-right:0;border-right:0}
+  .zpill .stxn[data-st="Standby"],.zpill .stxn[data-st="Low power"],.zpill .stxn[data-st="Wake"]{color:var(--warn)}
+  .zpill:has(.stxn[data-st="On"]:not([hidden])){border-color:color-mix(in srgb,var(--ok) 45%,#2c3238)}
+  .zpill:has(.stxn[data-st="Standby"]:not([hidden]),.stxn[data-st="Low power"]:not([hidden]),.stxn[data-st="Wake"]:not([hidden])){border-color:color-mix(in srgb,var(--warn) 60%,#2c3238)}
+  .zpill .szid.innum{display:inline;margin:0;padding:0;background:none;border:0;border-radius:0;font-size:inherit;line-height:1;vertical-align:baseline}
+  .zpill .szid.innum[hidden]{display:none}
+  .zpill .szid .zi{color:#8d969e;font-weight:600}
+  .zpill .szid .zt{color:#fff;font-weight:800;margin-left:.35em}
+  .zpill .szid .zt:first-child{margin-left:0}
   @supports (container-type:inline-size){
     .strip:not(.scale){container-type:inline-size}
     .sinfo{font-size:clamp(11px,7.2cqi,19px)}
@@ -995,7 +1003,7 @@ main.secs-all .phsec-panel > h3:first-child{display:none}
        a long name steps down to fit (fitNames). */
     .strip:not(.scale) .scrib{font-size:max(clamp(11px,calc(0.9vw + 6px),17px),min(9.5cqi,28px));font-weight:800;padding-block:max(4px,1.8cqi)}
     /* Nov 12 (Ferris): the ZNet pill and its power label (ON / STBY / LOW / WAKE) scale with the meter strip. */
-    .sinfo .zpill{font-size:clamp(10px,6cqi,17px)}
+    .zpill{font-size:clamp(10px,6cqi,17px)}
     /* Narrow strips: "+12" instead of "+12 dB" so the number, ZNet tag and trim fit. */
     @container (max-width:120px){ .sinfo .u{display:none} }
     /* Narrow strips: the pill keeps the power label and the trim; the ZNet ID steps out ([ON|25]). */
@@ -1003,7 +1011,36 @@ main.secs-all .phsec-panel > h3:first-child{display:none}
        number line ("01 MIX") tightens to fit instead of pushing the strip, and the meters, a few pixels wider. */
     .strip:not(.scale) .sinfo{min-width:0;overflow:hidden}
     @container (max-width:52px){ .sinfo{gap:1px;font-size:9px;letter-spacing:-.03em} }
-    @container (max-width:130px){ .sinfo .zpill .szid .zi:not(:only-child){display:none} .sinfo .zpill{margin-left:.3em;padding:.18em .4em;gap:.35em} .sinfo .zpill .stxn:not([hidden]){padding-right:.35em;letter-spacing:.02em} }
+    @container (max-width:130px){ .zpill .szid .zi:not(:only-child){display:none} .zpill{margin-left:.3em;padding:.18em .4em;gap:.35em} .zpill .stxn:not([hidden]){padding-right:.35em;letter-spacing:.02em} }
+    /* Nov 19: name left, pill right inside the name box (Setup › Meters › Name left, ZNet pill right). */
+    body[data-nameleft="1"] .strip:not(.scale) .scrib{justify-content:flex-start;gap:.4em;padding-inline:max(3px,2.4cqi) max(2px,1.6cqi)}
+    /* Nov 19 (Ferris: "make it look nicer next to track names"): in the name box the pill is a dark inset at the right
+       end, the full height of the box less a small margin, its corners matching the box, its text scaled to the name
+       (a little smaller), and a short bar in the power colour at its left edge instead of a tinted outline. */
+    body[data-nameleft="1"] .strip:not(.scale) .scrib:has(> .zpill > :not([hidden])){padding-right:3px}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill{margin:calc(3px - max(4px,1.8cqi)) 0 calc(3px - max(4px,1.8cqi)) auto;flex:none;align-self:stretch;display:inline-flex;align-items:center;gap:.45em;
+      font-size:.56em;letter-spacing:.02em;padding:0 .65em 0 .8em;border:0;border-radius:3px;background:rgba(8,9,10,.82);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);position:relative}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .stxn:not([hidden]){border-right-color:rgba(255,255,255,.18)}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill::before{content:"";position:absolute;left:.3em;top:26%;bottom:26%;width:2px;border-radius:2px;background:transparent}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill:has(.stxn[data-st="On"]:not([hidden]))::before{background:var(--ok)}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill:has(.stxn[data-st="Standby"]:not([hidden]),.stxn[data-st="Low power"]:not([hidden]),.stxn[data-st="Wake"]:not([hidden]))::before{background:var(--warn)}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zt{font-size:1.08em}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill:not(:has(> :not([hidden]))){display:none}
+    /* Nov 19, 15:55 (Ferris: "I meant zaxnet id not gain. Also I meant the A design with the background"): the dark inset
+       (v169) with style A's finish: every part one size and trimmed to its capitals so it sits on the middle of the box,
+       the power-colour bar a short centred line of the same height, the ZNet ID white on a Zaxcom-blue chip, the trim
+       white, ON green, STBY / LOW / WAKE amber. */
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill{gap:.5em;font-size:.58em;padding:0 .7em 0 1.05em;line-height:1}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill::before{left:.45em;top:50%;bottom:auto;height:1.2em;transform:translateY(-50%);width:2px;border-radius:1px}
+    /* 16:40 (Ferris: "The text still looks slightly higher than the green line and blue box"): no text-box (Safari before
+       18.2, so the Mac app's window, doesn't have it); each part is a 1em line, and --pill-cn (set by pillCenter() from
+       the font actually in use) moves the letters down so their capitals sit on the middle of the line, the chip and the bar. */
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .stxn:not([hidden]),body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zi,body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zt{display:inline-block;line-height:1;text-box:none}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .stxn:not([hidden]),body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zt,body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zi > span{display:inline-block;transform:translateY(var(--pill-cn,0px))}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .stxn:not([hidden]){border:0;padding:0}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid{display:inline-flex;align-items:center;gap:.5em}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zi{color:#fff;font-weight:800;padding:.32em .45em;background:#1b6ec2;border-radius:.3em}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zt{color:#fff;font-weight:800;font-size:1em;margin-left:0}
   }
 }
 :root[data-theme="day"] body[data-layout="console"],:root[data-theme="day"] body{--muted:#384046}
@@ -1017,7 +1054,8 @@ html.osk-on .app{height:calc(100% - var(--osk-h,0px))}
   .status .brand,.status .pill{flex:0 1 auto;min-width:0;overflow:hidden}
   .status .stat{flex:0 1 auto;min-width:0}
   .status .stat b,.status .stat .lbl{overflow:hidden;text-overflow:ellipsis}
-  .status #stMirrorBox{flex:0 1 auto;width:15ch;min-width:5ch}
+  .status #stMirrorBox{flex:none}
+  .status #stMirror{display:block;min-width:19ch}   /* Nov 19 (Ferris's photo: "CONT 99% · …"): room for "CONT 100% · 116/116" in the reading's own font, and it doesn't shrink */
   .status .daybtn{flex:none}
 }
 @media (max-width:1250px){ #phoneBtn,#tabletBtn{display:none} }  /* prototype-only preview buttons */
@@ -1025,7 +1063,7 @@ html.osk-on .app{height:calc(100% - var(--osk-h,0px))}
   .status .brand,.status .stat:has(#stDrive),.status #stPriBox{display:none}
   .status .pill{margin-right:auto}
 }
-@media (min-width:601px) and (max-width:780px){ .status #stMirrorBox{width:10ch} }
+@media (min-width:601px) and (max-width:900px){ .status #stMirrorBox{flex:0 1 auto;min-width:5ch} .status #stMirror{min-width:0} }   /* narrow: full reading when it fits, "…" only when it can't */
 /* Scream trim button (Meters page) and its setup chips (Nov 12) */
 .screambtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:38px;padding:4px 14px;border-radius:var(--r);border:2px solid var(--warn);background:transparent;color:var(--tick-warn,var(--warn));font-family:var(--f-display);line-height:1;cursor:pointer}
 .screambtn .sbig{font-size:var(--t-md);font-weight:800;letter-spacing:.08em}
@@ -1053,7 +1091,6 @@ html.osk-on .modal-back{bottom:var(--osk-h,0px);overflow:auto}
     <div class="stat opt"><span class="lbl">Battery</span><b id="stBatt">—</b></div>
     <button type="button" class="daybtn" id="phoneBtn" title="Preview the phone layout">iPhone</button>
     <button type="button" class="daybtn" id="tabletBtn" title="Preview the tablet layout">iPad</button>
-    <button type="button" class="daybtn" id="helpBtn" title="Open the Nova Relay user manual">Help</button>
     <button type="button" class="daybtn" id="dayBtn" aria-pressed="false" title="Light colours for bright sun">Daylight</button>
   </header>
 
@@ -1127,6 +1164,7 @@ const LOCAL = [
   /* Nov 7 (Ferris): choose whether the ZNet ID and the transmitter power state appear on the meters. */
   {id:0, n:"METERS_SHOW_ZNET", t:"Menu", k:"ui.meters.znet", m:["OFF","ON"], local:true},
   {id:0, n:"METERS_SHOW_TX", t:"Menu", k:"ui.meters.tx", m:["OFF","ON"], local:true},
+  {id:0, n:"METERS_NAME_LEFT", t:"Menu", k:"ui.meters.nameleft", m:["OFF","ON"], local:true},
   /* Nov 12 (Ferris): the ZNet trim (transmitter gain) next to the ZNet ID on the meters. */
   {id:0, n:"METERS_SHOW_ZNET_TRIM", t:"Menu", k:"ui.meters.znettrim", m:["OFF","ON"], local:true},
   {id:0, n:"METERS_SHOW_FADERS", t:"Menu", k:"ui.meters.faders", m:["OFF","ON"], local:true},
@@ -1180,7 +1218,7 @@ const V = {}; SCHEMA.forEach(s => V[s.k] = build(s.d, () => def(s)));
 V["ui.refline.enable"] = 1; V["ui.refline.level"] = -18;
 V["ui.track.com1"] = Array(16).fill(0);
 V["ui.helptext"] = 0; V["ui.osk"] = 0;
-V["ui.meters.znet"] = 1; V["ui.meters.tx"] = 1; V["ui.meters.znettrim"] = 1;
+V["ui.meters.znet"] = 1; V["ui.meters.tx"] = 1; V["ui.meters.znettrim"] = 1; V["ui.meters.nameleft"] = 1;
 /* Nov 14 (0.6.1): faders on the meters. Off until turned on (per device); positions are where Nova Relay last put each
    input's Aria fader (0-255), null until then. */
 V["ui.meters.faders"] = EXAMPLE ? 1 : 0;
@@ -2911,10 +2949,10 @@ function screamPanel(){
     h("div", {class:"panel"}, h("h3", null, "Where the button is"), h("p", {class:"hint keep"}, "On the Stream Deck (the Scream trim key) and as button addresses: /api/scream (toggle), /api/scream/on, /api/scream/off. (The button on the Meters page is off for now.)")));
 }
 /* ---------- Setup › Transmitters (Nov 15, Ferris: "add transmitter global power commands / individual power commands") ----------
-   ZaxNet transmitter power through the Nova: On, Wake or Low, for every transmitter at once or one at a time by its
-   ZaxNet ID; the command the Nova's own transmitter power menu sends (cQRXTX 98). All transmitters was confirmed on the
-   cart (Nov 14); one transmitter goes by its ZaxNet ID. All takes a second tap to confirm, and so does any change while
-   recording. The state shown is what each transmitter last reported through the Nova. */
+   ZaxNet transmitter power through the Nova: On, Wake or Low for every transmitter at once (cQRXTX 98, SET_REMOTE_PWR;
+   confirmed on the cart Nov 14). One transmitter by its ZaxNet ID was tried and changes every transmitter (Ferris,
+   Nov 19), so the RX pages only show the state. All takes a second tap to confirm. The state shown is what each
+   transmitter last reported through the Nova. */
 const TX_POWER = [["On", 0], ["Wake", 1], ["Low", 2]];
 const rxZid = r => { const z = (get("input.zaxnet.id") || [])[14 + r]; return Number.isInteger(z) && z >= 1 && z <= 30 ? z : null; };
 function txPowerSend(unit, v){   /* the prototype plays the transmitters; the installed app sends it to the Nova */
@@ -2943,12 +2981,15 @@ function txPowerButtons(getUnit, label, compact){
   draw(); seg.redraw = draw;
   return seg;
 }
-/* An RX input's page (and its meter pop-up): its transmitter's power, by ZaxNet ID, with the state it last reported. */
+/* An RX input's page (and its meter pop-up): the power state its transmitter last reported. Read only since Nov 19
+   (Ferris: "The individual tx power commands are just sending the global. But the global works."): cQRXTX 98 is
+   SET_REMOTE_PWR in Zaxcom's ZaxNet command list, a command for every transmitter; the transmitters ignore the
+   ZaxNet ID in it. One transmitter's power is set on the Nova's own RX page. */
 function txPowerTile(i){
-  const r = i - 14, chip = h("span", {class:"txchip"}), seg = txPowerButtons(() => rxZid(r), inFull(i));
+  const r = i - 14, chip = h("span", {class:"txchip"});
   bind("ui.txstate", [], a => { const st = (a || [])[r] || ""; chip.dataset.st = st; chip.textContent = st ? (st === "Low power" ? "Low" : st) : "\u2014"; });
-  bind("input.zaxnet.id", [], () => seg.redraw());
-  return h("div", {class:"txtile"}, h("span", {class:"tl"}, "TX power"), chip, seg);
+  return h("div", {class:"txtile"}, h("span", {class:"tl"}, "TX power"), chip,
+    h("span", {class:"txnote"}, "Set one transmitter on the Nova\u2019s RX page. All TX on the Meters page sets every transmitter."));
 }
 /* The Meters page: every transmitter at once (where the scream button was, Nov 15). */
 function txAllControl(){
@@ -3107,13 +3148,44 @@ function scaleStrip(hooks){
 }
 
 /* Nov 12: a name too long for its box steps down in size (to 10 px) instead of being cut off or covered. */
+/* Nov 19: the ZNet pill goes in the name box (right end) when Name left is on and the box has room for both;
+   on narrow strips (16 meters on a laptop) it stays on the number line so the name keeps the box. */
+function placePill(sc){
+  if(!sc._zp) return;
+  const w = sc.getBoundingClientRect().width, inBox = !!get("ui.meters.nameleft") && !(w && w < 150);
+  const dest = inBox ? sc : sc._num; if(sc._zp.parentNode !== dest) dest.append(sc._zp);
+}
+/* Nov 19, 16:40 (Ferris: "The text still looks slightly higher than the green line and blue box"): how far the capitals
+   of the pill's 1em lines sit from their middle, measured on the page with the font really in use (Martian Mono, or
+   the computer's own mono when offline): a zero-size mark on the baseline, and a mark 1cap tall for the capitals'
+   height (0.72em where a browser has no cap unit). Set per pill in px, so it includes the browser's own rounding. */
+function pillCenter(z){
+  try{
+    const probe = h("span", {style:"position:absolute;left:0;top:0;display:inline-block;line-height:1;white-space:nowrap;visibility:hidden;pointer-events:none"}, "Z0",
+      h("i", {style:"display:inline-block;width:0;height:0;vertical-align:baseline"}), h("i", {style:"display:inline-block;width:0;height:.72em;height:1cap;vertical-align:baseline"}));
+    z.append(probe);
+    const box = probe.getBoundingClientRect(), base = probe.children[0].getBoundingClientRect().bottom - box.top, cap = probe.children[1].getBoundingClientRect().height;
+    probe.remove();
+    if(!(box.height > 0) || !(cap > 0)) return;
+    z.style.setProperty("--pill-cn", (box.height / 2 - (base - cap / 2)).toFixed(2) + "px");
+  }catch(e){}
+}
+function pillCenterAll(){ for(const z of document.querySelectorAll(".strips .scrib > .zpill")) if(z.offsetParent) pillCenter(z); }
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => pillCenterAll());
+let refitT = null; const refitNames = () => { clearTimeout(refitT); refitT = setTimeout(() => fitNames(), 60); };
 function fitNames(){
+  for(const sc of document.querySelectorAll(".strips .strip:not(.scale) .scrib")) placePill(sc);
+  pillCenterAll();
   for(const n of document.querySelectorAll(".strips .strip:not(.scale) .scrib .snm")){
     n.style.fontSize = ""; n.style.lineHeight = ""; if(!n.offsetParent) continue;
     let fs = parseFloat(getComputedStyle(n).fontSize);
-    if(n.scrollWidth <= n.clientWidth) continue;
+    /* Nov 19: measured to the fraction of a pixel (scrollWidth rounds, so a name 0.4 px too wide got "…" while
+       counting as fitting). */
+    const rg = document.createRange(); rg.selectNodeContents(n);
+    const over = () => n.scrollWidth > n.clientWidth || rg.getBoundingClientRect().width > n.getBoundingClientRect().width + 0.01;
+    if(!over()) continue;
     n.style.lineHeight = n.getBoundingClientRect().height + "px";  /* the box keeps its height, so the strips stay level */
-    while(n.scrollWidth > n.clientWidth && fs > 10){ fs -= 0.5; n.style.fontSize = fs + "px"; }
+    while(over() && fs > 10){ fs -= 0.5; n.style.fontSize = fs + "px"; }
   }
 }
 /* Meters fill the window: the strips share the width, and the LED columns take the height that's left. */
@@ -3128,15 +3200,15 @@ function fitMetersOnly(){
     const cur = parseFloat(getComputedStyle(rows[0]).gridTemplateRows) || 34, extra = rows[0].getBoundingClientRect().height - cur;  /* padding + border */
     const rh = Math.max(12, Math.min(PHONE.matches ? 40 : 64, Math.floor((room - 3 * (rows.length - 1)) / rows.length - extra)));
     wrap.style.setProperty("--rowgap", rh < 18 ? "1px" : "3px");
-    wrap.style.setProperty("--rowh", rh + "px"); wrap.classList.toggle("tall", rh >= 24); wrap.classList.toggle("tight", rh < 24);
+    wrap.style.setProperty("--rowh", rh + "px"); wrap.classList.toggle("tall", rh >= 24); wrap.classList.toggle("tight", rh < 24); wrap.classList.toggle("stack", rh >= 32);
     /* Nov 15 (Ferris: "make sure the meters page doesn't scroll"): whatever the estimate missed, take off the rows. */
     for(let k = 0, cur2 = rh; k < 3; k++){
       const over = metersOverflow(); if(over <= 0 || cur2 <= 12) break;
-      cur2 = Math.max(12, cur2 - Math.ceil(over / rows.length)); if(cur2 < 18) wrap.style.setProperty("--rowgap", "1px"); wrap.style.setProperty("--rowh", cur2 + "px"); wrap.classList.toggle("tall", cur2 >= 24); wrap.classList.toggle("tight", cur2 < 24);
+      cur2 = Math.max(12, cur2 - Math.ceil(over / rows.length)); if(cur2 < 18) wrap.style.setProperty("--rowgap", "1px"); wrap.style.setProperty("--rowh", cur2 + "px"); wrap.classList.toggle("tall", cur2 >= 24); wrap.classList.toggle("tight", cur2 < 24); wrap.classList.toggle("stack", cur2 >= 32);
     }
     return;
   }
-  wrap.style.removeProperty("--rowh"); wrap.classList.remove("tall", "tight");
+  wrap.style.removeProperty("--rowh"); wrap.classList.remove("tall", "tight", "stack");
   const led = wrap.querySelector(".led"), strip = led && led.closest(".strip"); if(!strip) return;
   const chrome = Math.max(...[...wrap.querySelectorAll(".strip")].map(st => { const l = st.querySelector(".led"); return l ? st.getBoundingClientRect().height - l.getBoundingClientRect().height : 0; }));
   const avail = window.innerHeight - wrap.getBoundingClientRect().top - chrome - (wrap.scrollWidth > wrap.clientWidth ? 34 : 22);
@@ -3279,8 +3351,9 @@ function homeConsole(){
         const paintZ = () => {
           const c = stripInput(s), z = c == null || !get("ui.meters.znet") ? null : znetIdOf(c);
           const t = c != null && c >= 14 && c <= 21 && get("ui.meters.znettrim") ? (get("ui.znettrim") || [])[c - 14] ?? null : null;
-          for(const e of [zb, zbNum]){ e.replaceChildren(z ? h("i", {class:"zi"}, "Z" + z) : "", t != null ? h("b", {class:"zt"}, String(t)) : ""); e.hidden = !z && t == null; }
+          for(const e of [zb, zbNum]){ e.replaceChildren(z ? h("i", {class:"zi"}, h("span", null, "Z" + z)) : "", t != null ? h("b", {class:"zt"}, String(t)) : ""); e.hidden = !z && t == null; }
           if(zbNum) zbNum.title = [z ? `ZNet ID ${z}` : "", t != null ? `ZNet trim ${t}` : ""].filter(Boolean).join(" \u00b7 ");
+          refitNames();
         };
         bind("input.zaxnet.id", [], paintZ); bind("ui.meters.znet", [], paintZ); bind("ui.znettrim", [], paintZ); bind("ui.meters.znettrim", [], paintZ);
         if(s.kind === "t") bind("trackmix.matrix", [], paintZ);
@@ -3291,7 +3364,7 @@ function homeConsole(){
         txNum = h("span", {class:"stxn", "aria-hidden":"true"});
         const paintTx = () => { const v = (get("ui.txstate") || [])[ch - 14], show = v && get("ui.meters.tx"), w = !show ? "" : v === "On" ? "ON" : v === "Low power" ? "LOW" : v === "Standby" ? "STBY" : "WAKE";
           for(const e of [tb, txNum]){ e.textContent = w; e.hidden = !show; e.dataset.st = v || ""; }
-          scrib.title = `${s.name}${v ? " \u00b7 TX " + v : ""}`; };
+          scrib.title = `${s.name}${v ? " \u00b7 TX " + v : ""}`; refitNames(); };
         bind("ui.txstate", [], paintTx); bind("ui.meters.tx", [], paintTx);
       }
       const trim = h("span");
@@ -3312,8 +3385,12 @@ function homeConsole(){
       if(s.kind === "t") bind("trackmix.matrix", [], paintPfl);
       const fd = stripFader(() => s.kind === "o" ? null : stripInput(s), cv);
       hooks.push(() => fd.update());
+      /* Nov 19 (Ferris: "try left orient on the track names and moving the zaxnet id, gain, and power to right orient
+         on that"): with Setup › Meters › Name left, ZNet pill right, the pill sits at the right end of the name box. */
+      const zp = h("span", {class:"zpill"}, txNum, zbNum), numSpan = h("span", null, typeof s.num === "number" ? String(s.num).padStart(2, "0") : s.num);
+      scrib._zp = zp; scrib._num = numSpan; bind("ui.meters.nameleft", [], () => placePill(scrib));
       const box = h("div", {class:"strip"}, scrib,
-        h("div", {class:"sinfo"}, h("span", null, typeof s.num === "number" ? String(s.num).padStart(2, "0") : s.num, h("span", {class:"zpill"}, txNum, zbNum)), trim),
+        h("div", {class:"sinfo"}, numSpan, trim),
         cv, pb, fd.cap);
       /* Nov 3 (Ferris: PFL was lighting the MIX strip): only a strip that carries the PFL'd input on its own lights,
          the same strips that have a PFL key. A track fed by two or more inputs is a mix, whatever it's called. */
@@ -3600,7 +3677,7 @@ let setupSec = "rec", setupEdit = null;
 const SETUP_GROUPS = [
   {id:"rec", title:"Recording", items:[["sample.rate", "Sample rate"], ["ui.bitdepth", "Bit depth"], ["neverclip.attenuation", "ISO Attenuation"], ["record.preroll", "Pre-roll"], ["setup.transport", "Transport"], ["tone.enable", "Tone"], ["tone.level", "Tone level"]]},
   {id:"meters", title:"Meters", items:[["meters.meter.hold", "Meter hold"], ["meters.meter.decay", "Meter decay"], ["meters.peak.hold", "Peak hold"], ["meters.peak.decay", "Peak decay"],
-    ["ui.refline.enable", "Reference line"], ["ui.refline.level", "Ref line level"], ["ui.meters.znet", "ZNet ID on meters"], ["ui.meters.znettrim", "ZNet trim on meters"], ["ui.meters.tx", "TX power on meters"], ["ui.meters.faders", "Faders on meters"]]},
+    ["ui.refline.enable", "Reference line"], ["ui.refline.level", "Ref line level"], ["ui.meters.znet", "ZNet ID on meters"], ["ui.meters.znettrim", "ZNet trim on meters"], ["ui.meters.tx", "TX power on meters"], ["ui.meters.nameleft", "Name left, ZNet pill right"], ["ui.meters.faders", "Faders on meters"]]},
   {id:"ctrl", title:"Remote roll & control", items:[["setup.gpi1.remoteroll", "GPI 1 roll"], ["setup.serial.remoteroll", "Serial roll"], ["setup.serial.mode", "Serial mode"],
     ["setup.master.mode", "Master"], ["controller.backlight", "Backlight"], ["ui.update.period", "UI update"]]},
   {id:"scream", title:"Scream trim", items:[]},
@@ -3692,7 +3769,7 @@ function setupTiles(onlyId){
 }
 /* Sections: a menu of sections on the left, one section's settings on the right. */
 function setupSections(connPanel, connTitle){
-  const secs = [...SETUP_GROUPS, {id:"conn", title:connTitle, items:[]}, {id:"deck", title:"Stream Deck", items:[]}, {id:"update", title:"Updates", items:[]}];
+  const secs = [...SETUP_GROUPS, {id:"conn", title:connTitle, items:[]}, {id:"deck", title:"Stream Deck", items:[]}, {id:"update", title:"Updates", items:[]}, {id:"help", title:"Help", items:[]}];
   const nav = h("nav", {class:"secnav", "aria-label":"Setup sections"}, secs.map(g => {
     const dot = g.id === "update" && updState().available ? h("i", {class:"secdot", "aria-label":"update available"}) : null;
     return h("button", {type:"button", class:"secbtn", "aria-pressed":setupSec === g.id ? "true" : "false", onclick:() => { setupSec = g.id; go("setup"); }}, h("span", {class:"secname"}, g.title, dot));
@@ -3701,10 +3778,22 @@ function setupSections(connPanel, connTitle){
   if(setupEdit && !g.items.some(([k]) => k === setupEdit.k)) setupEdit = null;
   /* The link log lives under Connection (moved from its own tab, Oct 26). */
   const body = g.id === "conn" ? h("div", {class:"stack"}, connPanel, h("div", {class:"panel"}, h("h3", null, "Link log"), RENDER.log()), diagPanel())
-    : g.id === "deck" ? streamDeckPanels() : g.id === "scream" ? screamPanel() : g.id === "update" ? updatesPanel()
+    : g.id === "deck" ? streamDeckPanels() : g.id === "scream" ? screamPanel() : g.id === "update" ? updatesPanel() : g.id === "help" ? helpPanel()
     : g.id === "meters" ? h("div", {class:"stack"}, setupTiles(g.id), h("p", {class:"hint keep"}, "Faders on meters: strips with a PFL key get a fader. Drag the cap to move that input's Aria fader, the same as pushing it on the Aria (it works while recording). The Nova doesn't report fader positions, so the cap shows where Nova Relay last put it, and stays hollow until then. Touching that fader on the Aria takes over. After changing the Aria's bank, press its page buttons again, as for PFL."))
     : setupTiles(g.id);
   return h("div", {class:"secsplit"}, nav, body);
+}
+
+/* ---------- Setup › Help (Nov 19, Ferris: "Move the help button to settings to give the upper menu items more room. The
+   mirror status gets cut off") ---------- The manual, and where to go when something goes wrong. */
+function helpPanel(){
+  return h("div", {class:"stack"},
+    h("div", {class:"panel"}, h("h3", null, "User manual"),
+      h("p", {class:"hint keep"}, "Every page and setting, connecting to the Nova, phones and iPads, the Stream Deck, the Nova Relay box, updates and troubleshooting."),
+      h("div", {class:"flex", style:"gap:8px"}, h("button", {type:"button", class:"btn primary", id:"helpBtn", onclick:() => openHelp()}, "Open the manual"))),
+    h("div", {class:"panel"}, h("h3", null, "Something went wrong?"),
+      h("p", {class:"hint keep"}, "Save the last few minutes of the Nova's line, or download a problem report, in Setup › Connection."),
+      h("div", {class:"flex", style:"gap:8px"}, h("button", {type:"button", class:"btn", onclick:() => { setupSec = "conn"; go("setup"); }}, "Go to Connection"))));
 }
 
 /* ---------- Setup › Connection › Something went wrong? (Nov 18, Ferris: "Let's work on 1, 2, 3") ----------
@@ -3741,7 +3830,7 @@ function diagPanel(){
    What's running; Check for updates (GitHub, github.com/gfssound/nova-relay); Install (two taps; never by itself);
    an update file from this device (a cart without internet); Go back to the version before. The prototype pretends:
    the installed app asks the cart computer, which checks, downloads, checks the signature and restarts. */
-const PROTO_VERSION = "0.6.6";
+const PROTO_VERSION = "0.6.7";
 let protoUpd = {running:PROTO_VERSION, appVersion:PROTO_VERSION, fromUpdate:false, back:null, auto:true, checking:false, checkedAt:0, error:null, offline:false, busy:null, latest:null, available:false, recording:false, source:"github.com/gfssound/nova-relay"};
 let updDraw = null;
 const updState = () => ({...protoUpd, recording:sim.state === "RECORDING"});
@@ -4466,6 +4555,7 @@ function paintRecFile(){
 function applyLayout(){ document.body.dataset.layout = "console"; applyDay(); }
 function wireChrome(){
   bind("ui.helptext", [], v => document.body.dataset.help = v ? "1" : "0", true);
+  bind("ui.meters.nameleft", [], v => { document.body.dataset.nameleft = v ? "1" : "0"; requestAnimationFrame(() => fitNames()); }, true);
   bind("ui.osk", [], v => { if(!v) OSK.hide(); }, true);
   bind("ui.recfile", [], () => paintRecFile(), true);
   /* Headphone preset in the top bar: shows the current one, tap steps through the presets that are On. */
@@ -4520,7 +4610,6 @@ function wireChrome(){
     if($("phoneBtn")){ if(inPreview) $("phoneBtn").remove(); else $("phoneBtn").addEventListener("click", () => openDeviceView("phone")); }
     if($("tabletBtn")){ if(inPreview) $("tabletBtn").remove(); else $("tabletBtn").addEventListener("click", () => openDeviceView("tablet")); }
   }
-  $("helpBtn").addEventListener("click", () => openHelp());
 $("dayBtn").addEventListener("click", () => { dayMode = !dayMode; try{ localStorage.setItem("cart-remote-day", dayMode ? "1" : "0"); }catch(e){} applyDay(); });
   ["goScene","goTake"].forEach(id => { $(id).setAttribute("aria-haspopup", "dialog"); $(id).title = "Edit the next take, or the current take while recording"; });
   bind("tone.enable", [], v => { $("bTone").setAttribute("aria-pressed", v ? "true" : "false"); paintToneLock(); }, true);

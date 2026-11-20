@@ -10,6 +10,9 @@ const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Prom
   console.log('manual.pdf:', pdf);
   const get = await p.evaluate(async () => (await fetch('/manual/open')).status); console.log('GET /manual/open ->', get);
   const pop = p.waitForEvent('popup', { timeout: 4000 }).catch(() => null);
+  /* Nov 19: Help moved from the header to Setup › Help */
+  console.log('header Help button:', await p.locator('#status #helpBtn').count());
+  await p.evaluate(() => { setupSec = 'help'; go('setup'); }); await sleep(300);
   await p.click('#helpBtn'); const w = await pop; await sleep(500);
   console.log('requests:', posts.join(', '), '| toast:', await p.locator('.toast').textContent().catch(() => ''), '| fallback window:', w ? (await w.waitForURL(/manual/, {timeout: 4000}).catch(() => {}), w.url().replace(/^https?:..[^/]+/, '')) : 'none');
   await p.evaluate(() => go('timecode')); await sleep(300);

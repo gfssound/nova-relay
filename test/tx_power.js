@@ -1,4 +1,4 @@
-/* Nov 15: Setup › Transmitters (transmitter power for all transmitters and one by ZaxNet ID) against a replayed Nova:
+/* Nov 15 (Nov 19: one transmitter by ID refused): Setup › Transmitters (transmitter power for all transmitters and one by ZaxNet ID) against a replayed Nova:
    All takes a second tap; a receiver's row sends at once with its ZaxNet ID; /api/tx/power works; what the Nova gets.
    Also: the installed page blocks pinch / trackpad zoom and double-tap zoom. */
 const { spawn } = require('child_process'); const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
@@ -23,28 +23,25 @@ let fails = 0; const check = (ok, what) => { console.log(`${ok ? 'ok  ' : 'FAIL'
   check(frames().length === 0 && await all.locator('button', { hasText: 'Tap again: Low' }).count() === 1, 'Meters page All TX: the first tap only arms ("Tap again: Low"), nothing sent');
   await all.locator('button', { hasText: 'Tap again: Low' }).click(); await sleep(700);
   check(JSON.stringify(frames()) === '["98 01 00 00 02"]', `second tap sends power ALL = Low: ${JSON.stringify(frames())}`);
-  /* an RX input's page: TX power for that transmitter, one tap */
+  /* an RX input's page: the transmitter's reported state only (Nov 19: one transmitter by ZaxNet ID changed them all) */
   await p.evaluate(() => { go('inputs'); set('input.channel', [], 15, 'local'); }); await sleep(600);
-  const tile = p.locator('.txtile').first(); const zid = await p.evaluate(() => rxZid(0));
-  check(await p.locator('.txtile').count() >= 1 && /TX power/i.test(await tile.innerText()), `RX 1's page has TX power (ZaxNet ${zid})`);
+  const tile = p.locator('.txtile').first();
+  check(await p.locator('.txtile').count() >= 1 && /TX power/i.test(await tile.innerText()) && await tile.locator('button').count() === 0,
+    "RX 1's page shows TX power with no buttons (set one transmitter on the Nova)");
   const before = frames().length;
-  await tile.locator('button', { hasText: /^Wake$/ }).click(); await sleep(400);
-  check(frames().length === before && await tile.locator('button', { hasText: 'Tap again: Wake' }).count() === 1, "RX 1's page: the first tap only arms (\"Tap again: Wake\"), nothing sent");
-  await tile.locator('button', { hasText: 'Tap again: Wake' }).click(); await sleep(700);
-  const want = `98 01 ${zid.toString(16).padStart(2, '0').toUpperCase()} 00 01`;
-  check(frames().includes(want), `the second tap on RX 1's page sends to its ZaxNet ID ${zid}: ${want}`);
-  await p.evaluate(() => { const a = (get('input.zaxnet.id') || []).slice(); a[14] = null; V['input.zaxnet.id'] = a; notify('input.zaxnet.id', []); }); await sleep(200);
-  check(await p.locator('.txtile').first().locator('button').first().isDisabled(), 'no known ZaxNet ID: the buttons are off');
+  const ws = await p.evaluate(() => new Promise(res => { net.send({ t: 'txPower', unit: rxZid(0) || 3, v: 1 }); setTimeout(() => res(true), 600); }));
+  check(frames().length === before, 'a device asking for one transmitter by ZaxNet ID: nothing sent');
   await p.evaluate(() => { set('input.channel', [], 1, 'local'); }); await sleep(400);
   check(await p.locator('.txtile').count() === 0, 'an analog input has no TX power');
   await p.evaluate(() => { setupSec = 'rec'; go('setup'); }); await sleep(300);
   check(!(await p.evaluate(() => [...document.querySelectorAll('.secbtn')].some(b => /Transmitters/.test(b.textContent)))), 'Setup has no Transmitters section any more');
   const api = async u => p.evaluate(async u => { const r = await fetch(u); return r.status; }, u);
   check(await api('/api/tx/power/on') === 200, '/api/tx/power/on answers 200'); await sleep(600);
-  check(await api('/api/tx/power/low/3') === 200, '/api/tx/power/low/3 answers 200'); await sleep(600);
+  check(await api('/api/tx/power/low/3') === 409, '/api/tx/power/low/3 (one transmitter) refused'); await sleep(600);
+  check(await api('/api/test/power/low/3') === 409, '/api/test/power/low/3 (test panel, one transmitter) refused');
   check(await api('/api/tx/power/on/31') === 409 && await api('/api/tx/power/max') === 400, 'bad ZaxNet ID or state refused');
   await sleep(500);
-  const f = frames(); check(f.includes('98 01 00 00 00') && f.includes('98 01 03 00 02'), `the API's frames reached the Nova: ${JSON.stringify(f)}`);
+  const f = frames(); check(f.includes('98 01 00 00 00') && !f.some(x => !/^98 01 00 /.test(x)), `only every-transmitter frames reached the Nova: ${JSON.stringify(f)}`);
   /* zoom */
   const z = await p.evaluate(() => {
     const ev = (t, o) => { const e = new Event(t, { cancelable: true, ...o }); document.dispatchEvent(e); return e.defaultPrevented; };

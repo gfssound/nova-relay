@@ -1,7 +1,4 @@
-Updates: Setup › Updates checks GitHub for new versions and installs one only when you press Install (never by itself, never while recording); install from a file, go back to the version before
-Reads the Nova's settings before sending anything; only the NovaTouch hello is sent (no switching that brought up the demo screen); a lone port stays open for a faster first connection
-Since the last session: the Link log lists any of the Nova's settings that changed while Nova Relay wasn't connected
-Something went wrong? (Setup › Connection): save the last 5, 10 or 30 minutes of the Nova's line with a note, and download a one-file problem report
-TX power on each RX input's page and All TX on the Meters page (two taps); the Meters page never scrolls; no zoom or text highlighting on phones
-Mac: the app starts again (the builder missed the Stream Deck folder in 0.6.3 to 0.6.5)
-Nova Relay box: ready-made card image on GitHub; its settings can be edited on the card from Windows, Mac or Linux
+Meters: new switch Setup › Meters › Name left, ZNet pill right: track names on the left of the name box, with the transmitter's power, ZNet ID and ZNet trim at its right end. On phones and upright iPads (meter rows) that pill sits under the name when the rows have room
+The header's Mirror reading is no longer cut off; Help moved from the header to Setup › Help to give the header more room
+TX power on the RX input pages now shows the transmitter's state only: setting one transmitter from a computer changed every transmitter. All TX on the Meters page still sets them all
+Track names that were a fraction of a pixel too wide now shrink instead of ending in "…"

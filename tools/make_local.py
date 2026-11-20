@@ -67,7 +67,7 @@ rep('''const link = {
 /* ---------- Connection to the cart computer ----------
    The cart computer holds the shared settings and runs the recorder link. Every device
    (this one, phones, iPads) sends its changes there and receives everyone else's. */
-const PER_DEVICE = new Set(["ui.helptext", "ui.osk", "ui.refline.enable", "ui.refline.level", "ui.meters.znet", "ui.meters.znettrim", "ui.meters.tx", "ui.meters.faders"]);
+const PER_DEVICE = new Set(["ui.helptext", "ui.osk", "ui.refline.enable", "ui.refline.level", "ui.meters.znet", "ui.meters.znettrim", "ui.meters.tx", "ui.meters.nameleft", "ui.meters.faders"]);
 const cart = {urls:[], serial:null, ports:[], devices:1, ready:false, synced:false, nova:null};
 const cartSubs = new Set();
 const cartChanged = () => cartSubs.forEach(f => { try{ f(); }catch(e){} });
@@ -404,13 +404,10 @@ function testPanel(){
     if(!(cart.nova && cart.nova.connected)){ toast("Not connected to the Nova."); return; }
     fetch(path, {method:"POST"}).then(r => r.json()).then(o => toast(o.ok ? (label + " sent") : (o.error || "Not sent"))).catch(() => toast("Send failed."));
   };
-  /* Nov 14 (0.6.1): which transmitter. All = unit 0; otherwise one transmitter by its ZaxNet ID, from the RX inputs. */
-  const txSel = h("select", {class:"sel", "aria-label":"Which transmitter"});
-  const fillTx = () => { const cur = txSel.value || "0", ids = get("input.zaxnet.id") || [], seen = new Set(), opts = [h("option", {value:"0"}, "All transmitters")];
-    for(let i = 14; i < 22; i++){ const z = ids[i]; if(z && !seen.has(z)){ seen.add(z); opts.push(h("option", {value:String(z)}, `Z${z} \u00b7 ${inLabel(i)}`)); } }
-    txSel.replaceChildren(...opts); txSel.value = [...txSel.options].some(o => o.value === cur) ? cur : "0"; };
-  txSel.addEventListener("focus", fillTx);
-  const powBtn = (word, label) => h("button", {type:"button", class:"btn", onclick:() => { const u = +txSel.value || 0; testSend("api/test/power/" + word + (u ? "/" + u : ""), (u ? "Power Z" + u + " " : "Power all ") + label); }}, label);
+  /* Nov 19: every transmitter only. One transmitter by ZaxNet ID (cQRXTX 98 with a unit) changed every transmitter on
+     the cart (Ferris), so the picker is gone. */
+  const txSel = h("span", {class:"lbl"}, "All transmitters"), fillTx = null;
+  const powBtn = (word, label) => h("button", {type:"button", class:"btn", onclick:() => { testSend("api/test/power/" + word, "Power all " + label); }}, label);
   const chSel = (n) => { const s = h("select", {class:"sel"}); for(let i = 0; i < n; i++) s.appendChild(h("option", {value:i}, String(i + 1))); return s; };
   const slider = () => { const r = h("input", {type:"range", min:0, max:255, value:128, style:"flex:1;min-width:80px"}); const o = h("span", {class:"mono", style:"min-width:3ch;text-align:right"}, "128"); r.addEventListener("input", () => o.textContent = r.value); return [r, o]; };
   const faderCh = chSel(16), faderSl = slider();
@@ -423,7 +420,7 @@ function testPanel(){
     h("label", {class:"row", for:"f-test-arm"}, h("span", {class:"lbl"}, "Enable test sends"), h("span", {class:"flex"}, arm)),
     h("span", {class:"lbl"}, "Transmitter power"),
     h("div", {class:"flex", style:"align-items:center;gap:6px"}, txSel, powBtn("on", "On"), powBtn("wake", "Wake"), powBtn("low", "Low")),
-    h("p", {class:"hint keep"}, "All transmitters works (Nov 14). Pick one transmitter to test whether it obeys by its ZaxNet ID: watch that one, and check the others don't change."),
+    h("p", {class:"hint keep"}, "Every transmitter at once (works, Nov 14). One transmitter by its ZaxNet ID can't be done this way: the transmitters take this command as for all of them (Nov 19)."),
     h("span", {class:"lbl"}, "Surface controls (may move the live mix)"),
     surfaceRow("Fader", faderCh, faderSl, () => testSend("api/test/fader/" + faderCh.value + "/" + faderSl[0].value, "Fader " + (+faderCh.value + 1))),
     surfaceRow("Trim", trimCh, trimSl, () => testSend("api/test/trim/" + trimCh.value + "/" + trimSl[0].value, "Trim " + (+trimCh.value + 1))),
