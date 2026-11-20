@@ -625,7 +625,7 @@ main{padding-block:clamp(8px,1.6vh,18px) clamp(12px,2.4vh,28px)}
   .strip .scrib .rtag:not(:has(.szid:not([hidden]))) .stx{padding-right:0;border-right:0}
   .strip .scrib .rtag:has(.stx[data-st="On"]:not([hidden])){border-color:color-mix(in srgb,var(--ok) 45%,#2c3238)}
   .strip .scrib .rtag:has(.stx[data-st="Standby"]:not([hidden]),.stx[data-st="Low power"]:not([hidden]),.stx[data-st="Wake"]:not([hidden])){border-color:color-mix(in srgb,var(--warn) 60%,#2c3238)}
-  .strip .scrib .rtag .szid .zi{color:#8d969e;font-weight:600}
+  .strip .scrib .rtag .szid .zi{color:#c2c9d0;font-weight:700}   /* Nov 20 (Ferris: "Just make them all that lighter gray") */
   .strip .scrib .rtag .szid .zt{color:#fff;font-weight:800;margin-left:.35em}
   .strip .scrib .rtag .szid .zt:first-child{margin-left:0}
   .strips-wrap.tight .strip .pflb{height:calc(100% - 2px);font-size:9px;padding:0 2px}
@@ -1005,7 +1005,7 @@ main.secs-all .phsec-panel > h3:first-child{display:none}
   .zpill:has(.stxn[data-st="Standby"]:not([hidden]),.stxn[data-st="Low power"]:not([hidden]),.stxn[data-st="Wake"]:not([hidden])){border-color:color-mix(in srgb,var(--warn) 60%,#2c3238)}
   .zpill .szid.innum{display:inline;margin:0;padding:0;background:none;border:0;border-radius:0;font-size:inherit;line-height:1;vertical-align:baseline}
   .zpill .szid.innum[hidden]{display:none}
-  .zpill .szid .zi{color:#8d969e;font-weight:600}
+  .zpill .szid .zi{color:#c2c9d0;font-weight:700}   /* Nov 20 (Ferris: "it needs to be a lighter grey"): the ZNet ID on the pill under the name, lighter than the old #8d969e so it reads on the dark line, still apart from the white trim */
   .zpill .szid .zt{color:#fff;font-weight:800;margin-left:.35em}
   .zpill .szid .zt:first-child{margin-left:0}
   @supports (container-type:inline-size){
@@ -1052,7 +1052,7 @@ main.secs-all .phsec-panel > h3:first-child{display:none}
     body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .stxn:not([hidden]),body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zt,body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zi > span{display:inline-block;transform:translateY(var(--pill-cn,0px))}
     body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .stxn:not([hidden]){border:0;padding:0}
     body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid{display:inline-flex;align-items:center;gap:.5em}
-    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zi{color:#fff;font-weight:800;padding:.32em .45em;background:#1b6ec2;border-radius:.3em}
+    body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zi{color:#c2c9d0;font-weight:700;padding:0;background:none}   /* Nov 20: lighter grey like the other pills (was white on a blue chip) */
     body[data-nameleft="1"] .strip:not(.scale) .scrib > .zpill .szid .zt{color:#fff;font-weight:800;font-size:1em;margin-left:0}
   }
 }
@@ -4082,7 +4082,7 @@ function diagPanel(){
    What's running; Check for updates (GitHub, github.com/gfssound/nova-relay); Install (two taps; never by itself);
    an update file from this device (a cart without internet); Go back to the version before. The prototype pretends:
    the installed app asks the cart computer, which checks, downloads, checks the signature and restarts. */
-const PROTO_VERSION = "0.6.8";
+const PROTO_VERSION = "0.6.9";
 let updDraw = null, updDev = null, updLocal = null;
 const updCmp = (a, b) => { const pa = String(a).split(".").map(n => parseInt(n, 10) || 0), pb = String(b).split(".").map(n => parseInt(n, 10) || 0);
   for(let i = 0; i < Math.max(pa.length, pb.length); i++){ const d = (pa[i] || 0) - (pb[i] || 0); if(d) return d < 0 ? -1 : 1; } return 0; };

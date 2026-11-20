@@ -1,3 +1,1 @@
-On a computer or an iPad held sideways, the transport (timecode, Scene, Take, Headphones, Tone, STOP and REC) is now a bar along the bottom of the screen, under the meters; the header and the page tabs stay at the top
-The on-screen keyboard is on at first (Setup › Display turns it off on a device that doesn't need it)
-Mac: the downloads build reliably on GitHub again (the Apple Silicon .dmg had failed with "No space left on device")
+Meters: the transmitter's ZaxNet ID is a lighter grey everywhere it shows (in the name box, on the line under the name, and in phone rows), easier to read on the dark pill

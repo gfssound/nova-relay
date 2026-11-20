@@ -1,12 +1,10 @@
 {
- "version": "0.6.8",
- "file": "Nova-Relay-0.6.8-update.zip",
- "sha256": "ca0c630e1ff0c6d6970905ade0d6978a0190c89a0309955afdf9b3c758eed21f",
- "size": 773463,
+ "version": "0.6.9",
+ "file": "Nova-Relay-0.6.9-update.zip",
+ "sha256": "71e21abe994083cc469d7abbc38dd365634355343a801587e605a047f1e8362a",
+ "size": 773561,
  "date": "2026-11-20",
  "notes": [
-  "On a computer or an iPad held sideways, the transport (timecode, Scene, Take, Headphones, Tone, STOP and REC) is now a bar along the bottom of the screen, under the meters; the header and the page tabs stay at the top",
-  "The on-screen keyboard is on at first (Setup › Display turns it off on a device that doesn't need it)",
-  "Mac: the downloads build reliably on GitHub again (the Apple Silicon .dmg had failed with \"No space left on device\")"
+  "Meters: the transmitter's ZaxNet ID is a lighter grey everywhere it shows (in the name box, on the line under the name, and in phone rows), easier to read on the dark pill"
  ]
 }
