@@ -1,13 +1,12 @@
 {
- "version": "0.6.7",
- "file": "Nova-Relay-0.6.7-update.zip",
- "sha256": "25723b4e8256757a6e107afaf8d4f800b33e9825578effa3b84b1132e81278c5",
- "size": 772250,
+ "version": "0.6.8",
+ "file": "Nova-Relay-0.6.8-update.zip",
+ "sha256": "ca0c630e1ff0c6d6970905ade0d6978a0190c89a0309955afdf9b3c758eed21f",
+ "size": 773463,
  "date": "2026-11-20",
  "notes": [
-  "Meters: new switch Setup › Meters › Name left, ZNet pill right: track names on the left of the name box, with the transmitter's power, ZNet ID and ZNet trim at its right end. On phones and upright iPads (meter rows) that pill sits under the name when the rows have room",
-  "The header's Mirror reading is no longer cut off; Help moved from the header to Setup › Help to give the header more room",
-  "TX power on the RX input pages now shows the transmitter's state only: setting one transmitter from a computer changed every transmitter. All TX on the Meters page still sets them all",
-  "Track names that were a fraction of a pixel too wide now shrink instead of ending in \"…\""
+  "On a computer or an iPad held sideways, the transport (timecode, Scene, Take, Headphones, Tone, STOP and REC) is now a bar along the bottom of the screen, under the meters; the header and the page tabs stay at the top",
+  "The on-screen keyboard is on at first (Setup › Display turns it off on a device that doesn't need it)",
+  "Mac: the downloads build reliably on GitHub again (the Apple Silicon .dmg had failed with \"No space left on device\")"
  ]
 }

@@ -1090,6 +1090,16 @@ html.osk-on .app{height:calc(100% - var(--osk-h,0px))}
 .rxchip[aria-pressed="true"]{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
 .rxchip[aria-pressed="true"] b{color:var(--tick-warn,var(--warn))}
 html.osk-on .modal-back{bottom:var(--osk-h,0px);overflow:auto}
+/* Nov 19 (Ferris, after trying a layout switch: "Remove the other layout options, just keep the new one."): from 901 px
+   wide the transport (timecode, Scene, Take, Headphones, Tone, STOP, REC) is a bar along the bottom of the screen,
+   under the page; the header and the page tabs stay at the top. Phones and upright iPads keep their own layouts. */
+@media (min-width:901px){
+  .app{grid-template-rows:auto auto minmax(0,1fr) auto}
+  .status{grid-row:1}
+  .tabs{grid-row:2}
+  main{grid-row:3}
+  .transport{grid-row:4;border-bottom:0;border-top:1px solid var(--line);background:var(--surface)}
+}
 
 /* Local app additions */
 html{height:100%}
@@ -1248,7 +1258,7 @@ const EXAMPLE = false;
 const V = {}; SCHEMA.forEach(s => V[s.k] = build(s.d, () => def(s)));
 V["ui.refline.enable"] = 1; V["ui.refline.level"] = -18;
 V["ui.track.com1"] = Array(16).fill(0);
-V["ui.helptext"] = 0; V["ui.osk"] = 0;
+V["ui.helptext"] = 0; V["ui.osk"] = 1;   /* Nov 19, 19:35 (Ferris): "On screen keyboard should default to on" */
 V["ui.meters.znet"] = 1; V["ui.meters.tx"] = 1; V["ui.meters.znettrim"] = 1; V["ui.meters.nameleft"] = 1;
 /* Nov 14 (0.6.1): faders on the meters. Off until turned on (per device); positions are where Nova Relay last put each
    input's Aria fader (0-255), null until then. */
@@ -4072,7 +4082,7 @@ function diagPanel(){
    What's running; Check for updates (GitHub, github.com/gfssound/nova-relay); Install (two taps; never by itself);
    an update file from this device (a cart without internet); Go back to the version before. The prototype pretends:
    the installed app asks the cart computer, which checks, downloads, checks the signature and restarts. */
-const PROTO_VERSION = "0.6.7";
+const PROTO_VERSION = "0.6.8";
 let updDraw = null, updDev = null, updLocal = null;
 const updCmp = (a, b) => { const pa = String(a).split(".").map(n => parseInt(n, 10) || 0), pb = String(b).split(".").map(n => parseInt(n, 10) || 0);
   for(let i = 0; i < Math.max(pa.length, pb.length); i++){ const d = (pa[i] || 0) - (pb[i] || 0); if(d) return d < 0 ? -1 : 1; } return 0; };
