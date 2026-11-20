@@ -8,7 +8,7 @@ const { spawn } = require('child_process'); const fs = require('fs'); const path
 const DIR = __dirname, ROOT = path.join(DIR, '..');
 const TESTS = [
   /* the Nova link */ 'read_first', 'hands_off', 'hello_choice', 'nova523_settings', 'boot_guard', 'connect_quiet', 'safety', 'tx_power',
-  /* the page */ 'e2e_net', 'api', 'conn', 'e2e_blank', 'help_cart', 'osk_installed', 'status_row', 'pfl_pages', 'meters_noscroll', 'small_screen', 'test_panel',
+  /* the page */ 'e2e_net', 'api', 'conn', 'e2e_blank', 'help_cart', 'osk_installed', 'status_row', 'pfl_pages', 'meters_noscroll', 'small_screen', 'test_panel', 'note_rolling',
   /* Stream Deck, the box */ 'deck_proto', 'deck_pi', 'pi_clock',
   /* packaging */ 'package_start',
   /* diagnostics, updates */ 'diag', 'updates', 'updates_device'];

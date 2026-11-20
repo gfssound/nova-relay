@@ -33,7 +33,7 @@ const SCHEMA = JSON.parse(fs.readFileSync(path.join(__dirname, "schema.json"), "
 const BY_ID = new Map(SCHEMA.map(s => [s.id, s]));
 const BY_KEY = new Map(SCHEMA.map(s => [s.k, s]));
 
-const VERSION = "0.6.9";
+const VERSION = "0.6.10";
 const args = process.argv.slice(2);
 const argVal = (name, def) => { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
 const PORT = +(process.env.PORT || argVal("--port", 8080));
@@ -152,6 +152,14 @@ function tcToFrames(tc, fr) {
   let f = (mins * 60 + tc.s) * fr.n + tc.f;
   if (fr.df) f -= 2 * (mins - Math.floor(mins / 10));
   return f;
+}
+/* Take a pre-roll (seconds of real time) off a timecode: 10 s at 23.976 is 239.76 frames, taken as 239 (Ferris's file 001: 10:04:07:00 → 10:03:57:01). */
+function minusPreroll(tc, pre, fr) {
+  const m = String(tc || "").match(/(\d+):(\d+):(\d+)[:;.](\d+)/); if (!m || !(pre > 0)) return tc;
+  const day = tcToFrames({ h: 24, m: 0, s: 0, f: 0 }, fr);
+  let f = tcToFrames({ h: +m[1], m: +m[2], s: +m[3], f: +m[4] }, fr) - Math.floor(pre * fr.r);
+  if (f < 0) f += day;
+  return framesToTC(f, fr);
 }
 const fmtDur = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return h ? `${h}:${String(m).padStart(2, "0")}:${String(x).padStart(2, "0")}` : `${m}:${String(x).padStart(2, "0")}`; };
 
@@ -512,7 +520,7 @@ const idxText = idx => idx.length ? "[" + idx.map(i => i + 1).join(",") + "]" : 
 
 const nova = {
   active: false, connected: false, lastRx: 0, lastHello: 0, helloText: HELLO_OWN, helloSince: 0, triedOther: false, pauseUntil: 0,
-  state: "STOPPED", elapsed: 0, drive: 0, volts: 0, recStartFrames: 0, lastTake: null,
+  state: "STOPPED", elapsed: 0, drive: 0, volts: 0, recStartFrames: 0, lastTake: null, rollSerial: null,
   trk: Array(16).fill(-120), out: Array(8).fill(-120), inp: Array(22).fill(-120),
   model: "", aria: "", dims: new Map(), types: new Map(), which: { track: null, out: null, tfader: null, ofader: null },
   dirty: new Set(), flushT: null, history: new Map(), notSent: new Set(), namesCleared: false,
@@ -692,6 +700,9 @@ const nova = {
     else if (this.state === "RECORDING") {
       this.lastTake = { dur: this.elapsed, start: framesToTC(this.recStartFrames, sim.fr()), startFrames: this.recStartFrames,
         tracks: (get("record.tracks") || []).slice(0, 16).filter(Boolean).length };
+      /* A split file gets no take-list row from the Nova, so its length goes on the row Relay made at the split. */
+      const sp = this.rollSerial != null ? this.history.get(this.rollSerial) : null;
+      if (sp && sp.split && sp.dur == null) { sp.dur = this.elapsed; this.rememberTake(this.rollSerial, sp); this.lastTake = null; this.publishHistory(); }
     }
     this.state = st;
     logAll("rx", st === "RECORDING" ? "Nova: recording" : `Nova: stopped${this.lastTake ? " after " + fmtDur(this.lastTake.dur) : ""}`);
@@ -723,7 +734,7 @@ const nova = {
       case NOVA.CMD.OUT_METERS: if (d.length >= 6) { for (let i = 0; i < 8; i++) this.out[i] = i < d.length ? NOVA.meterDb(d[i]) : -120; } break;
       case NOVA.CMD.TIMECODE: {
         const tc = NOVA.decodeTimecode(d); if (!tc) break;
-        sim.genFrames = tcToFrames(tc, sim.fr()); this.alive(); break;
+        sim.genFrames = tcToFrames(tc, sim.fr()); sim.tcAt = performance.now(); this.alive(); break;
       }
       case NOVA.CMD.HELLO: {
         const t = d.toString("latin1");
@@ -834,7 +845,7 @@ const nova = {
       case "input.channel": if (dec.kind === "value") { this.chan = dec.raw; this.chanAt = Date.now(); this.confSent = null; } break;
     }
     if (RX_SKIP.has(k) || !["Menu", "Number", "Text"].includes(sc.t)) return;
-    if (!sc.d || !sc.d.length) { if (dec.kind !== "value") return; V[k] = this.convIn(sc, dec.raw, dec.type); this.markDirty(k); return; }
+    if (!sc.d || !sc.d.length) { if (dec.kind !== "value") return; V[k] = this.convIn(sc, dec.raw, dec.type); this.markDirty(k); this.afterValue(k); return; }
     const zero = sc.t === "Text" ? "" : 0;
     if (!Array.isArray(V[k])) V[k] = buildArr(sc.d, zero);
     let sub = V[k];
@@ -851,20 +862,78 @@ const nova = {
     /* Routes from the Nova already use its source numbers, so the remote mustn't convert them from the old layout. */
     if (k === "outputmix.matrix" && V["ui.outsrc"] !== 1) { V["ui.outsrc"] = 1; this.markDirty("ui.outsrc"); }
   },
+  /* Nov 20 (Ferris's capture of Nov 18-19, three splits): when a file reaches the Nova's size limit (~41 min here) the Nova
+     carries on in the next file by itself and names the take with a letter (INT01 1 → 1a). It sends no REC report and
+     no take-list row for that file, at the split or at STOP, only store.current/store.segment (the new file number) and
+     take.current ("1a"). And when the Nova starts its take list over (store.segment 000, no "list cleared" message),
+     the old rows stayed on Relay: a split file then showed the old test take's 1/2, start and length. */
+  afterValue(k) {
+    if (k === "store.segment") this.trimHistory(parseInt(V[k], 10));
+    else if (k === "store.current" || k === "take.current") this.checkSplit();
+  },
+  /* The Nova's take list has n files: rows for file n+1 and up are from an earlier list (or an earlier folder of the same name). */
+  trimHistory(n) {
+    if (!Number.isFinite(n) || n < 0) return;
+    const gone = [...this.history.keys()].filter(serial => serial >= n);
+    if (!gone.length) return;
+    for (const serial of gone) { this.history.delete(serial); delete takeFiles[takeKey(get("store.folder"), serial)]; if (historyEdits[serial]) delete historyEdits[serial]; }
+    saveTakeFiles(); saveHistoryEdits(); this.lastTake = null;
+    logAll("rx", n ? `Nova: its take list now ends at file ${String(n).padStart(3, "0")}; ${gone.length} older row${gone.length > 1 ? "s" : ""} above it removed from Relay's list.` : `Nova: it started a new take list; Relay's old rows (${gone.length}) removed.`);
+    this.publishHistory();
+  },
+  /* While recording, a new file number without a REC report is a split: the row is made here from the Nova's take.current. */
+  checkSplit() {
+    if (this.state !== "RECORDING") return;
+    const n = parseInt(get("store.current"), 10);
+    if (this.rollSerial == null) { if (n >= 1) this.rollSerial = n - 1; return; }   /* connected mid-take: that file is the rolling one */
+    /* The Nova sends take.next "1a", then the new file number, then take.current "1a": the name arrives just after the number. */
+    const cur = this.history.get(this.rollSerial);
+    if (cur && cur.split && n - 1 === this.rollSerial) {
+      const tk = String(get("take.current") || "");
+      if (tk && tk !== cur.take) { cur.take = tk; cur.nova = { ...cur.nova, take: tk }; const fi = takeFiles[takeKey(get("store.folder"), this.rollSerial)]; if (fi) { fi.take = tk; saveTakeFiles(); } setV("ui.recfile", [], { ...(get("ui.recfile") || {}), take: tk }); this.publishHistory(); }
+      return;
+    }
+    const take = String(get("take.next") || get("take.current") || "");
+    if (!(n >= 1) || n - 1 <= this.rollSerial || !take) return;
+    const serial = n - 1, prevSerial = this.rollSerial, prev = this.history.get(prevSerial), fr = sim.fr();
+    if (prev && prev.dur == null) { prev.dur = this.elapsed; this.rememberTake(prevSerial, prev); }
+    const folder = String(get("store.folder") || ""), pf = takeFiles[takeKey(folder, prevSerial)] || {};
+    const scene = prev ? prev.scene : String(get("scene.current") || "");
+    /* While recording the Nova sends its timecode about once a second, on whole seconds: count on from the last one
+       to the moment the new file is announced (Nov 18-19 capture: the last timecode was 0.16-0.94 s before the split). */
+    const since = sim.tcAt != null ? Math.max(0, Math.min(2, (performance.now() - sim.tcAt) / 1000)) : 0;
+    const startFrames = sim.genFrames + Math.round(since * (fr.r || 24));
+    const start = framesToTC(startFrames, fr);
+    const note = prev ? prev.note || "" : "";   /* Ferris (Nov 20): a split file carries the note of the take it continues */
+    takeFiles[takeKey(folder, serial)] = { folder, file: String(n).padStart(3, "0"), scene, take, start, ub: pf.ub || "", fr: pf.fr || "", tracks: pf.tracks, names: pf.names, split: true, note };
+    saveTakeFiles();
+    const nova = { scene, take, note: "" };
+    const row = { seg: serial, ...nova, nova, note, start, startFrames, dur: null, tracks: pf.tracks || (get("record.tracks") || []).slice(0, 16).filter(Boolean).length, split: true };
+    this.withFile(row, serial); row.exact = false;
+    this.history.set(serial, row);
+    this.rollSerial = serial; this.elapsed = 0; this.recStartFrames = sim.genFrames;
+    setV("ui.recfile", [], { folder, file: String(n).padStart(3, "0"), scene, take, start, ub: pf.ub || "", fr: pf.fr || "", split: true });
+    logAll("rx", `Nova: file ${String(prevSerial + 1).padStart(3, "0")} reached its size limit${prev && prev.dur != null ? " after " + fmtDur(prev.dur) : ""}; the take carries on in file ${String(n).padStart(3, "0")} as ${scene}/${take}`);
+    this.publishHistory();
+  },
   /* At REC the Nova reports the file it's about to write (161, then 162 with the start timecode). segnum is the file
      number the Nova shows (073); its take list numbers the same take 72, as everywhere else in the remote. */
   recReport(t) {
     const n = parseInt(t.segnum, 10); if (!Number.isFinite(n) || n < 1) return;
     const serial = n - 1, folder = String(t.foldername || get("store.folder") || ""), key = takeKey(folder, serial);
+    this.rollSerial = serial;
     const armed = (get("record.tracks") || []).slice(0, 16).map((a, i) => a ? i : -1).filter(i => i >= 0);
     const fi = takeFiles[key] = { ...(takeFiles[key] || {}), folder, file: String(n).padStart(3, "0"), scene: t.scene ?? "", take: t.take ?? "",
       tracks: armed.length, names: armed.map(i => `${i + 1} ${get("track.name", [i]) || "TRK " + (i + 1)}`) };
-    if (t.tc) fi.start = String(t.tc);
+    /* Nov 20 (Ferris): the Nova's REC report timecode is the REC press; the file starts the pre-roll earlier (file 001 of
+       Nov 18-19: report 10:04:07:00, pre-roll 10 s, the WAV's own start 10:03:57:01). The take list and sound report
+       show the file's start. */
+    if (t.tc) { fi.recTc = String(t.tc); fi.preroll = +get("record.preroll") || 0; fi.start = minusPreroll(fi.recTc, fi.preroll, sim.fr()); }
     if (t.ub) fi.ub = String(t.ub);
     if (t.fr) fi.fr = String(t.fr);
     saveTakeFiles();
     setV("ui.recfile", [], { folder, file: fi.file, scene: fi.scene, take: fi.take, start: fi.start || "", ub: fi.ub || "", fr: fi.fr || "" });
-    if (t.tc) logAll("rx", `Nova: recording file ${fi.file}${folder ? " in " + folder : ""}, ${fi.scene}/${fi.take}, from ${fi.start}`);
+    if (t.tc) logAll("rx", `Nova: recording file ${fi.file}${folder ? " in " + folder : ""}, ${fi.scene}/${fi.take}, REC at ${fi.recTc}${fi.preroll ? `, file starts ${fi.start} (${fi.preroll} s pre-roll)` : ""}`);
     const row = this.history.get(serial);
     if (row) { this.withFile(row, serial); this.publishHistory(); }
   },
@@ -873,7 +942,8 @@ const nova = {
     const fi = takeFiles[takeKey(get("store.folder"), serial)];
     if (!fi) return row;
     if (fi.start) Object.assign(row, { start: fi.start, exact: true });
-    for (const k of ["folder", "ub", "fr", "names"]) if (fi[k] != null) row[k] = fi[k];
+    for (const k of ["folder", "ub", "fr", "names", "split"]) if (fi[k] != null) row[k] = fi[k];
+    if (fi.split && fi.note && !row.note) row.note = fi.note;
     if (row.dur == null && fi.dur != null) row.dur = fi.dur;
     if (!row.tracks && fi.tracks) row.tracks = fi.tracks;
     return row;
@@ -922,6 +992,10 @@ const nova = {
       }
       this.withFile(row, serial); this.rememberTake(serial, row);
       this.history.set(serial, row);
+      for (let s2 = serial + 1, old = prev ? prev.note || "" : ""; ; s2++) {
+        const ch = this.history.get(s2); if (!ch || !ch.split || (ch.note && ch.note !== old) || ch.note === row.note) break;
+        ch.note = row.note || ""; const f2 = takeFiles[takeKey(get("store.folder"), s2)]; if (f2) { f2.note = ch.note; saveTakeFiles(); }
+      }
     } else return;
     this.publishHistory();
   },
@@ -938,6 +1012,7 @@ const nova = {
     if (!this.connected) return;
     const sc = BY_KEY.get(k); if (!sc) return;
     if (k === "metadata.history") { this.sendHistory(val); return; }
+    if (k === "note.current") { this.sendCurrentNote(val); return; }
     const mode = SEND.get(k);
     if (!mode && QUIET.has(k)) return;
     /* Input settings are written in a 32-entry list (live session 12, Oct 28: trim [N] landed on input N − 10 for
@@ -1023,6 +1098,31 @@ const nova = {
       while (out.length < 10) out.push(null);
       V["metadata.history"] = out; this.markDirty("metadata.history");
     }
+  },
+  /* Note on the current take (Nov 20, Ferris: "Relay doesn't seem to send note to current take while recording").
+     Firmware 5.23 ignores note.current from a computer (its handler is commented out in Remote_PC.cpp) and note.next
+     always goes to the next take. A take-list edit (SET 58) calls SetNote(<segment>, note) for whatever segment it
+     names, so the note goes out as a take-list edit: while recording, for the file the Nova reported at REC (161);
+     when stopped, for the newest take (the Nova's "current take" then). Scene and take are sent as the Nova has them. */
+  sendCurrentNote(val) {
+    const note = String(val ?? "").slice(0, 40);
+    const rec = this.state === "RECORDING", rf = get("ui.recfile");
+    const newest = this.history.size ? Math.max(...this.history.keys()) : null;
+    const serial = rec && rf && +rf.file > 0 ? +rf.file - 1 : newest;
+    if (serial == null) { logAll("ev", `Note ${JSON.stringify(note)}: kept on the remote only, because the Nova hasn't said which take is ${rec ? "rolling" : "current"} yet.`); return; }
+    const row = this.history.get(serial);
+    if (row && newest != null && serial <= newest) {
+      if ((row.note || "") === note) return;
+      this.sendHistory([{ seg: serial, scene: row.scene || "", take: row.take || "", note }]); return;
+    }
+    /* The rolling take isn't in the take list yet: send the same form with the scene/take from the Nova's record report. */
+    const size = Math.max(serial, newest ?? -1) + 1;
+    if (size > 255) { logAll("ev", `Note for file ${serial + 1}: kept on the remote only (file numbers above 255 haven't been seen in NovaTouch's form yet).`); return; }
+    const scene = rec && rf ? rf.scene || "" : get("scene.current") || "", take = rec && rf ? rf.take || "" : get("take.current") || "";
+    const text = [];
+    for (const [key, v] of [["scene", scene], ["note", note], ["take", take]]) text.push(...Buffer.from(key, "latin1"), 0, ...Buffer.from(String(v || ""), "latin1"), 0);
+    this.write(NOVA.CMD.SETTING, Buffer.from([58, 0, 5, 1, size, 1, serial, ...text, 0]),
+      `→ Nova  SET  58 METADATA_HISTORY [file ${String(serial + 1).padStart(3, "0")}, rolling: row ${serial} of ${size}] = ${scene}/${take} note ${JSON.stringify(note)}  (note on the current take)`);
   },
   /* REC and STOP: sent exactly as the Aria-8 sends its own buttons (CMD 25: button, 00 = press, 80 = release).
      The Nova's record state confirms whether it worked. */
@@ -1417,7 +1517,7 @@ function onMessage(c, m) {
         }
         break;
       }
-      if ((SEND.get(m.k) || m.k === "metadata.history" || m.k === "ui.znettrim") && nova.connected && !nova.loaded && !nova.listenOnly) {
+      if ((SEND.get(m.k) || m.k === "metadata.history" || m.k === "note.current" || m.k === "ui.znettrim") && nova.connected && !nova.loaded && !nova.listenOnly) {
         /* read-first (Nov 18): put that device's control back to what the remote has, and say why */
         send(c, { t: "set", k: m.k, idx: m.idx, val: get(m.k, m.idx) ?? null });
         const now = Date.now(); if (now - (nova._bounceLog || 0) > 2000) { nova._bounceLog = now; logAll("ev", `Not sent, because Nova Relay is still reading the Nova's settings${nova.loadPct != null ? " (" + nova.loadPct + "%)" : ""}. Try again in a moment.`); }

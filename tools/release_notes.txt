@@ -1,1 +1,4 @@
-Meters: the transmitter's ZaxNet ID is a lighter grey everywhere it shows (in the name box, on the line under the name, and in phone rows), easier to read on the dark pill
+Metadata: a note added while recording now goes on the take that's rolling, on the Nova as well (it was kept on Relay only)
+Metadata: when a file reaches the Nova's size limit and the take carries on in a new file (take 1a, 2a…), the take list and sound report show that file with its own take name, start and length, and the note of the take it continues
+Metadata: when the Nova starts its take list over, Relay drops the old rows (an old take could show up in place of a new file)
+Sound report: Start TC is the file's own start (the pre-roll before REC is now included, as in the WAV)

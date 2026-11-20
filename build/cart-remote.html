@@ -3840,7 +3840,7 @@ function diagPanel(){
    What's running; Check for updates (GitHub, github.com/gfssound/nova-relay); Install (two taps; never by itself);
    an update file from this device (a cart without internet); Go back to the version before. The prototype pretends:
    the installed app asks the cart computer, which checks, downloads, checks the signature and restarts. */
-const PROTO_VERSION = "0.6.9";
+const PROTO_VERSION = "0.6.10";
 let protoUpd = {running:PROTO_VERSION, appVersion:PROTO_VERSION, fromUpdate:false, back:null, auto:true, checking:false, checkedAt:0, error:null, offline:false, busy:null, latest:null, available:false, recording:false, source:"github.com/gfssound/nova-relay"};
 let updDraw = null;
 const updState = () => ({...protoUpd, recording:sim.state === "RECORDING"});
