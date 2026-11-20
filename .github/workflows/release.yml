@@ -49,7 +49,9 @@ jobs:
   mac:
     needs: release
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.only == 'all' || inputs.only == 'mac' }}
-    runs-on: macos-15
+    # Nov 20: macos-15 (Apple Silicon) runners went unassigned five times in a row ("capacity constraints"). The build only
+    # assembles downloaded parts, so an Intel Mac makes both the Apple Silicon and the Intel .dmg.
+    runs-on: macos-15-intel
     strategy:
       matrix:
         arch: [arm64, x64]   # Nova-Relay-<v>-AppleSilicon.dmg, Nova-Relay-<v>-Intel.dmg (about half the size of one for both)
