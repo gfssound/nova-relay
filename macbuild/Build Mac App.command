@@ -353,8 +353,12 @@ echo "5/5  Making the .dmg…"
 ln -s /Applications "$WORK/dmg/Applications"
 rm -f "$DMG"
 # LZMA (ULMO, macOS 10.15+; the app needs 11) packs noticeably smaller than the usual zlib (UDZO).
-hdiutil create -volname "Nova Relay $VERSION" -srcfolder "$WORK/dmg" -ov -format ULMO "$DMG" >/dev/null || \
-  hdiutil create -volname "Nova Relay $VERSION" -srcfolder "$WORK/dmg" -ov -format UDZO "$DMG" >/dev/null || fail "hdiutil couldn't make the .dmg."
+# Nov 19 (0.6.7, GitHub's Apple Silicon build twice: "hdiutil: create failed - No space left on device"): hdiutil's own
+# guess of the image size from -srcfolder can come out too small, so the size is given (the folder plus a third,
+# plus 40 MB) on an HFS+ volume; if that still fails, once more with double the room.
+SZ=$(du -sm "$WORK/dmg" | awk '{print int($1 * 1.34) + 40}')
+mkdmg() { hdiutil create -volname "Nova Relay $VERSION" -srcfolder "$WORK/dmg" -fs HFS+ -size "${1}m" -ov -format "$2" "$DMG" >/dev/null; }
+mkdmg "$SZ" ULMO || mkdmg "$((SZ * 2))" ULMO || mkdmg "$((SZ * 2))" UDZO || fail "hdiutil couldn't make the .dmg."
 rm -rf "$WORK"
 trap - ERR
 
