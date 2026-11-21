@@ -10,7 +10,7 @@ const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Prom
   await p.goto('http://127.0.0.1:8147/'); await p.waitForFunction(() => cart.ready);
   await p.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(300);
   await p.evaluate(path => { const s = document.getElementById('f-serial-port'); s.append(new Option(path, path)); s.value = path; }, pty);
-  await p.locator('button', { hasText: 'Connect' }).first().click(); await sleep(6000);
+  await p.locator('button', { hasText: /^Connect$/ }).first().click(); await sleep(6000);
   console.log('presets from Nova:', await p.evaluate(() => V['names.preset.name'].join(',')));
   await p.evaluate(() => go('names')); await sleep(300);
   const f = p.locator('#f-track-name-3'); const box = await f.boundingBox();

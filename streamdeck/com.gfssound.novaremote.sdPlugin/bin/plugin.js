@@ -133,7 +133,7 @@ const DRAW = {
   com(st, k) { return talkKey(st, k, "com", "COM", C.com); },
   drive(st, k) {
     const v = st ? st.driveLeft : undefined;
-    return levelKey(st, k, "DRIVE LEFT", v == null ? null : hm(v), v == null ? null : levelOf(v / 60, num(k.settings.amber, 60), num(k.settings.red, 15)),
+    return levelKey(st, k, "DRIVE LEFT", v == null ? null : hms(v), v == null ? null : levelOf(v / 60, num(k.settings.amber, 60), num(k.settings.red, 15)),
       v == null ? "" : "at " + (st.armedCount || 0) + " tracks");
   },
   battery(st, k) {
@@ -286,6 +286,8 @@ function meterKey(top, name, db, k) {
 /* Status keys (Nov 7): normal, amber (level 1) or red (level 2, blinking unless turned off). Lower is worse. */
 const num = (v, d) => { const n = parseFloat(v); return isFinite(n) ? n : d; };
 const levelOf = (v, amber, red) => v <= red ? 2 : v <= amber ? 1 : 0;
+/* Nov 20: the Drive key shows seconds too, so it counts down in real time while recording (the server counts it). */
+const hms = sec => { sec = Math.max(0, Math.floor(sec)); return `${Math.floor(sec / 3600)}:${String(Math.floor(sec / 60) % 60).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`; };
 const hm = sec => { const m = Math.floor(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m` : `${m}m`; };
 const gb = v => v >= 1000 ? (v / 1000).toFixed(1) + " TB" : v >= 10 ? Math.round(v) + " GB" : v.toFixed(1) + " GB";
 function levelKey(st, k, top, value, level, bottom) {
@@ -472,7 +474,7 @@ function connText() {
   if (reach === "ok") return { ok: true, text: `Connected to Nova Relay${status.version ? " " + status.version : ""} at ${at}. ${status.recorder === "nova" ? "The Nova is connected." : "No Nova connected to it right now."}` };
   if (reach === "nosetup") return { ok: false, text: `Nova Relay is running at ${at} but hasn't been opened yet. Open it once on any device.` };
   if (reach === "unknown") return { ok: false, text: `Looking for Nova Relay at ${at}…` };
-  return { ok: false, text: `Can't reach Nova Relay at ${at} (${lastError}). Is it running? If it's on another computer, type the address from Nova Relay › Setup › Stream Deck.` };
+  return { ok: false, text: `Can't reach Nova Relay at ${at} (${lastError}). Is it running? If it's on another computer, type the address from Nova Relay › Setup › Help.` };
 }
 function tellPIs() {
   const c = connText();

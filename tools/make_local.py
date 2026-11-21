@@ -18,7 +18,7 @@ head = head.replace('<title>Nova Relay prototype</title>', '''<title>Nova Relay<
 <meta name="apple-mobile-web-app-title" content="Nova Relay">
 <meta name="theme-color" content="#0a0b0c">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
+<link rel="icon" href="icon-small.png">
 <link rel="apple-touch-icon" href="icon-180.png">''', 1)
 head = head.replace('</style>', '''
 /* Local app additions */
@@ -67,7 +67,7 @@ rep('''const link = {
 /* ---------- Connection to the cart computer ----------
    The cart computer holds the shared settings and runs the recorder link. Every device
    (this one, phones, iPads) sends its changes there and receives everyone else's. */
-const PER_DEVICE = new Set(["ui.helptext", "ui.osk", "ui.refline.enable", "ui.refline.level", "ui.meters.znet", "ui.meters.znettrim", "ui.meters.tx", "ui.meters.nameleft", "ui.meters.faders"]);
+const PER_DEVICE = new Set(["ui.helptext", "ui.osk", "ui.exp.wireless", "ui.refline.enable", "ui.refline.level", "ui.meters.faders", "ui.meters.monitor", "ui.meters.extras"]);
 const cart = {urls:[], serial:null, ports:[], devices:1, ready:false, synced:false, nova:null};
 const cartSubs = new Set();
 const cartChanged = () => cartSubs.forEach(f => { try{ f(); }catch(e){} });
@@ -205,7 +205,10 @@ rep('V["metadata.history"] = hh; notify("metadata.history", []); saveSoon();', '
 # ---- 6. Setup: cart addresses + serial port
 k = s.index('    const conn = h("div", {class:"conn"},'); l = s.index('\n    const reset =', k)
 s = s[:k] + '    const conn = cartPanel();' + s[l:]
-rep('const connTitle = "Connection";', 'const connTitle = "Cart & Recorder Link";')
+rep('const connTitle = "Connection";', 'const connTitle = "Connection";')
+# Nov 20: Setup sections regrouped: the RX trim finder sits under Wireless, the protocol test tools under Troubleshooting
+rep('const wirelessTools = () => null;', 'const wirelessTools = () => pageFinder();')
+rep('const troubleTools = () => null;', 'const troubleTools = () => testPanel();')
 rep('seed(); seedDevice(); saveSoon(); go("setup"); renderTransport(); log("ev", "Reset to example setup"); }}, "Reset"),',
     'seedBlank(); seedDevice(); saveSoon(); net.send({t:"replace", V:sharedSnapshot()}); go("setup"); renderTransport(); log("ev", "Remote setup cleared; reloading from the Nova"); }}, "Clear"),')
 # Nov 6 (Ferris): Help opens the manual that ships with the app. On the computer running Nova Relay it opens in the
@@ -217,7 +220,7 @@ rep('function openHelp(){ window.open(MANUAL_URL, "_blank", "noopener"); }',
 # Nov 11: hand over the serial capture from the Link log (a Pi box has no Finder). Installed app only: the prototype has no file.
 rep('}}, "Copy"), copied),', '}}, "Copy"), h("a", {class:"btn", href:"api/capture", download:"", title:"The newest serial capture file, for Zaxcom or for working out a problem"}, "Download capture"), copied),')
 rep('const deckBase = () => "http://192.168.1.20:8080";', 'const deckBase = () => ((cart.urls && cart.urls[0] && cart.urls[0].url) || location.origin).replace(/\\/+$/, "");')
-rep('const deckLocal = () => "";', 'const deckLocal = () => !(cart.urls && cart.urls.length) ? "Only this computer can reach Nova Relay right now, so these addresses work only here. To use buttons on another computer, turn on Phones and iPads (Setup \u203a Cart & Recorder Link) or join the cart Wi-Fi." : "";')
+rep('const deckLocal = () => "";', 'const deckLocal = () => !(cart.urls && cart.urls.length) ? "Only this computer can reach Nova Relay right now, so these addresses work only here. To use buttons on another computer, turn on Phones and iPads (Setup \u203a Connection) or join the cart Wi-Fi." : "";')
 rep('const deckPluginUrl = () => "";', 'const deckPluginUrl = () => "streamdeck/Nova-Relay.streamDeckPlugin";')
 
 # Nov 15: Setup › Transmitters sends to the Nova (the prototype plays the transmitters)
@@ -252,7 +255,7 @@ rep('const ariaState = () => ({com:protoCom, learning:protoLearning, nova:true})
 rep('function learnAriaButton(){ protoLearning = true; deckDraw && deckDraw(); setTimeout(() => { protoLearning = false; protoCom = true; deckDraw && deckDraw(); toast("Learned the Aria\'s Com button"); }, 2500); }',
     'function learnAriaButton(){ net.send({t:"learnButton", what:"com"}); }')
 rep('function forgetAriaButton(){ protoCom = false; deckDraw && deckDraw(); }', 'function forgetAriaButton(){ net.send({t:"forgetButton", what:"com"}); }')
-rep('const cartChanged = () => cartSubs.forEach(f => { try{ f(); }catch(e){} });', 'const cartChanged = () => { cartSubs.forEach(f => { try{ f(); }catch(e){} }); if(current === "setup" && setupSec === "deck" && deckDraw) try{ deckDraw(); }catch(e){} };')
+rep('const cartChanged = () => cartSubs.forEach(f => { try{ f(); }catch(e){} });', 'const cartChanged = () => { cartSubs.forEach(f => { try{ f(); }catch(e){} }); if(current === "setup" && (setupSec === "deck" || setupSec === "conn") && deckDraw) try{ deckDraw(); }catch(e){} };')
 # Nov 2 (Ferris): shipped versions carry no example data; they start blank and fill from the Nova.
 rep('const EXAMPLE = true;', 'const EXAMPLE = false;')
 # Nov 14 (0.6.1, Ferris: "wait on faders for printed version"): faders on the meters stay in the prototype but are off in
@@ -260,7 +263,8 @@ rep('const EXAMPLE = true;', 'const EXAMPLE = false;')
 SHIP_FADERS = False
 if not SHIP_FADERS:
     rep(', ["ui.meters.faders", "Faders on meters"]]},', ']},')
-    rep('    : g.id === "meters" ? h("div", {class:"stack"}, setupTiles(g.id), h("p"', '    : false ? h("div", {class:"stack"}, setupTiles(g.id), h("p"')
+    # Nov 20: Meters keeps its own section (Show without recording); only the faders note goes.
+    rep('    : g.id === "meters" ? h("div", {class:"stack"}, setupTiles(g.id), extrasPanel(), monitorPanel(), h("p"', '    : g.id === "meters" ? h("div", {class:"stack"}, setupTiles(g.id), extrasPanel(), monitorPanel(), false && h("p"')
     rep('const ch = getCh(), on = !!get("ui.meters.faders") &&', 'const ch = getCh(), on = false &&')
 rep('const reset = h("button", {type:"button", class:"btn"}, "Reset to example setup");', 'const reset = h("button", {type:"button", class:"btn"}, "Clear remote setup");')
 rep('"This replaces every setting with the example cart setup."', '"This clears what the remote keeps itself (colors, output names and presets) on every device. Names, routing and everything else reload from the Nova."')
@@ -340,8 +344,7 @@ rep('function presetPicker(', '''function cartPanel(){
     h("span", {class:"lbl"}, "Note in the capture"),
     h("div", {class:"flex"}, h("div", {style:"flex:1;min-width:0"}, noteIn), h("button", {type:"button", class:"btn", onclick:addNote}, "Add note")),
     h("p", {class:"hint keep"}, "Type what you're about to do on the Nova and press Enter; the note is saved in the capture file at that moment."),
-    pageFinder(),
-    testPanel());
+    null);
 }
 
 

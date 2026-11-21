@@ -32,7 +32,7 @@ const check = (ok, what) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if
   await p.goto(`http://127.0.0.1:${PORT}/`); await p.waitForFunction(() => cart.ready);
   await p.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(300);
   await p.evaluate(path => { const s = document.getElementById('f-serial-port'); s.append(new Option(path, path)); s.value = path; }, pty);
-  await p.locator('button', { hasText: 'Connect' }).first().click(); await sleep(8000);
+  await p.locator('button', { hasText: /^Connect$/ }).first().click(); await sleep(8000);
 
   const api = async q => (await fetch(`http://127.0.0.1:${PORT}${q}`)).json();
   const out = path.join(DEV, 'hidraw3.out');
@@ -55,7 +55,7 @@ const check = (ok, what) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if
   check(/REC/.test(tx(d.images.k0)) && /TRACK 1/.test(tx(d.images.k5)) && /NEXT SCENE/.test(tx(d.images.k11)), `default layout drawn live: ${tx(d.images.k0)} / ${tx(d.images.k5)} / ${tx(d.images.k11)}`);
 
   /* Setup › Stream Deck in the installed app: live pictures in the grid; a change there reaches the Stream Deck */
-  await p.evaluate(() => { setupSec = 'deck'; go('setup'); }); await sleep(1200);
+  await p.evaluate(() => { setupSec = 'exp'; go('setup'); }); await sleep(1200);
   const stateTxt = await p.locator('#dk-state').textContent();
   check(/Stream Deck MK\.2 plugged in/.test(stateTxt), `Setup says: ${stateTxt}`);
   check(await p.locator('#deck-box .dk-grid img').count() === 15, `Setup shows the 15 live key pictures (${await p.locator('#deck-box .dk-grid img').count()})`);

@@ -54,7 +54,7 @@ async function session(label, fn) {
     /* 2. a dropout (the Nova stops answering for 6 s), then save */
     fake.kill('SIGSTOP'); await sleep(6000); fake.kill('SIGCONT');
     await p.waitForFunction(() => cart.nova && cart.nova.connected && !cart.nova.loading, null, { timeout: 40000 }); await sleep(1500);
-    await p.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(400);
+    await p.evaluate(() => { setupSec = 'help'; go('setup'); }); await sleep(400);
     await p.fill('input[aria-label=Note]', 'HP routing changed as it connected');
     await p.locator('button', { hasText: /^Save$/ }).click();
     await p.waitForFunction(() => diagSaved.length > 0, null, { timeout: 5000 }).catch(() => { });

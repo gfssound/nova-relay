@@ -35,7 +35,7 @@ const killAll = () => { try { execFileSync('pkill', ['-f', '--', `server.js --po
   killAll(); startServer(base); await sleep(1000);
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 860 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  const open = async () => { await p.goto(`http://127.0.0.1:${PORT}/`); await p.waitForFunction(() => cart.ready && cart.update); await p.evaluate(() => { setupSec = 'update'; go('setup'); }); await sleep(300); };
+  const open = async () => { await p.goto(`http://127.0.0.1:${PORT}/`); await p.waitForFunction(() => cart.ready && cart.update); await p.evaluate(() => { setupSec = 'updates'; go('setup'); }); await sleep(300); };
   const running = () => p.evaluate(() => cart.update && cart.update.running);
   await open();
   check(await running() === '0.6.5', `the app's own version runs (${await running()})`);
@@ -88,11 +88,11 @@ const killAll = () => { try { execFileSync('pkill', ['-f', '--', `server.js --po
   check(!fs.existsSync(path.join(DATA, 'app/0.6.5')), 'older installed copies are cleared (keeps this one and the one before)');
 
   console.log('D. go back');
-  await p.evaluate(() => { setupSec = 'update'; go('setup'); }); await sleep(300);
+  await p.evaluate(() => { setupSec = 'updates'; go('setup'); }); await sleep(300);
   await p.click('text=Go back to 0.6.9'); await p.click('text=Tap again');
   await p.waitForFunction(() => cart.update && cart.update.running === '0.6.9', null, { timeout: 30000 }).catch(() => { });
   check(await running() === '0.6.9', `went back to 0.6.9 (${await running()})`);
-  await p.evaluate(() => { setupSec = 'update'; go('setup'); }); await sleep(300);
+  await p.evaluate(() => { setupSec = 'updates'; go('setup'); }); await sleep(300);
   await p.click('text=Go back to 0.6.5'); await p.click('text=Tap again');
   await p.waitForFunction(() => cart.update && cart.update.running === '0.6.5', null, { timeout: 30000 }).catch(() => { });
   check(await running() === '0.6.5' && await p.evaluate(() => !cart.update.fromUpdate), `went back to the app's own 0.6.5 (${await running()})`);

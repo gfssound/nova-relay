@@ -22,7 +22,7 @@ Or build the app yourself (any Mac with internet)
 Using it
   Nova Relay opens in its own window: no web browser and no Terminal window. Close the window or press ⌘Q to
   stop it. View › Enter Full Screen (Control-⌘-F) gives the remote the whole screen; View › Zoom In / Zoom Out
-  (⌘= / ⌘-) changes the size. Phones and iPads: the addresses are in Setup › Cart & Recorder Link; they work
+  (⌘= / ⌘-) changes the size. Phones and iPads: the addresses are in Setup › Connection; they work
   while the app is open. Nova Relay › Open in Web Browser (Shift-⌘-B) opens it in a browser too.
 
 Updates

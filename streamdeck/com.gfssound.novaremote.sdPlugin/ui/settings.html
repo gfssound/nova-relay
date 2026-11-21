@@ -55,7 +55,7 @@
                note: "Sends the Aria's Slate button, so the slate mic goes wherever the Nova routes slate. Lit while it's on, also when Slate is pressed on the Aria." }],
     com: [{ key: "mode", type: "select", label: "Press", def: "hold",
              options: [["hold", "On while held (like the Aria)"], ["latch", "Tap on, tap off"]],
-             note: "Sends the Aria's Com button. Learn it once: Nova Relay › Setup › Stream Deck › Learn, then press Com on the Aria." }],
+             note: "Sends the Aria's Com button. Learn it once: Nova Relay › Setup › Connection › Aria Slate and Com buttons › Learn, then press Com on the Aria." }],
     hp: [{ key: "mode", type: "select", label: "Preset", def: "next",
            options: [["next", "Next preset"], ["prev", "Previous preset"], ...range(12, "Preset")],
            note: "Next and previous skip presets that are turned off." }],
@@ -117,7 +117,7 @@
         note: "Hold to keep going. Needs the fader set once from Nova Relay (the Nova doesn't say where it is). Touching that fader on the Aria takes over." }],
     hpdial: [{ type: "info", note: "Turn for the next or previous headphone preset (presets that are off are skipped)." }],
     status: [{ type: "info", note: "Shows timecode, record state, scene and take. Press it to open Nova Relay in the browser." }],
-    scream: [{ type: "info", note: "Panic button for loud screams. Choose the transmitters and the scream ZNet trim in Nova Relay (Setup › Scream trim). One tap drops them, the next puts them back. Amber while on. The Nova's RX page keeps its old number, so trim each transmitter from one place." }],
+    scream: [{ type: "info", note: "Panic button for loud screams. Choose the transmitters and the scream ZNet trim in Nova Relay (Setup › Wireless). One tap drops them, the next puts them back. Amber while on. The Nova's RX page keeps its old number, so trim each transmitter from one place." }],
   };
 
   function buildOpts() {

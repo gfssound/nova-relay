@@ -25,7 +25,7 @@ const killAll = () => { try { execFileSync('pkill', ['-f', '--', `server.js --po
   await p.route(/127\.0\.0\.1:8339\/updates\/latest\.json/, r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: latest }));
   await p.route(/127\.0\.0\.1:8339\/updates\/Nova-Relay-0\.6\.11-update\.zip/, r => r.fulfill({ status: 200, contentType: 'application/zip', headers: { 'Access-Control-Allow-Origin': '*' }, body: zb }));
   await p.goto(`http://127.0.0.1:${PORT}/`); await p.waitForFunction(() => cart.ready && cart.update);
-  await p.evaluate(() => { setupSec = 'update'; go('setup'); }); await sleep(300);
+  await p.evaluate(() => { setupSec = 'updates'; go('setup'); }); await sleep(300);
   await p.click('text=Check now');
   await p.waitForFunction(() => updState().available, null, { timeout: 15000 }).catch(() => { });
   check(await p.evaluate(() => cart.update.offline && updState().viaDevice && updState().latest.version === '0.6.11'), 'the cart computer couldn\'t reach GitHub; the phone found 0.6.11 itself');

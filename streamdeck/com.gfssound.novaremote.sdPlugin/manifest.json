@@ -4,7 +4,7 @@
   "Description": "Keys for Nova Relay (Zaxcom Nova, through the Aria-8 or direct): transport, Slate and Com, logging (scene, take, notes), arming and arm sets, PFL, headphones, routing, input pages, jams, meters, receivers, drive/battery/mirror status, trim and headphone dials. Keys light up with the recorder's state.",
   "Author": "GFS Sound",
   "UUID": "com.gfssound.novaremote",
-  "Version": "1.5.2.0",
+  "Version": "1.5.3.0",
   "Icon": "imgs/plugin",
   "Category": "Nova Relay",
   "CategoryIcon": "imgs/category",

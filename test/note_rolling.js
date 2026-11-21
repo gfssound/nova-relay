@@ -17,7 +17,7 @@ const PORT = +(process.env.PORT || 8161);
   await pg.goto(`http://127.0.0.1:${PORT}/`); await pg.waitForFunction(() => cart.ready);
   await pg.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(300);
   await pg.evaluate(p => { const s = document.getElementById('f-serial-port'); s.append(new Option(p, p)); s.value = p; }, pty);
-  await pg.locator('button', { hasText: 'Connect' }).first().click();
+  await pg.locator('button', { hasText: /^Connect$/ }).first().click();
   let noted = 0, t0 = Date.now(), marks = [];
   while (Date.now() - t0 < 70000 && noted < 2) {
     await sleep(400);

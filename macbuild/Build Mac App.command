@@ -336,9 +336,12 @@ chmod +x "$RES/Nova Relay.command"; for arch in $ARCHS; do chmod +x "$RES/node/$
 # 3. Icon from the remote's own icon
 echo "3/5  Making the icon…"
 ICONSET="$WORK/AppIcon.iconset"; mkdir -p "$ICONSET"
+BIG="$SRC/public/icon-1024.png"; [ -f "$BIG" ] || BIG="$SRC/public/icon-512.png"   # Nov 20: a 1024 source so the 512@2x size is sharp
+SMALL="$SRC/public/icon-small.png"; [ -f "$SMALL" ] || SMALL="$BIG"                  # the badge without NOVA for 16 and 32 (the word can't be read that small)
 for s in 16 32 128 256 512; do
-  sips -z $s $s "$SRC/public/icon-512.png" --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
-  d=$((s * 2)); sips -z $d $d "$SRC/public/icon-512.png" --out "$ICONSET/icon_${s}x${s}@2x.png" >/dev/null
+  ic="$BIG"; [ $s -le 32 ] && ic="$SMALL"
+  sips -z $s $s "$ic" --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
+  d=$((s * 2)); sips -z $d $d "$ic" --out "$ICONSET/icon_${s}x${s}@2x.png" >/dev/null
 done
 iconutil -c icns "$ICONSET" -o "$RES/applet.icns" || echo "     (icon skipped)"
 rm -f "$RES/Assets.car"

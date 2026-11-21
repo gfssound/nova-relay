@@ -1,0 +1,69 @@
+Nova Relay: notices and licences
+================================
+
+Nova Relay is an independent app by gfssound (github.com/gfssound/nova-relay). It is not made, sold or supported by
+Zaxcom, Inc. Zaxcom, Nova, Aria, Oasis, NovaTouch and ZaxNet are trademarks of Zaxcom, Inc., used only to say which
+equipment Nova Relay works with. Controlling a Nova from a computer needs the Nova's NovaTouch option or an Aria or
+Oasis attached; Nova Relay works within the licence the Nova has and never bypasses or imitates it.
+
+
+NovaRemote (Zaxcom) - protocol reference
+----------------------------------------
+Details of the Nova's serial protocol were taken from Zaxcom's NovaRemote project, github.com/HowyZax/novaremote.
+Nova Relay contains no Zaxcom code or firmware. NovaRemote's licence:
+
+MIT License
+
+Copyright (c) 2026 Zaxcom
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Node.js
+-------
+Node.js runs Nova Relay on the cart computer and the Nova Relay box. Node.js is licensed under the MIT licence,
+Copyright Node.js contributors. Node.js also includes third-party components under their own licences; the full list
+is in the LICENSE file of the Node.js release (https://github.com/nodejs/node/blob/main/LICENSE).
+
+
+Electron (Linux app)
+--------------------
+The Linux app's window is Electron, MIT licence, Copyright (c) Electron contributors and GitHub Inc. Electron includes
+Chromium and other components under their own licences (LICENSES.chromium.html inside the app).
+
+
+Fonts on the page
+-----------------
+Saira Condensed, Barlow and Martian Mono: SIL Open Font License 1.1 (https://openfontlicense.org).
+Copyright the Saira Project Authors, the Barlow Project Authors and the Martian Mono Project Authors.
+
+
+Fonts on the Nova Relay box's Stream Deck keys
+----------------------------------------------
+Liberation Sans Bold: SIL Open Font License 1.1, Copyright (c) 2012 Red Hat, Inc.
+DejaVu Sans Bold (a few symbols): Bitstream Vera Fonts licence and the DejaVu changes (public domain),
+Copyright (c) 2003 Bitstream, Inc. Bitstream Vera is a trademark of Bitstream, Inc.
+
+
+Stream Deck model details
+-------------------------
+Key sizes, image formats and report layouts for each Stream Deck model were taken from python-elgato-streamdeck
+(MIT licence, Copyright (c) Dean Camera) and node-elgato-stream-deck (MIT licence, Copyright (c) Julian Waller).
+No code from either is included. Stream Deck is a trademark of Corsair Memory, Inc.
+
+
+Raspberry Pi OS (Nova Relay box)
+--------------------------------
+The box runs Raspberry Pi OS, which is made of many packages under their own licences
+(/usr/share/doc/*/copyright on the box).

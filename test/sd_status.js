@@ -47,7 +47,7 @@ const fillOf = svg => (svg.match(/<rect width="144" height="144" rx="18" fill="(
   await sleep(1200);
   const show = label => { console.log('--', label); KEYS.forEach(([a, s], i) => console.log(`  ${a}${JSON.stringify(s)}: [${fillOf(img(sd, 'k' + i))}] ${texts(img(sd, 'k' + i))}`)); };
   show('no Nova yet');
-  await p.locator('button', { hasText: 'Connect' }).first().click(); await sleep(12000);
+  await p.locator('button', { hasText: /^Connect$/ }).first().click(); await sleep(12000);
   const st = await p.evaluate(async () => (await fetch('/api/status')).json());
   console.log('status:', JSON.stringify({ driveLeft: st.driveLeft, volts: st.volts, primaryFreeGB: st.primaryFreeGB, mirror: st.mirror }));
   show('with the Nova');

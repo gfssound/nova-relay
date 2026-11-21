@@ -12,7 +12,7 @@ const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Prom
   await p.goto('http://localhost:8139/'); await p.waitForFunction(() => cart.ready);
   await p.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(400);
   await p.evaluate(path => { const s = document.getElementById('f-serial-port'); s.append(new Option(path, path)); s.value = path; }, pty);
-  await p.locator('button', { hasText: 'Connect' }).first().click(); await sleep(3500);
+  await p.locator('button', { hasText: /^Connect$/ }).first().click(); await sleep(3500);
   console.log('pflmap', JSON.stringify(await p.evaluate(() => get('ui.pflmap'))));
   await p.evaluate(() => togglePfl(15)); await sleep(500);   // RX 2 -> fader 2 -> 51
   console.log('soloins after on', JSON.stringify(await p.evaluate(() => get('ui.soloins'))));

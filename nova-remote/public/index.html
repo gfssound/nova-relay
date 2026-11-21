@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Nova Relay">
 <meta name="theme-color" content="#0a0b0c">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
+<link rel="icon" href="icon-small.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,6 +64,7 @@ button{cursor:pointer}
 .pill{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:var(--t-sm);background:var(--raised);white-space:nowrap}
 .pill i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
 .pill.warn i{background:var(--warn);box-shadow:0 0 6px var(--warn)}  /* shipped versions: no Nova connected */
+
 
 /* transport bar */
 .transport{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;padding-block:14px;border-bottom:1px solid var(--line)}
@@ -126,6 +127,7 @@ button{cursor:pointer}
 .tabs::-webkit-scrollbar{display:none}
 .tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px 9px;font-family:var(--f-display);font-weight:600;font-size:var(--t-md);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent-line)}
+body:not([data-xwx="1"]) .tab[data-v="wireless"]{display:none}
 main{overflow:auto;min-height:0;padding-block:18px 28px}
 
 /* generic blocks */
@@ -299,6 +301,35 @@ body[data-layout="console"]{
 .sinfo{display:flex;justify-content:space-between;gap:4px;font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--tick);white-space:nowrap}
 .led{display:block;width:100%;height:var(--ledh,clamp(220px,42vh,420px))}
 .strip.soloed{border-color:var(--warn);box-shadow:inset 0 0 0 2px var(--warn)}
+.strip.monitor{border-style:dashed;border-color:var(--muted)}
+/* Nov 21: meter extras (Ferris's layout from the Meter Extras page) */
+.xl, .xnum, .xr{display:none}
+.strips-wrap.mx .strip > .xl{display:flex;align-items:center;justify-content:space-between;gap:.35em;min-height:1.6em;padding:0 2px;font:700 12px/1 var(--f-mono);color:var(--tick);white-space:nowrap;overflow:hidden}
+.strips-wrap.mx.no-l1 .xl[data-p="l1"], .strips-wrap.mx.no-l2 .xl[data-p="l2"], .strips-wrap.mx.no-under .xl[data-p="under"]{display:none}
+.xl .xph{display:contents}
+.strip .zt.mxn{display:none !important}   /* the spare copy of ZNet trim: only on narrow strips, below */
+@media (max-height:500px){ .strips-wrap.mx .strip > .xl{min-height:1.2em} .strips-wrap.mx .strip:not(.scale){gap:2px} }
+.xl > .xi:only-child{margin-right:auto}
+.xi .u{display:none}
+.xzt i{font-style:normal;font-weight:500;color:var(--muted);margin-right:.3em}
+.xzt{color:var(--fg)}
+.xzid{padding:.1em .35em;border-radius:.3em;background:#0a0b0c;border:1px solid #2c3238;color:#c2c9d0}
+.xpw{color:var(--warn)} .xpw[data-st="On"]{color:var(--ok)}
+.xi.wrec{display:inline-flex;align-items:center;gap:.3em;padding:.22em .45em;border-radius:.3em;background:#3a3f45;color:#d7dce0;font:800 .86em/1 var(--f-display);letter-spacing:.04em}
+.xi.wrec .d{font-size:.8em}
+.xi.wrec.on{background:var(--rec);color:#fff}
+.xi.wrec.off{background:#5a2020;color:#ffb3b3}
+.xi.wbat{display:inline-flex;align-items:center;gap:.3em;color:var(--ok)}
+.xi.wbat i{display:block;width:1.45em;height:.75em;box-sizing:border-box;border:1.5px solid currentColor;border-radius:2px;padding:1px;background:linear-gradient(90deg,currentColor var(--bp),transparent 0) content-box}
+.xi.wbat.low{color:var(--warn)}
+.xi.wbat.off{color:var(--dim)}
+.xi.wrf{display:inline-flex;align-items:flex-end;gap:1px;height:1em}
+.xi.wrf s{display:block;width:.28em;background:#3a3f45;text-decoration:none}
+.xi.wrf s.on{background:var(--ok)}
+.xi.wrf.weak s.on{background:var(--warn)}
+.strip.monitor .scrib{background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.22) 0 6px,transparent 6px 12px)}
+.montag{padding:0 .4em;border:1px solid var(--muted);border-radius:3px;color:var(--fg);font-size:.9em;letter-spacing:.06em}
+
 /* PFL keys (Nov 1): yellow when on, like the Aria's PFL light */
 .pflb{font-family:var(--f-display);font-weight:700;font-size:13px;letter-spacing:.08em;line-height:1;padding:6px 0;min-height:32px;border:1px solid var(--line);border-radius:2px;background:transparent;color:var(--muted)}
 .pflb:hover:not(:disabled):not(.on){border-color:var(--warn);color:var(--warn)}
@@ -597,6 +628,46 @@ main{padding-block:clamp(8px,1.6vh,18px) clamp(12px,2.4vh,28px)}
   .strip.scale{background:none;border:0;padding:0 4px;grid-template-rows:14px}
   .strip.scale .scrib{display:none}
   .strip.scale .led{height:14px !important}
+  /* Nov 21: meter extras sideways. The number leads the row; the rest goes right of the bar in place order. On a phone
+     only the text items fit there (ZNet trim, trim); REC, battery and RF go in a second pill in the name box, beside
+     the ZNet pill, when the rows are tall enough for two lines (left off when they aren't). */
+  .strips-wrap.mx .strip > .xl{display:none}
+  .strips-wrap.mx .strip{grid-template-columns:18px 120px minmax(0,1fr) 44px 40px}
+  .strips-wrap.mx .strip > .xr .xzt i{display:none}
+  .strips-wrap.mx .strip > .xr .xzt{color:#c2c9d0}
+  .strips-wrap.mx .strip > .xnum{display:block;grid-column:1;grid-row:1;font:700 11px var(--f-mono);color:var(--tick);white-space:nowrap;overflow:hidden}
+  .strips-wrap.mx .strip > .xnum .montag{display:none}
+  .strips-wrap.mx .strip > .xr{display:flex;grid-column:4;grid-row:1;align-items:center;justify-content:flex-end;gap:.5em;font:700 11px/1 var(--f-mono);color:var(--tick);white-space:nowrap;overflow:hidden}
+  .strips-wrap.mx .strip > .xr .xw{display:none}
+  .strips-wrap.mx .strip .pflb{grid-column:5}
+  /* Nov 21 (Ferris picked H2 on the canvas): sideways, each row is two lines. On top: a colour mark, the name, the
+     name-box pill (power, ZNet ID) and, at the right, the other extras in place order. Under it the bar runs the full
+     width. Rows too short for two lines (under 26 px) keep the one-line look with the name box. */
+  .strips-wrap.mx.two{--toph:17px}
+  .strips-wrap.mx.two .strip{grid-template-columns:18px minmax(0,1fr) auto 40px}
+  .strips-wrap.mx.two .strip:not(.scale){grid-template-rows:var(--toph) calc(var(--rowh,34px) - var(--toph));row-gap:2px}
+  .strips-wrap.mx.two .strip:not(.scale) > .xnum, .strips-wrap.mx.two .strip:not(.scale) > .pflb{grid-row:1 / span 2}
+  .strips-wrap.mx.two .strip:not(.scale) > .xnum{align-self:center}
+  .strips-wrap.mx.two .strip > .scrib{grid-column:2;grid-row:1;display:flex !important;align-items:center;justify-content:flex-start;gap:7px;min-width:0;align-self:stretch;
+    padding:0 0 0 9px;border-radius:0;background:transparent !important;box-shadow:inset 4px 0 0 var(--sc,#9aa5b1);color:var(--fg)}
+  .strips-wrap.mx.two .strip > .scrib .snm{flex:0 1 auto;min-width:0;font-size:calc(var(--toph) * .86) !important;line-height:1 !important;color:var(--fg)}
+  .strips-wrap.mx.two .strip > .scrib .rtag{flex:none;font-size:calc(var(--toph) * .56)}
+  .strips-wrap.mx.two .strip .led{grid-column:2 / 4;grid-row:2}
+  .strips-wrap.mx.two .strip.scale .led{grid-column:2 / 4;grid-row:1}   /* the scale is one short line, not a two-line row */
+  .strips-wrap.mx .strip.scale .sinfo{display:none}   /* sideways the scale needs no "dB" line of its own */
+  .strips-wrap.mx.two .strip > .xr{grid-column:3;grid-row:1;justify-content:flex-end;gap:.8em;padding-left:6px;font-size:calc(var(--toph) * .68)}
+  .strips-wrap.mx.two .strip > .xr .xw{display:inline-flex}
+  .strips-wrap.mx.two .strip > .xr .wrec{font-size:.95em;padding:.12em .4em}
+  .strips-wrap.mx.two .strip > .xr .xzt{color:var(--fg)}
+  .strips-wrap.mx.two .strip .pflb{grid-column:4}
+  .strips-wrap.mx.two .strip > .xr .wrec .t, .strips-wrap.mx.two .strip > .xr .wbat b{display:none}   /* phone: icons only, so the name keeps its room */
+  .strips-wrap.mx.two .strip > .xr .wrec.off .t{display:inline;font-size:.8em}
+  /* Nov 21 (Ferris: "Can I see what that looks like"): rows too short for two lines (16 tracks on a phone) match H2 on
+     one line: a colour mark and the plain name instead of the name box, so the bar gets the room the box had. */
+  .strips-wrap.mx:not(.two) .strip{grid-template-columns:18px 92px minmax(0,1fr) 44px 40px}
+  .strips-wrap.mx:not(.two) .strip > .scrib{background:transparent !important;box-shadow:inset 3px 0 0 var(--sc,#9aa5b1);border-radius:0;padding:0 0 0 7px !important;color:var(--fg);justify-content:flex-start}
+  .strips-wrap.mx:not(.two) .strip > .scrib .snm{color:var(--fg);font-weight:800}
+  .strips-wrap.mx:not(.two) .strip > .scrib .rtag{display:none}
   /* Nov 12 (Ferris): the ZNet and ON/STBY tags get their own space beside the name instead of covering it, on the
      right as one pill (state dot or STBY/LOW/WAKE word, ZNet ID, trim), and every name starts at the left so they line up. "+12". */
   .strip .sinfo .u{display:none}
@@ -632,6 +703,14 @@ main{padding-block:clamp(8px,1.6vh,18px) clamp(12px,2.4vh,28px)}
 }
 @media (orientation:portrait) and (min-width:601px) and (max-width:1100px){
   .strip{grid-template-columns:26px 150px minmax(0,1fr) 60px 56px;column-gap:10px;padding:3px 8px}
+  /* Nov 21: upright tablets: H2 a little bigger, with the words */
+  .strips-wrap.mx .strip{grid-template-columns:26px 150px minmax(0,1fr) 60px 56px}
+  .strips-wrap.mx .strip > .xr{font-size:13px;gap:.7em}
+  .strips-wrap.mx .strip > .xr .xzt{color:var(--fg)}
+  .strips-wrap.mx.two{--toph:22px}
+  .strips-wrap.mx.two .strip{grid-template-columns:26px minmax(0,1fr) auto 56px}
+  .strips-wrap.mx.two .strip > .xr{gap:1.1em}
+  .strips-wrap.mx.two .strip > .xr .wrec .t, .strips-wrap.mx.two .strip > .xr .wbat b{display:inline}
   .strip .pflb{font-size:13px}
   .strip .scrib{font-size:17px}
   .strip .sinfo > span{font-size:12px}
@@ -693,6 +772,32 @@ body #bRec[aria-pressed="true"] svg{animation:recdot 1.2s steps(1) infinite}
 .secsplit{display:grid;grid-template-columns:minmax(200px,260px) minmax(0,1fr);gap:12px;align-items:start}
 @media (max-width:700px){.secsplit{grid-template-columns:1fr}}
 .secnav{display:flex;flex-direction:column;gap:6px}
+.secsub{font-size:var(--t-sm);color:var(--dim);line-height:1.25}
+.secname .short{display:none}
+.secnav .secbtn{min-height:0;padding:8px 12px;gap:2px}
+/* Nov 21 (Ferris: "shrink the size of setup panels so there isn't as much scrolling"): denser Setup. Tighter panels and
+   tiles, four tiles across on wide screens, switch lists three or four across, and on wide screens a section with
+   several panels lays them out in two columns. */
+.secsplit .panel{padding:10px 12px;gap:8px}
+.secsplit .stack{gap:8px}
+.secsplit .panel h3{font-size:var(--t-md)}
+/* Nov 21 (Ferris: "capitalize all words in a label text"): headings, buttons and switch names in Setup */
+.secsplit h3, .secsplit .btn, .secsplit .mxname b, .secsplit .mxname small, .secsplit .conn b, .secsplit .decklbl, .secsplit .aboutrow > .lbl{text-transform:capitalize}
+.secsplit .tgrid.t3.big .vtile{min-height:58px;padding:7px 12px}
+.secsplit .tgrid.t3.big .vtile .tv{font-size:clamp(16px,2vmin,21px)}
+@media (min-width:1280px){ .secsplit .tgrid.t3.big{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.secsplit .mxgrid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:5px}
+.secsplit .mxname b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:600px){ .secsplit .mxgrid{grid-template-columns:repeat(2,minmax(0,1fr))} .secsplit .mxrow{padding:5px 6px;gap:6px} .secsplit .mxrow .mxname b{font-size:12.5px} .secsplit .tsw{width:34px;height:20px} .secsplit .tsw i{width:14px;height:14px} .secsplit .tsw[aria-checked="true"] i{transform:translateX(14px)} .secsplit .mxrow .mxname small{font-size:10px} }
+.secsplit .mxrow{padding:5px 8px;gap:8px}
+.secsplit .tsw{width:38px;height:22px;border-radius:11px}
+.secsplit .tsw i{width:16px;height:16px}
+.secsplit .tsw[aria-checked="true"] i{transform:translateX(16px)}
+@media (min-width:1101px){
+  .secsplit > .stack:has(> .panel ~ .panel){display:block;columns:2 400px;column-gap:8px}
+  .secsplit > .stack:has(> .panel ~ .panel) > *{break-inside:avoid;margin-bottom:8px}
+  .secsplit > .stack:has(> .panel ~ .panel) > .hint{column-span:all}
+}
 /* Setup › Stream Deck (Nov 7) */
 .decksteps{margin:4px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:10px;line-height:1.45}
 .decksteps a.btn{display:inline-flex;text-decoration:none}
@@ -960,8 +1065,10 @@ main.secs-all .phsec-panel > h3:first-child{display:none}
   /* setup: the section buttons become a compact 3-across switch */
   .secsplit{gap:8px}
   .secnav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
-  .secbtn{min-height:0;padding:7px 6px;align-items:center;text-align:center}
-  .secbtn .secname{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .secnav .secbtn{min-height:0;padding:7px 6px;align-items:center;text-align:center}
+  .secname:has(.short) .long{display:none} .secname .short{display:inline !important}
+  .secbtn .secname{font-size:10.5px;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}   /* Nov 21: TROUBLESHOOTING fits a phone */
+  .secsub{display:none}
   .secsplit .panel .row{min-height:0}
 }
 
@@ -1012,6 +1119,23 @@ main.secs-all .phsec-panel > h3:first-child{display:none}
     .strip:not(.scale){container-type:inline-size}
     .sinfo{font-size:clamp(11px,7.2cqi,19px)}
     .strip .pflb{font-size:clamp(12px,6.6cqi,18px);min-height:clamp(24px,10cqi,38px)}
+    .strips-wrap.mx .strip > .xl{font-size:clamp(10px,10.4cqi,17px)}
+    @container (max-width:92px){ .xl .wbat b{display:none} }
+    /* narrow strips (16 on a laptop, a phone held sideways): ZNet trim joins the pill on line 1, as before */
+    @container (max-width:120px){ .xl .xzt{display:none} .strip .xl .zpill .zt.mxn{display:inline !important} .strips-wrap.mx .strip > .xl{gap:.2em} }
+    @container (max-width:80px){ .xl .zpill{font-size:9px} }
+    /* Nov 21 (Ferris: "when all 16 are present ... just keep TX battery and RF"): on narrow meters (16 on a laptop, a
+       phone held sideways) only battery and RF stay; the other extras and the name-box pill step aside, and lines left
+       with nothing close so the meters get taller. Wide screens with room for 16 keep everything.
+       Nov 21 (Ferris: "7 tracks ... only shows battery and RF even though you could fit things"): only once a meter is
+       too narrow for its lines (76 px inside: 16 on a laptop, 10 on a phone held sideways); wider ones keep them all. */
+    @container (max-width:76px){
+      .strips-wrap.mx .strip > .xl > :not([data-k="bat"]):not([data-k="rf"]){display:none}
+      .strips-wrap.mx .strip > .xl:not(:has(> [data-k="bat"], > [data-k="rf"])){display:none}
+      .strips-wrap.mx .strip > .xl:has(> [data-k="bat"], > [data-k="rf"]){justify-content:space-between}
+      .strips-wrap.mx .strip > .xl .wbat b{display:none}
+    }
+    @container (max-width:66px){ .xl .wrec .t{display:none} .xl .wrec.off .t{display:inline} .xl .wrec.off{font-size:.7em} }
     /* Nov 13 (Ferris, photo of the cart screen): the meter titles grow with the strip too (never smaller than before);
        a long name steps down to fit (fitNames). */
     .strip:not(.scale) .scrib{font-size:max(clamp(11px,calc(0.9vw + 6px),17px),min(9.5cqi,28px));font-weight:800;padding-block:max(4px,1.8cqi)}
@@ -1083,9 +1207,33 @@ html.osk-on .app{height:calc(100% - var(--osk-h,0px))}
 .screambtn .ssm{font-size:10px;font-weight:600;letter-spacing:.04em;opacity:.85}
 .screambtn[aria-pressed="true"]{background:var(--warn);color:#111;box-shadow:0 0 0 2px var(--ground),0 0 0 4px var(--warn)}
 .chipgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+/* Nov 21: switches (Setup › Meters) */
+.tsw{flex:none;position:relative;width:46px;height:26px;padding:0;border-radius:13px;border:1px solid var(--line);background:#2a2e33;cursor:pointer}
+.tsw i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#8d969e;transition:transform .15s,background .15s}
+.tsw[aria-checked="true"]{background:color-mix(in srgb,var(--accent) 28%,#2a2e33);border-color:var(--accent-line)}
+.tsw[aria-checked="true"] i{transform:translateX(20px);background:var(--accent)}
+.tsw:disabled{opacity:.55;cursor:default}
+@media (prefers-reduced-motion:reduce){.tsw i{transition:none}}
+.mxlist{display:flex;flex-direction:column;gap:6px}
+.mxrow{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(120px,170px) auto;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--raised)}
+.mxrow.off .mxname b{color:var(--muted)}
+.mxrow .mxname{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mxrow .mxname small{color:var(--muted);font-family:var(--f-mono);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mxrow .sel:disabled{opacity:.45}
+.mxord{display:inline-flex;gap:4px}
+.mxrow.mxrf{grid-template-columns:auto minmax(0,1fr)}
+.mxgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.mxgrid .mxrow{grid-template-columns:auto minmax(0,1fr)}
+.mxsum{display:flex;flex-wrap:wrap;gap:4px 14px}
+@media (max-width:600px){.mxrow{grid-template-columns:auto minmax(0,1fr) auto;row-gap:8px}.mxrow .sel{grid-column:1 / 3}.mxrow .mxord{grid-column:3;grid-row:2}.mxgrid{grid-template-columns:1fr}}
 @media (max-width:600px){.chipgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .rxchip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 10px;text-align:left;min-width:0}
 .rxchip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.aboutrow{display:flex;gap:12px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--line)}
+.aboutrow .lbl{width:110px;flex:none}
+.aboutrow b{font-family:var(--f-mono);overflow-wrap:anywhere}
+.aboutlist{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:var(--t-sm);line-height:1.45}
+.aboutlist b{color:var(--fg)}
 .rxchip small{color:var(--muted)}
 .rxchip[aria-pressed="true"]{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
 .rxchip[aria-pressed="true"] b{color:var(--tick-warn,var(--warn))}
@@ -1099,6 +1247,251 @@ html.osk-on .modal-back{bottom:var(--osk-h,0px);overflow:auto}
   .tabs{grid-row:2}
   main{grid-row:3}
   .transport{grid-row:4;border-bottom:0;border-top:1px solid var(--line);background:var(--surface)}
+}
+
+/* ---- Wireless (Nov 20, prototype only): RX-12 channels as tiles, 4 to a row, from the Z4 design ---- */
+.wx{--wx-name:#5ccfff;--wx-trk:#5ccfff;--wx-inset:var(--ground);height:100%;min-height:0;display:flex;flex-direction:column;gap:10px}
+:root[data-theme="day"] .wx{--wx-name:#0a6f99;--wx-trk:#1590c4}
+/* Nov 21 (Ferris: "Wireless page daylight mode should be easier to read"): in daylight the page's own greens, ambers
+   and reds are darker so text and bars hold up on white; unlit meter segments are light grey instead of black. */
+.wx{--wx-unlit:var(--meter-bg);--wx-needle:#f2f2f2}
+:root[data-theme="day"] .wx{--ok:#178a4c;--warn:#a86f00;--rec:#d42a2e;--wx-trk:#0b6fa8;--wx-unlit:#d3d8dc;--wx-needle:#111417;--line:#b3bbc1;--dim:#6b747b}
+:root[data-theme="day"] .wx .trk{background:#fff}
+:root[data-theme="day"] .wx .fq{color:var(--fg);background:#fff}
+body[data-view="wireless"] main{overflow:hidden}
+.wx-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+/* Nov 21: waiting for a receiver */
+.wx-wait{display:none;flex:1;min-height:0;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+.wx.waiting .wx-wait{display:flex}
+.wx.waiting .wx-body, .wx.waiting .wx-sw{display:none}
+.wx-wait .wi{width:clamp(96px,14vmin,150px);color:var(--wx-name)}
+.wx-wait .wi svg{display:block;width:100%}
+.wx-wait .wi path{animation:wxw 2.4s ease-in-out infinite}
+.wx-wait .wi .w2{animation-delay:.25s} .wx-wait .wi .w3{animation-delay:.5s}
+@keyframes wxw{0%,100%{opacity:.18}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.wx-wait .wi path{animation:none}}
+.wx-wait h2 b{font-weight:inherit;white-space:nowrap}
+.wx-wait h2{margin:0;font:800 clamp(24px,3.2vw,44px)/1.1 var(--f-display);letter-spacing:.04em;color:var(--fg)}
+.wx-wait .ws{margin:0;display:inline-flex;align-items:center;gap:10px;padding:6px 16px;border-radius:99px;background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn);font:700 clamp(13px,1.2vw,17px) var(--f-display);letter-spacing:.12em;text-transform:uppercase}
+.wx-wait .ws i{width:8px;height:8px;border-radius:50%;background:currentColor;animation:wxp 1.2s ease-in-out infinite}
+@keyframes wxp{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.wx-wait .ws i{animation:none}}
+.wx-sp{flex:1}
+.wx-sim{display:flex;align-items:center;gap:8px;padding:4px 8px;border:1px dashed var(--muted);border-radius:8px}
+.wx-sim .lb{font:700 11px var(--f-display);letter-spacing:.14em;color:var(--muted)}
+.wx-sim .sel{height:32px}
+.wx-mods{display:inline-flex;align-items:center;gap:6px}
+.wx-mods[hidden]{display:none}
+.wx-step{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.wx-step button{width:36px;height:34px;border:0;background:var(--raised);color:var(--fg);font:700 18px var(--f-mono);cursor:pointer}
+.wx-step button:disabled{color:var(--dim);cursor:default}
+.wx-step output{min-width:44px;display:flex;align-items:center;justify-content:center;font:700 18px var(--f-mono);background:var(--wx-inset)}
+
+.wx-sw{display:inline-flex;align-items:center;gap:8px;font:600 var(--t-sm) var(--f-body);cursor:pointer;user-select:none}
+.wx-sw input{position:absolute;opacity:0}
+.wx-sw span{position:relative;width:36px;height:21px;border-radius:99px;background:var(--line);transition:background .2s}
+.wx-sw span::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:var(--ground);transition:transform .2s}
+.wx-sw input:checked+span{background:var(--accent)}
+.wx-sw input:checked+span::after{transform:translateX(15px)}
+.wx-sw input:focus-visible+span{outline:2px solid var(--accent-line);outline-offset:2px}
+.wx-body{flex:1;min-height:0;display:flex;gap:12px}
+.wx-wrap{position:relative;flex:1;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden}
+.wx-grid{position:relative}
+.wx-tile{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;gap:clamp(3px,3cqh,8px);padding:clamp(5px,4cqmin,12px);background:var(--raised);border:2px solid var(--line);border-radius:9px;container-type:size;container-name:wxt;cursor:pointer;overflow:hidden;
+  transition:left .35s cubic-bezier(.3,.7,.2,1),top .35s cubic-bezier(.3,.7,.2,1),width .35s cubic-bezier(.3,.7,.2,1),height .35s cubic-bezier(.3,.7,.2,1),opacity .25s,transform .25s,border-color .2s}
+.wx-tile.sel{border-color:var(--accent-line)}
+.wx-tile.enter,.wx-tile.leave{opacity:0;transform:scale(.85)}
+.wx-tile.leave{pointer-events:none}
+.wx-tile:focus-visible{outline:2px solid var(--accent-line);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.wx-tile{transition:none}}
+/* Nov 21: Y3, receiver cards (two channels each) while they fit */
+.wx-rx{position:absolute;box-sizing:border-box;background:var(--raised);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  transition:left .35s cubic-bezier(.3,.7,.2,1),top .35s cubic-bezier(.3,.7,.2,1),width .35s cubic-bezier(.3,.7,.2,1),height .35s cubic-bezier(.3,.7,.2,1),opacity .25s}
+.wx-rx.gone{opacity:0}
+.wx-rx .rh{display:flex;align-items:center;gap:10px;height:34px;padding:0 12px;background:var(--surface);border-bottom:1px solid var(--line)}
+.wx-rx .rt{font:700 15px var(--f-display);letter-spacing:.12em}
+.wx-rx .rch{font:500 11px var(--f-mono);color:var(--muted)}
+.wx-rx .wx-seg{font-size:10px}
+.wx-rx .wx-seg button{padding:3px 7px}
+.wx-rx .rt, .wx-rx .rch{white-space:nowrap}
+@media (max-width:600px){ .wx-rx .wx-seg{display:none} }
+.wx-rx .rmode{display:none;gap:4px;white-space:nowrap}
+.wx-grid.z2 .wx-rx .rh{height:26px;padding:0 10px;gap:8px}
+.wx-grid.z2 .wx-rx .rt{font-size:13px}
+.wx-grid.z2 .wx-rx .rch{font-size:10px}
+.wx-grid.z2 .wx-rx .wx-seg{display:none}
+.wx-grid.z2 .wx-rx .rmode{display:inline-flex}
+/* cards (Y3 and Z2): label box down the left, name line, battery/RF, meter, tracker; REC and frequency top right */
+.wx-grid.cards .wx-tile{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto minmax(0,1fr);column-gap:12px;row-gap:6px;
+  padding:10px 12px;background:transparent;border:0;border-top:1px solid transparent;border-radius:0}
+.wx-grid.cards .wx-tile.b{border-top-color:var(--line)}
+.wx-hold{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;border-top:1px solid var(--line);color:var(--muted);text-align:center;
+  background:repeating-linear-gradient(135deg,transparent 0 10px,color-mix(in srgb,var(--line) 35%,transparent) 10px 11px);transition:left .35s,top .35s,width .35s,height .35s,opacity .25s}
+.wx-hold.gone{opacity:0}
+.wx-hold b{font:800 clamp(12px,1.1vw,16px) var(--f-display);letter-spacing:.14em;color:var(--fg)}
+.wx-hold span{font:500 12px var(--f-body)}
+.wx-grid.z2 .wx-hold{gap:3px;padding:4px}
+.wx-grid.z2 .wx-hold span{font-size:11px}
+.wx-grid.cards .wx-tile.sel{box-shadow:inset 0 0 0 2px var(--accent-line);border-radius:8px}
+.wx-grid.cards .wx-tile .hd{display:contents}
+.wx-grid.cards .wx-tile .lw{grid-column:1;grid-row:1 / 4;align-self:start;width:42px;gap:5px}
+.wx-grid.cards .wx-tile .lab{width:100%;aspect-ratio:1;border-radius:6px}
+.wx-grid.cards .wx-tile .who{grid-column:2;grid-row:1;flex-direction:row;align-items:center;gap:8px}
+.wx-grid.cards .wx-tile .who .nm{flex:0 1 auto}
+.wx-grid.cards .wx-tile .who .nx{margin-left:auto;padding-left:4px}
+.wx-grid.cards .wx-tile .l1{display:flex;flex:none;gap:8px}
+/* Nov 21 (Ferris: "znet id should match style of rx channel"): the ZNet ID is a box like the channel label (same face, size, corners), always neutral */
+/* Nov 21 (Ferris: "znet id should be zaxcom blue on this page") */
+/* then ("match the blue to the color of the tx name text"): the same blue as the names; dark text on it, white in daylight */
+.wx{--zaxblue:var(--wx-name);--zaxink:#0f1113}
+:root[data-theme="day"] .wx{--zaxink:#fff}
+.wx .lw .zid{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:clamp(22px,11cqi,40px);padding:.28em 0;border-radius:5px;background:var(--zaxblue);border:1px solid var(--zaxblue);color:var(--zaxink);font:800 clamp(11px,5.6cqi,19px)/1 var(--f-display)}
+.wx-grid.cards .wx-tile .lw .zid{width:100%;border-radius:6px}
+.wx-grid.cards .wx-tile .nm{line-height:1}
+.wx-grid.cards .wx-tile .hr{grid-column:3;grid-row:1 / 3}
+.wx-grid.cards .wx-tile .rc{width:auto;height:auto;padding:.15em .6em;border-radius:5px}
+.wx-grid.cards .wx-tile .nx .rf span{display:inline}
+.wx-grid.cards .wx-tile .fq{padding:.1em .4em;border:1px solid var(--line);background:var(--wx-inset)}
+.wx-grid.cards .wx-tile .mt{grid-column:2;grid-row:2}
+.wx-grid.cards .wx-tile .mt .lv{display:block}
+.wx-grid.cards .wx-tile .trk{grid-column:2 / 4;grid-row:3}
+.wx-grid.cards .wx-tile .trk .th{display:flex}
+/* Y3 sizes */
+.wx-grid.y3 .wx-tile .lw{width:clamp(42px,16cqh,68px)}
+.wx-grid.y3 .wx-tile .lab{font-size:clamp(18px,7cqh,28px)}
+.wx-grid.y3 .wx-tile .tx{font-size:clamp(15px,6.5cqh,24px)}
+.wx-grid.y3 .wx-tile .lw .zid{font-size:clamp(18px,7cqh,28px);padding:.3em 0}
+.wx-grid.y3 .wx-tile .nm{font-size:clamp(22px,min(11cqh,5.4cqi),40px)}
+.wx-grid.y3 .wx-tile .nx{font-size:clamp(15px,min(7cqh,3.4cqi),24px);gap:16px}
+.wx-grid.y3 .wx-tile .hr{gap:6px}
+.wx-grid.y3 .wx-tile .rc{font-size:clamp(13px,5.5cqh,20px)}
+.wx-grid.y3 .wx-tile .fq{font-size:clamp(17px,7cqh,28px)}
+.wx-grid.y3 .wx-tile .mt canvas{height:clamp(20px,8cqh,40px)}
+.wx-grid.y3 .wx-tile .mt .lv{font-size:clamp(15px,5.6cqh,22px)}
+.wx-grid.y3 .wx-tile .trk{min-height:28px}
+.wx-grid.y3 .wx-tile .trk .th{font-size:clamp(11px,4cqh,15px)}
+.wx-grid.y3 .wx-tile .trk .th .lbl{display:inline}
+/* Z2 sizes: everything smaller; the tracker keeps its numbers and drops its title */
+.wx-grid.z2 .wx-tile .lw{width:clamp(28px,22cqh,48px)}
+.wx-grid.z2 .wx-tile{grid-template-columns:auto minmax(0,1fr) auto;column-gap:9px;row-gap:4px;padding:7px 10px}
+.wx-grid.z2 .wx-tile .lab{font-size:clamp(12px,9cqh,19px);border-radius:5px}
+.wx-grid.z2 .wx-tile .lw{gap:3px}
+.wx-grid.z2 .wx-tile .who{gap:6px}
+.wx-grid.z2 .wx-tile .l1{gap:6px}
+.wx-grid.z2 .wx-tile .tx{font-size:12px}
+.wx-grid.z2 .wx-tile .lw .zid{font-size:clamp(12px,9cqh,19px);padding:.25em 0;border-radius:5px}
+.wx-grid.z2 .wx-tile .nm{font-size:clamp(14px,min(17cqh,7cqi),28px)}
+.wx-grid.z2 .wx-tile .nx{font-size:clamp(11px,min(11cqh,4.6cqi),18px);gap:8px}
+.wx-grid.z2 .wx-tile .hr{gap:3px}
+.wx-grid.z2 .wx-tile .rc{font-size:clamp(9px,min(9cqh,4.2cqi),15px)}
+.wx-grid.z2 .wx-tile .fq{font-size:clamp(10px,min(11cqh,5.4cqi),19px)}
+.wx-grid.z2 .wx-tile .mt canvas{height:clamp(6px,6cqh,16px)}
+.wx-grid.z2 .wx-tile .mt .lv{font-size:11px}
+.wx-grid.z2 .wx-tile .trk{min-height:16px;padding:2px 4px}
+.wx-grid.z2 .wx-tile .trk .th{font-size:9.5px}
+.wx-grid.z2 .wx-tile .trk .th .lbl{display:none}
+@container wxt (max-height:96px){ .wx-grid.z2 .wx-tile .trk .th{display:none} .wx-grid.z2 .wx-tile .l1{display:none} }
+@container wxt (max-height:78px){ .wx-grid.z2 .wx-tile .mt .lv{display:none} }
+@container wxt (max-height:64px){ .wx-grid.z2 .wx-tile .lw .zid{display:none} }
+@container wxt (max-height:48px){ .wx-grid.z2 .wx-tile .trk{display:none} }
+/* tight cards give way so the name shows whole: the TX number (narrow cards), then per name (fitName): the RF %,
+   the battery %, then the name a little smaller */
+@container wxt (max-width:400px){ .wx-grid.cards .wx-tile .l1{display:none} }
+.wx-tile.g1 .nx .rf span{display:none}
+.wx-tile.g2 .nx .bat > span{display:none}
+.wx-tile.g3 .nx .rf{display:none}
+.wx-tile:has(.nm.off) .nx{display:none}   /* no transmitter: nothing to show */
+.wx .hd{display:flex;align-items:center;gap:clamp(5px,3cqi,10px);min-width:0}
+.wx .lw{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;align-self:flex-start}
+.wx .lab{flex:none;display:flex;align-items:center;justify-content:center;width:clamp(22px,11cqi,40px);aspect-ratio:1;border-radius:5px;box-sizing:border-box;font:800 clamp(11px,5.6cqi,19px)/1 var(--f-display);background:var(--wx-inset);border:1px solid var(--line);color:var(--fg)}
+.wx .lab.low{background:var(--warn);border-color:var(--warn);color:#0f1113}
+.wx .lab.off{background:var(--rec);border-color:var(--rec);color:#fff}
+.wx .who{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
+.wx .who .l1{min-width:0;overflow:hidden;flex-shrink:20}
+.wx .who .nm{flex:1 1 auto;min-width:3.5em}
+.wx .l1{display:flex;align-items:center;gap:5px;min-width:0}
+.wx .tx{font:700 clamp(10px,5.2cqi,17px) var(--f-body);white-space:nowrap}
+.wx .zid{padding:0 .35em;border-radius:4px;background:var(--wx-inset);border:1px solid var(--line);color:#c2c9d0;font:700 clamp(11px,5.4cqi,17px) var(--f-mono);white-space:nowrap}
+:root[data-theme="day"] .wx .zid:not(.lw .zid){color:var(--muted)}
+.wx .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 clamp(12px,8.5cqi,30px)/1.1 var(--f-body);color:var(--wx-name)}
+.wx .nm.off{color:var(--muted)}
+.wx .rc{flex:none;padding:.1em .55em;border-radius:4px;background:var(--raised-2);color:var(--fg);font:700 clamp(9px,4.4cqi,14px) var(--f-body);white-space:nowrap}
+.wx .rc.on{background:#c93030;color:#fff}
+.wx .rc.off{background:color-mix(in srgb,var(--rec) 35%,var(--raised))}
+/* Nov 21 (Ferris: "shift battery and rf to area next to the tx name ... throughout to allow texts to be bigger overall") */
+.wx .nx{flex:none;display:inline-flex;align-items:center;gap:clamp(6px,3cqi,14px);min-width:0;font:700 clamp(10px,4.6cqi,15px) var(--f-body)}
+.wx-det .nx{display:none}
+.wx .bat{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;color:var(--bc)}
+.wx .bat i{position:relative;width:1.9em;height:1em;border:2px solid var(--bc);border-radius:3px;box-sizing:border-box}
+.wx .bat i::after{content:"";position:absolute;left:1px;top:1px;bottom:1px;width:calc(var(--bp) - 2px);background:var(--bc)}
+.wx .rf{display:inline-flex;align-items:flex-end;gap:4px;white-space:nowrap;color:var(--muted);font-weight:600}
+.wx .rf i{display:inline-flex;align-items:flex-end;gap:1px;height:.95em}
+.wx .rf i s{width:.28em;background:var(--line);text-decoration:none}
+.wx .rf i s.on{background:var(--ok)}
+.wx .hr{flex:none;align-self:flex-start;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.wx .fq{padding:.1em .4em;border:1px solid var(--line);border-radius:5px;background:var(--wx-inset);font:700 clamp(10px,4.6cqi,16px) var(--f-mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+.wx-det .hd .fq{display:none}
+.wx .mt{display:flex;align-items:center;gap:6px;min-height:0}
+.wx .mt canvas{flex:1;min-width:0;height:clamp(6px,7cqh,22px);display:block}
+.wx .lv{width:2.6em;text-align:right;font:700 clamp(10px,4.6cqi,15px) var(--f-mono);font-variant-numeric:tabular-nums}
+.wx .trk{position:relative;flex:1;min-height:10px;background:var(--wx-inset);border:1px solid var(--line);border-radius:6px;padding:3px 5px;display:flex;flex-direction:column;gap:2px}
+.wx .trk .th{display:flex;gap:6px;font:600 clamp(8px,3.6cqi,12px) var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden}
+.wx .trk .th .lbl{font-family:var(--f-body);letter-spacing:.06em}
+.wx .trk canvas{flex:1;min-height:0;width:100%;display:block}
+@container wxt (max-height:205px){.wx .trk .th .lbl{display:none}}
+@container wxt (max-height:170px){.wx .trk .th{display:none}}
+@container wxt (max-height:100px){.wx .mt .lv{display:none}.wx .l1{display:none}}
+@container wxt (max-height:44px){.wx .trk{display:none}}
+@container wxt (max-width:190px){.wx .rf span{display:none}}
+@container wxt (max-width:140px){.wx .rc{font-size:0;width:.7rem;height:.7rem;padding:0;border-radius:50%}.wx .nx .rf{display:none}.wx .fq{padding:0;border:0;background:none;font-size:10px}}
+.wx-sw[hidden]{display:none}
+.wx-det{flex:none;width:clamp(340px,28vw,520px);display:flex;flex-direction:column;gap:12px;padding:16px;box-sizing:border-box;background:var(--raised);border:2px solid var(--accent-line);border-radius:12px;overflow:hidden}   /* Nov 21 (Ferris): no scrolling; the signal graph takes what height is left */
+.wx-det .hd .lab{width:44px;font-size:20px}
+.wx-det .tx{font-size:17px}.wx-det .lw .zid{width:44px;font-size:20px}.wx-det .nm{font-size:30px}.wx-det .rc{font-size:14px;align-self:center}
+.wx-why{padding:8px 12px;border-radius:8px;background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn);font:600 14px var(--f-body)}
+.wx-why.ok{background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--ok)}
+.wx-why.bad{background:color-mix(in srgb,var(--rec) 14%,transparent);color:var(--rec)}
+:root[data-theme="day"] .wx-why{color:#8a5d00}
+.wx-cells{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.6fr);gap:10px}
+.wx-cell{padding:10px;background:var(--wx-inset);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;gap:6px;font:700 15px var(--f-body);min-width:0;color:var(--fg)}
+.wx-cell small,.wx-sec{font:600 11px var(--f-display);letter-spacing:.12em;color:var(--muted)}
+button.wx-cell{text-align:left;cursor:pointer;container-type:inline-size;overflow:hidden}
+button.wx-cell span{font:700 clamp(14px,15cqi,24px) var(--f-mono);white-space:nowrap}
+.wx-dm canvas{width:100%;height:30px;display:block}
+.wx-scale{display:flex;justify-content:space-between;font:700 11px var(--f-mono);color:var(--muted);margin-top:3px}
+.wx-dt{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--wx-inset);border:1px solid var(--line);border-radius:8px}
+.wx-dt .th{display:flex;align-items:baseline;gap:8px;font:600 12px var(--f-mono);color:var(--muted);flex-wrap:wrap}
+.wx-dt canvas{flex:1;min-height:30px;width:100%;display:block}
+.wx-axis{display:flex;justify-content:space-between;font:500 10px var(--f-mono);color:var(--muted)}
+.wx-modes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.wx-seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;font:700 12px var(--f-body)}
+.wx-seg button{padding:6px 10px;border:0;background:transparent;color:var(--fg);font:inherit;cursor:pointer}
+.wx-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.wx-seg button:focus-visible, .wx .rm:focus-visible, .wx .fq:focus-visible{outline:2px solid var(--accent-line);outline-offset:1px}
+.wx .fq{cursor:pointer;color:var(--fg)}
+.wx .fq:hover{border-color:var(--accent-line)}
+.wx-det .wx-cell.dfq:hover{border-color:var(--accent-line)}
+.wx .rm{padding:2px 6px;border:1px solid var(--line);border-radius:4px;background:var(--wx-inset);color:var(--fg);font:700 10px var(--f-body);cursor:pointer}
+.wx-fp{position:absolute;z-index:20;width:270px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--surface);border:1px solid var(--accent-line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.wx-fp .fh{display:flex;align-items:baseline;gap:8px;font:600 var(--t-sm) var(--f-body)}
+.wx-fp .fh b{font:800 18px var(--f-display)}
+.wx-fp .fr{display:flex;align-items:center;gap:6px}
+.wx-fp .fr input{flex:1;min-width:0;height:38px;padding:0 8px;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;background:var(--wx-inset);color:var(--fg);font:700 20px var(--f-mono);text-align:center}
+.wx-fp .fr input.bad{border-color:var(--rec)}
+.wx-fp .fr button{width:38px;height:38px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--fg);font:700 18px var(--f-mono);cursor:pointer}
+.wx-fp .u{font:600 12px var(--f-mono);color:var(--muted)}
+.wx-fp .fn{font:500 12px/1.35 var(--f-body);color:var(--muted)}
+.wx-fp .fb{display:flex;justify-content:flex-end;gap:8px}
+.wx-fp.fx{position:fixed;left:50%;top:90px;transform:translateX(-50%);z-index:60;width:min(300px,calc(100vw - 24px))}   /* phones: near the top, clear of the tab bar and keyboard */
+.wx{position:relative}
+.wx-note{font:500 12px var(--f-body);color:var(--muted)}
+@media (max-width:900px){
+  body[data-view="wireless"] main{overflow:auto}
+  .wx{height:auto}
+  .wx-body{flex-direction:column}
+  .wx-wrap{overflow:visible}
+  .wx-det{width:auto}
+  .wx-sim{flex-wrap:wrap}
 }
 
 /* Local app additions */
@@ -1202,13 +1595,14 @@ const LOCAL = [
   {id:0, n:"HELP_TEXT", t:"Menu", k:"ui.helptext", m:["OFF","ON"], local:true},
   /* Nov 11 (Ferris): an on-screen keyboard for touch screens with no keyboard (cart Mac, Linux, the Pi box). Per device. */
   {id:0, n:"ON_SCREEN_KEYBOARD", t:"Menu", k:"ui.osk", m:["OFF","ON"], local:true},
-  /* Nov 7 (Ferris): choose whether the ZNet ID and the transmitter power state appear on the meters. */
-  {id:0, n:"METERS_SHOW_ZNET", t:"Menu", k:"ui.meters.znet", m:["OFF","ON"], local:true},
-  {id:0, n:"METERS_SHOW_TX", t:"Menu", k:"ui.meters.tx", m:["OFF","ON"], local:true},
-  {id:0, n:"METERS_NAME_LEFT", t:"Menu", k:"ui.meters.nameleft", m:["OFF","ON"], local:true},
-  /* Nov 12 (Ferris): the ZNet trim (transmitter gain) next to the ZNet ID on the meters. */
-  {id:0, n:"METERS_SHOW_ZNET_TRIM", t:"Menu", k:"ui.meters.znettrim", m:["OFF","ON"], local:true},
+  /* Nov 21 (Ferris): the Wireless page is experimental until Nova Relay can read an RX-8 / RX-12. Per device. */
+  {id:0, n:"EXPERIMENTAL_WIRELESS", t:"Menu", k:"ui.exp.wireless", m:["OFF","ON"], local:true},
+  /* Nov 21: the old ZNet ID / TX power / ZNet trim / name-left switches became the meter extras (METERS_EXTRAS). */
   {id:0, n:"METERS_SHOW_FADERS", t:"Menu", k:"ui.meters.faders", m:["OFF","ON"], local:true},
+  /* Nov 20 (Ferris): tracks shown on the Meters page without being armed, to watch crew comms and the like. Per device. */
+  {id:0, n:"METERS_MONITOR", t:"Base", k:"ui.meters.monitor", local:true},
+  /* Nov 21 (Ferris): which meter extras are on, {on:{key:0|1}} (Setup › Meters › Extras On The Meters). Per device. */
+  {id:0, n:"METERS_EXTRAS", t:"Base", k:"ui.meters.extras", local:true},
   /* Receiver frequencies in MHz, RX 1–8, as the Nova last reported them (Nov 1: sent when a frequency is edited, and all eight when they're sent to the transmitters over ZaxNet). */
   {id:0, n:"RX_FREQ", t:"Base", k:"ui.rxfreq", local:true},
   /* Nov 1: ZaxNet trim (0–52) and transmitter power state per receiver, as the Nova last reported them. */
@@ -1258,8 +1652,8 @@ const EXAMPLE = false;
 const V = {}; SCHEMA.forEach(s => V[s.k] = build(s.d, () => def(s)));
 V["ui.refline.enable"] = 1; V["ui.refline.level"] = -18;
 V["ui.track.com1"] = Array(16).fill(0);
-V["ui.helptext"] = 0; V["ui.osk"] = 1;   /* Nov 19, 19:35 (Ferris): "On screen keyboard should default to on" */
-V["ui.meters.znet"] = 1; V["ui.meters.tx"] = 1; V["ui.meters.znettrim"] = 1; V["ui.meters.nameleft"] = 1;
+V["ui.helptext"] = 0; V["ui.osk"] = 1; V["ui.exp.wireless"] = EXAMPLE ? 1 : 0;   /* Nov 19, 19:35 (Ferris): "On screen keyboard should default to on" */
+
 /* Nov 14 (0.6.1): faders on the meters. Off until turned on (per device); positions are where Nova Relay last put each
    input's Aria fader (0-255), null until then. */
 V["ui.meters.faders"] = EXAMPLE ? 1 : 0;
@@ -1269,7 +1663,7 @@ V["ui.rxfreq"] = EXAMPLE ? ["544.7","542.5","545.2","545.7","565.8","542.0","543
 V["ui.znettrim"] = EXAMPLE ? [25, 25, 30, 25, null, null, 25, 25] : Array(8).fill(null);
 V["ui.znetsrc"] = Array(8).fill(null);
 V["ui.scenetakes"] = {};
-V["ui.scream.rx"] = Array(8).fill(0); V["ui.scream.level"] = 15; V["ui.scream.state"] = {on:false, saved:null};
+V["ui.scream.rx"] = Array(8).fill(0); V["ui.meters.monitor"] = Array(16).fill(0); V["ui.meters.extras"] = null; V["ui.scream.level"] = 15; V["ui.scream.state"] = {on:false, saved:null};
 V["ui.txstate"] = EXAMPLE ? ["On", "On", "Standby", "On", null, null, "On", "On"] : Array(8).fill(null);
 V["ui.colorbank"] = [0xe7a43c,0xd98b2b,0xe5484d,0xe56f8f,0xb07cd8,0x4aa3df,0x2fb8c4,0x46c28a,0xc9d94a,0x8fa3ad,0xe8e8e6,0x5c6b74];
 function get(k, idx = []){ let a = V[k]; for(const i of idx){ if(a == null) return undefined; a = a[i]; } return a; }
@@ -1424,10 +1818,10 @@ const link = {
 /* ---------- Connection to the cart computer ----------
    The cart computer holds the shared settings and runs the recorder link. Every device
    (this one, phones, iPads) sends its changes there and receives everyone else's. */
-const PER_DEVICE = new Set(["ui.helptext", "ui.osk", "ui.refline.enable", "ui.refline.level", "ui.meters.znet", "ui.meters.znettrim", "ui.meters.tx", "ui.meters.nameleft", "ui.meters.faders"]);
+const PER_DEVICE = new Set(["ui.helptext", "ui.osk", "ui.exp.wireless", "ui.refline.enable", "ui.refline.level", "ui.meters.faders", "ui.meters.monitor", "ui.meters.extras"]);
 const cart = {urls:[], serial:null, ports:[], devices:1, ready:false, synced:false, nova:null};
 const cartSubs = new Set();
-const cartChanged = () => { cartSubs.forEach(f => { try{ f(); }catch(e){} }); if(current === "setup" && setupSec === "deck" && deckDraw) try{ deckDraw(); }catch(e){} };
+const cartChanged = () => { cartSubs.forEach(f => { try{ f(); }catch(e){} }); if(current === "setup" && (setupSec === "deck" || setupSec === "conn") && deckDraw) try{ deckDraw(); }catch(e){} };
 function deviceName(){
   const ua = navigator.userAgent;
   if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return "cart computer";
@@ -2665,9 +3059,10 @@ const yOf = (db, H) => { const n = Math.max(0, Math.min(1, (db - FLOOR) / -FLOOR
 function meterSlots(){
   const src = get("home.meters.source"), out = [];
   if(src === 1){ for(let o = 0; o < 8; o++) out.push({id:"o" + o, kind:"o", name:outName(o) || `OUT ${o+1}`, num:o+1, db:() => outDb(o)}); return out; }
-  const rt = get("record.tracks");
+  const rt = get("record.tracks"), mon = get("ui.meters.monitor") || [];
+  /* Nov 20: armed tracks, plus any track picked in Setup › Meters › Show without recording (marked MON). */
   for(let i = 0; i < 16; i++){
-    if(rt[i]) out.push({id:"t" + i, kind:"t", t:i, name:get("track.name", [i]) || `TRK ${i+1}`, num:i+1, db:() => trackDb(i)});
+    if(rt[i] || mon[i]) out.push({id:"t" + i, kind:"t", t:i, name:get("track.name", [i]) || `TRK ${i+1}`, num:i+1, db:() => trackDb(i), mon:!rt[i]});
   }
 
   return out;
@@ -2705,7 +3100,10 @@ function drawBridge(cv, slots, dt){
 const VIEWS = [
   /* Order from Ferris, Nov 1 */
   ["home","Meters"],["arm","Record Enables"],["meta","Metadata"],["names","Track Names"],["inputs","Inputs"],
-  ["routing","Routing"],["timecode","Timecode"],["setup","Setup"]
+  ["routing","Routing"],["timecode","Timecode"],
+  /* Nov 20: the RX-12 page; Nov 21: shown only with Setup › Experimental › Wireless page on */
+  ["wireless","Wireless"],
+  ["setup","Setup"]
 ];
 let current = "home", frameHooks = [];
 function go(v){
@@ -2944,7 +3342,7 @@ const RENDER = {
       h("button", {type:"button", class:"btn primary", onclick:() => { try{ localStorage.removeItem(STORE_KEY); }catch(e){} SCHEMA.forEach(s => V[s.k] = build(s.d, () => def(s))); seedBlank(); seedDevice(); saveSoon(); net.send({t:"replace", V:sharedSnapshot()}); go("setup"); renderTransport(); log("ev", "Remote setup cleared; reloading from the Nova"); }}, "Clear"),
       h("button", {type:"button", class:"btn", onclick:() => { confirmRow.hidden = true; reset.hidden = false; }}, "Cancel"));
     reset.addEventListener("click", () => { reset.hidden = true; confirmRow.hidden = false; });
-    const connTitle = "Cart & Recorder Link";
+    const connTitle = "Connection";
     const connPanel = h("div", {class:"panel"}, h("h3", null, connTitle), conn, reset, confirmRow);
     return setupSections(connPanel, connTitle);
   },
@@ -2994,7 +3392,7 @@ function screamRxs(){ const a = get("ui.scream.rx") || []; return [0,1,2,3,4,5,6
 function screamToggle(){
   const rxs = screamRxs(), lvl = get("ui.scream.level") ?? 15, st = get("ui.scream.state") || {};
   if(!st.on){
-    if(!rxs.length){ toast("Choose the receivers in Setup \u203a Scream trim"); setupSec = "scream"; go("setup"); return; }
+    if(!rxs.length){ toast("Choose the receivers in Setup \u203a Wireless"); setupSec = "wireless"; go("setup"); return; }
     const saved = {};  /* receiver number → its trim before (null = not known) */
     for(const r of rxs) saved[r] = (get("ui.znettrim") || [])[r] ?? null;
     set("ui.scream.state", [], {on:true, saved, level:lvl});
@@ -3012,12 +3410,69 @@ function screamToggle(){
   }
 }
 function screamButton(){
-  const b = h("button", {type:"button", class:"screambtn", title:"Scream trim: drop the chosen transmitters' ZNet trim, tap again to put it back (Setup \u203a Scream trim)", onclick:() => screamToggle()});
+  const b = h("button", {type:"button", class:"screambtn", title:"Scream trim: drop the chosen transmitters' ZNet trim, tap again to put it back (Setup \u203a Wireless)", onclick:() => screamToggle()});
   const paint = () => { const on = screamOn(), n = screamRxs().length;
     b.setAttribute("aria-pressed", on ? "true" : "false");
     b.replaceChildren(h("span", {class:"sbig"}, on ? "SCREAM ON" : "SCREAM"), h("span", {class:"ssm"}, on ? `tap to restore` : n ? `${n} RX \u2192 ${get("ui.scream.level") ?? 15}` : "set up")); };
   bind("ui.scream.state", [], paint); bind("ui.scream.rx", [], paint); bind("ui.scream.level", [], paint);
   return b;
+}
+/* Nov 20 (Ferris): "enabling a track to be on the meter page even if it isn't armed ... to see crew communication".
+   Tracks picked here show on the Meters page with a dashed outline and MON; arming one records it as usual. Per device. */
+/* A switch (Nov 21): a button with role=switch; on() says its state, flip() is called with the new one. */
+function tsw(label, on, flip, opts = {}){
+  const b = h("button", {type:"button", class:"tsw", role:"switch", "aria-checked":on ? "true" : "false", "aria-label":label, disabled:!!opts.disabled,
+    onclick:() => { if(!b.disabled) flip(b.getAttribute("aria-checked") !== "true"); }}, h("i", {"aria-hidden":"true"}));
+  return b;
+}
+/* Nov 21 (Ferris: "make the meter extras toggle switches in the meters setup page", then "just enable on/off toggle
+   for extras, not moving where they are"): one switch per extra; each has a fixed place, named under it. Lines with
+   nothing on them close up and the meters get taller. This device only. */
+const MX_ITEMS = {pwr:["Power Status", "ON / STBY"], zid:["ZNet ID", "Z1"], ztrim:["ZNet Trim", "25"], trim:["Trim", "+12 dB"],
+  bat:["Battery", "transmitter"], rf:["RF Signal", "bars"], num:["Track Number", "05"], rec:["REC Status", "\u25cf REC"]};
+function extrasPanel(){
+  const grid = h("div", {class:"mxgrid"});
+  const put = fn => { const m = meterExtras(true); fn(m); set("ui.meters.extras", [], {on:m.on}); };
+  const draw = () => {
+    const m = meterExtras();
+    grid.replaceChildren(...m.order.filter(k => get("ui.exp.wireless") || !MX_WIRELESS.includes(k)).map(k => {
+      const [name] = MX_ITEMS[k], on = !!m.on[k];
+      return h("div", {class:"mxrow" + (on ? "" : " off")},
+        tsw(name, on, v => put(n => n.on[k] = v ? 1 : 0)),
+        h("span", {class:"mxname"}, h("b", null, name)));   /* Nov 21 (Ferris): just the name */
+    }));
+  };
+  bind("ui.meters.extras", [], draw); bind("ui.exp.wireless", [], draw);
+  return h("div", {class:"panel"}, h("h3", null, "Extras on the meters"),
+    h("p", {class:"hint keep"}, "What shows with each meter. A line with nothing on it closes and the meters get taller; very narrow meters keep only battery and RF. Battery, RF Signal and REC Status come from a wireless receiver: they show on tracks fed by one, with Setup › Experimental › Wireless Page on. This device only."),
+    grid);
+}
+/* Nov 20 (Ferris): "enabling a track to be on the meter page even if it isn't armed ... to see crew communication".
+   Tracks switched on here show on the Meters page with a dashed outline and MON; arming one records it as usual.
+   Nov 21 (Ferris: "Same with the track shows"): switches, like the extras. Per device. */
+/* Nov 21 (Ferris): features that are built but not yet confirmed working go here, each behind its own switch. */
+function experimentalPanel(){
+  const row = h("div", {class:"mxrow"});
+  const draw = v => { row.className = "mxrow" + (v ? "" : " off"); row.replaceChildren(tsw("Wireless page", !!v, on => set("ui.exp.wireless", [], on ? 1 : 0)),
+    h("span", {class:"mxname"}, h("b", null, "Wireless Page"))); };
+  bind("ui.exp.wireless", [], draw);
+  return h("div", {class:"panel"}, h("h3", null, "Experimental"),
+    h("p", {class:"hint keep"}, "Built, but not yet confirmed working on every setup. Try them away from a job first."),
+    h("div", {class:"mxgrid"}, row),
+    h("p", {class:"hint keep"}, "Wireless page: the receivers of an RX-8 or RX-12 with battery, RF, frequency and a 30-minute signal history. Nova Relay can't read a receiver yet, so the page waits for one. This device only."));
+}
+function monitorPanel(){
+  const grid = h("div", {class:"mxgrid"});
+  const draw = () => grid.replaceChildren(...Array.from({length:16}, (_, t) => {
+    const mon = !!(get("ui.meters.monitor") || [])[t], armed = !!(get("record.tracks") || [])[t], name = get("track.name", [t]) || `TRK ${t + 1}`;
+    return h("div", {class:"mxrow" + (mon || armed ? "" : " off")},
+      tsw(`Show ${name} without recording`, mon || armed, v => { const a = (get("ui.meters.monitor") || Array(16).fill(0)).slice(); a[t] = v ? 1 : 0; set("ui.meters.monitor", [], a); }, {disabled:armed}),
+      h("span", {class:"mxname"}, h("b", null, `${String(t + 1).padStart(2, "0")} \u00b7 ${name}`), h("small", null, armed ? "armed" : mon ? "shown, not recorded" : "hidden")));
+  }));
+  bind("ui.meters.monitor", [], draw); bind("record.tracks", [], draw); bind("track.name", [], draw);
+  return h("div", {class:"panel"}, h("h3", null, "Show without recording"),
+    h("p", {class:"hint keep"}, "Tracks to watch on the Meters page even when they aren't armed, such as crew comms. They show with a dashed outline and MON, and aren't recorded. Armed tracks always show. This device only."), grid,
+    h("div", {class:"flex"}, h("button", {type:"button", class:"btn", onclick:() => set("ui.meters.monitor", [], Array(16).fill(0))}, "Turn them all off")));
 }
 function screamPanel(){
   const chips = h("div", {class:"chipgrid"});
@@ -3030,10 +3485,10 @@ function screamPanel(){
   const state = h("p", {class:"hint keep"});
   bind("ui.scream.state", [], st => state.textContent = st && st.on ? "Scream trim is ON. Tap SCREAM ON on the Stream Deck (or /api/scream) to put the trims back." : "");
   return h("div", {class:"stack"},
-    h("div", {class:"panel"}, h("h3", null, "Receivers"), h("p", {class:"hint keep"}, "Tap the transmitters to drop when SCREAM is pressed."), chips),
-    h("div", {class:"panel"}, h("h3", null, "Scream level"), bigStep("ui.scream.level", [], "ZNet trim while screaming"),
+    h("div", {class:"panel"}, h("h3", null, "Scream trim: receivers"), h("p", {class:"hint keep"}, "Tap the transmitters to drop when SCREAM is pressed."), chips),
+    h("div", {class:"panel"}, h("h3", null, "Scream trim: level"), bigStep("ui.scream.level", [], "ZNet trim while screaming"),
       h("p", {class:"hint keep"}, "The ZNet trim (0\u201352) those transmitters go to. The second press puts back what each one had, if the remote knew it. " + ZNET_NOTE), state),
-    h("div", {class:"panel"}, h("h3", null, "Where the button is"), h("p", {class:"hint keep"}, "On the Stream Deck (the Scream trim key) and as button addresses: /api/scream (toggle), /api/scream/on, /api/scream/off. (The button on the Meters page is off for now.)")));
+    h("div", {class:"panel"}, h("h3", null, "Scream trim: where the button is"), h("p", {class:"hint keep"}, "On the Stream Deck (the Scream trim key) and as button addresses: /api/scream (toggle), /api/scream/on, /api/scream/off. (The button on the Meters page is off for now.)")));
 }
 /* ---------- Setup › Transmitters (Nov 15, Ferris: "add transmitter global power commands / individual power commands") ----------
    ZaxNet transmitter power through the Nova: On, Wake or Low for every transmitter at once (cQRXTX 98, SET_REMOTE_PWR;
@@ -3236,9 +3691,29 @@ function scaleStrip(hooks){
 /* Nov 12: a name too long for its box steps down in size (to 10 px) instead of being cut off or covered. */
 /* Nov 19: the ZNet pill goes in the name box (right end) when Name left is on and the box has room for both;
    on narrow strips (16 meters on a laptop) it stays on the number line so the name keeps the box. */
+/* Nov 21 (Ferris, from the Meter Extras page): where each extra goes on the meters. Places: the name box ("name"), the
+   lines above the meter ("l1", "l2") and the line under it ("under"); order inside a place follows "order". Fixed;
+   Setup › Meters only switches each extra on or off. Sideways (rows, look H2): the number leads the row, name-box items
+   sit beside the name, the rest at the right end of the name line; under 26 px rows keep only the numbers. */
+const MX_LAYOUT = {order:["pwr","zid","ztrim","trim","bat","rf","num","rec"],
+  on:{pwr:1, zid:1, ztrim:1, trim:1, bat:1, rf:1, num:1, rec:1},
+  place:{pwr:"name", zid:"name", ztrim:"l1", trim:"l1", bat:"l2", rf:"l2", num:"under", rec:"under"}};
+const MX_KEYS = ["pwr","zid","ztrim","trim","bat","rf","num","rec"];
+/* Nov 21 (Ferris: "just enable on/off toggle for extras, not moving where they are"): where each extra goes is fixed
+   (MX_LAYOUT); this device keeps only which are on and whether RF shows its %. */
+/* Nov 21 (Ferris: "transmitter battery and rf only comes from wireless page right? So those shouldn't appear if wireless
+   tab is toggled off"): battery, RF and the transmitter's REC status come from the receiver, so they're off (and their
+   switches hidden) while Setup › Experimental › Wireless Page is off. raw = what this device stored, for saving. */
+const MX_WIRELESS = ["bat", "rf", "rec"];
+const meterExtras = raw => {
+  const v = get("ui.meters.extras") || {}, on = {}, wx = !!get("ui.exp.wireless");
+  for(const k of MX_KEYS) on[k] = !raw && !wx && MX_WIRELESS.includes(k) ? 0 : v.on && k in v.on ? (v.on[k] ? 1 : 0) : MX_LAYOUT.on[k];
+  return {order:MX_LAYOUT.order.slice(), place:Object.assign({}, MX_LAYOUT.place), on};   /* Nov 21 (Ferris): no RF %, bars only */
+};
+const mxIn = (k, p) => { const m = meterExtras(); return !!m.on[k] && m.place[k] === p; };
 function placePill(sc){
   if(!sc._zp) return;
-  const w = sc.getBoundingClientRect().width, inBox = !!get("ui.meters.nameleft") && !(w && w < 150);
+  const w = sc.getBoundingClientRect().width, inBox = !(w && w < 150);   /* Nov 21: always name left; the extras' name-box place decides what rides in the pill */
   const dest = inBox ? sc : sc._num; if(sc._zp.parentNode !== dest) dest.append(sc._zp);
 }
 /* Nov 19, 16:40 (Ferris: "The text still looks slightly higher than the green line and blue box"): how far the capitals
@@ -3274,27 +3749,44 @@ function fitNames(){
     while(over() && fs > 10){ fs -= 0.5; n.style.fontSize = fs + "px"; }
   }
 }
+/* Nov 21: meter extras are on; a line no strip has anything on closes up (and the meters get taller) */
+function mxMark(wrap, strips){
+  wrap.classList.add("mx");
+  for(const p of ["l1", "l2", "under"]) wrap.classList.toggle("no-" + p, !strips.querySelector(`.xl[data-p="${p}"] > .xi:not(.xgap)`));
+}
 /* Meters fill the window: the strips share the width, and the LED columns take the height that's left. */
-function fitMeters(){ fitMetersOnly(); fitNames(); }
+function fitMeters(){ fitMetersOnly(); fitNames(); alignScale(); }
+/* Nov 21 (Ferris: "dB scale on meters page is off"): the extras lines above the meters vary, so the scale's top is moved
+   to the first meter's top (same height, so 0 and -60 land on the meter's ends). Rows (sideways) need none. */
+function alignScale(){
+  const wrap = document.querySelector(".strips-wrap"), sl = wrap && wrap.querySelector(".strip.scale .led"); if(!sl) return;
+  sl.style.marginTop = ""; if(ROWMETERS.matches) return;
+  const tl = wrap.querySelector(".strip:not(.scale) .led"); if(!tl) return;
+  const d = tl.getBoundingClientRect().top - sl.getBoundingClientRect().top; if(Math.abs(d) > .25) sl.style.marginTop = d.toFixed(2) + "px";
+}
 /* Names are measured again once the web fonts have loaded (they can be wider than the stand-in font). */
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitNames());
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitNames(); alignScale(); });
 function fitMetersOnly(){
   const wrap = document.querySelector(".strips-wrap"); if(!wrap) return;
   if(ROWMETERS.matches){  /* phone / upright tablet (Oct 30): one row per track, sized so every row fits without scrolling */
     const rows = wrap.querySelectorAll(".strip:not(.scale)"); if(!rows.length) return;
+    const wasTwo = wrap.classList.contains("two");
     const room = $("view").getBoundingClientRect().bottom - (parseFloat(getComputedStyle($("view")).paddingBottom) || 12) - rows[0].getBoundingClientRect().top;
-    const cur = parseFloat(getComputedStyle(rows[0]).gridTemplateRows) || 34, extra = rows[0].getBoundingClientRect().height - cur;  /* padding + border */
+    const cur = getComputedStyle(rows[0]).gridTemplateRows.split(" ").reduce((a, v) => a + (parseFloat(v) || 0), 0) || 34, extra = rows[0].getBoundingClientRect().height - cur;  /* padding + border */
     const rh = Math.max(12, Math.min(PHONE.matches ? 40 : 64, Math.floor((room - 3 * (rows.length - 1)) / rows.length - extra)));
     wrap.style.setProperty("--rowgap", rh < 18 ? "1px" : "3px");
-    wrap.style.setProperty("--rowh", rh + "px"); wrap.classList.toggle("tall", rh >= 24); wrap.classList.toggle("tight", rh < 24); wrap.classList.toggle("stack", rh >= 32);
+    wrap.style.setProperty("--rowh", rh + "px"); wrap.classList.toggle("tall", rh >= 24); wrap.classList.toggle("tight", rh < 24); wrap.classList.toggle("stack", rh >= 32); wrap.classList.toggle("two", rh >= 26);
     /* Nov 15 (Ferris: "make sure the meters page doesn't scroll"): whatever the estimate missed, take off the rows. */
     for(let k = 0, cur2 = rh; k < 3; k++){
       const over = metersOverflow(); if(over <= 0 || cur2 <= 12) break;
-      cur2 = Math.max(12, cur2 - Math.ceil(over / rows.length)); if(cur2 < 18) wrap.style.setProperty("--rowgap", "1px"); wrap.style.setProperty("--rowh", cur2 + "px"); wrap.classList.toggle("tall", cur2 >= 24); wrap.classList.toggle("tight", cur2 < 24); wrap.classList.toggle("stack", cur2 >= 32);
+      cur2 = Math.max(12, cur2 - Math.ceil(over / rows.length)); if(cur2 < 18) wrap.style.setProperty("--rowgap", "1px"); wrap.style.setProperty("--rowh", cur2 + "px"); wrap.classList.toggle("tall", cur2 >= 24); wrap.classList.toggle("tight", cur2 < 24); wrap.classList.toggle("stack", cur2 >= 32); wrap.classList.toggle("two", cur2 >= 26);
     }
+    /* Nov 21: switching between one and two lines changes how much a row needs; measure once more with the new look */
+    if(wrap.classList.contains("two") !== wasTwo && !fitMetersOnly.again){ fitMetersOnly.again = true; try{ fitMetersOnly(); }finally{ fitMetersOnly.again = false; } }
     return;
   }
-  wrap.style.removeProperty("--rowh"); wrap.classList.remove("tall", "tight", "stack");
+  wrap.style.removeProperty("--rowh"); wrap.classList.remove("tall", "tight", "stack", "two");
+  const scl = wrap.querySelector(".strip.scale .led"); if(scl) scl.style.marginTop = "";
   const led = wrap.querySelector(".led"), strip = led && led.closest(".strip"); if(!strip) return;
   const chrome = Math.max(...[...wrap.querySelectorAll(".strip")].map(st => { const l = st.querySelector(".led"); return l ? st.getBoundingClientRect().height - l.getBoundingClientRect().height : 0; }));
   const avail = window.innerHeight - wrap.getBoundingClientRect().top - chrome - (wrap.scrollWidth > wrap.clientWidth ? 34 : 22);
@@ -3391,7 +3883,9 @@ function stripFader(getCh, cv){
     const g = [H, L, T, W, Hh, v].join(",");
     if(g === geom) return; geom = g;
     cap.classList.toggle("h", H); cap.classList.toggle("unknown", !known);
-    if(H) Object.assign(cap.style, {left:(L + CAP / 2 + f * (W - CAP)) + "px", top:(T - 4) + "px", height:(Hh + 8) + "px", width:""});
+    /* Nov 21: with the extras line under the bar, the cap stops at the bar's bottom edge so it doesn't cover the line */
+    const below = cv.closest(".strips-wrap.mx.two") ? 0 : 4;
+    if(H) Object.assign(cap.style, {left:(L + CAP / 2 + f * (W - CAP)) + "px", top:(T - 4) + "px", height:(Hh + 4 + below) + "px", width:""});
     else Object.assign(cap.style, {left:(L - 6) + "px", top:(T + Hh - CAP / 2 - f * (Hh - CAP)) + "px", width:(W + 12) + "px", height:""});
     read.textContent = known ? pct(v) : "";
     const lbl = `Fader for ${inFull(ch)} (Aria fader ${pflFader(ch)}): ${known ? pct(v) : "not set from Nova Relay yet"}`;
@@ -3421,7 +3915,7 @@ function homeConsole(){
         : ch != null
         ? h("button", {type:"button", class:"scrib", title:`Open ${s.name}`, "aria-haspopup":"dialog", onclick:() => openInputModal(ch, scrib)}, h("span", {class:"snm"}, s.name))
         : h("div", {class:"scrib", title:s.name}, h("span", {class:"snm"}, s.name));
-      scrib.style.background = slotColor(s);
+      scrib.style.background = slotColor(s); scrib.style.setProperty("--sc", slotColor(s));
       /* Long-press (right-click) a track's name on the meters to pick a preset name (Nov 2). */
       if(s.kind === "t") presetPress(scrib, name => set("track.name", [s.t], cleanName(name).trim()), () => get("track.name", [s.t]) || "");
       /* Nov 1: transmitter power state on strips fed by a receiver (as the Nova last reported it). */
@@ -3435,27 +3929,26 @@ function homeConsole(){
         zbNum = h("span", {class:"szid innum"});
         /* Nov 12: the ZNet trim rides in the same tag, in a lit box: [Z1 25]. Shown once the remote knows it. */
         const paintZ = () => {
-          const c = stripInput(s), z = c == null || !get("ui.meters.znet") ? null : znetIdOf(c);
-          const t = c != null && c >= 14 && c <= 21 && get("ui.meters.znettrim") ? (get("ui.znettrim") || [])[c - 14] ?? null : null;
-          for(const e of [zb, zbNum]){ e.replaceChildren(z ? h("i", {class:"zi"}, h("span", null, "Z" + z)) : "", t != null ? h("b", {class:"zt"}, String(t)) : ""); e.hidden = !z && t == null; }
+          const c = stripInput(s), z = c == null || !mxIn("zid", "name") ? null : znetIdOf(c);
+          const t = c != null && c >= 14 && c <= 21 && mxIn("ztrim", "name") ? (get("ui.znettrim") || [])[c - 14] ?? null : null;
+          /* Nov 21: when ZNet trim has its own place, the pill still carries it for narrow strips (shown only there) */
+          const tn = t == null && c != null && c >= 14 && c <= 21 && mxIn("ztrim", "l1") ? (get("ui.znettrim") || [])[c - 14] ?? null : null;
+          for(const e of [zb, zbNum]){ e.replaceChildren(z ? h("i", {class:"zi"}, h("span", null, "Z" + z)) : "", t != null ? h("b", {class:"zt"}, String(t)) : tn != null ? h("b", {class:"zt mxn"}, String(tn)) : ""); e.hidden = !z && t == null; }
           if(zbNum) zbNum.title = [z ? `ZNet ID ${z}` : "", t != null ? `ZNet trim ${t}` : ""].filter(Boolean).join(" \u00b7 ");
           refitNames();
         };
-        bind("input.zaxnet.id", [], paintZ); bind("ui.meters.znet", [], paintZ); bind("ui.znettrim", [], paintZ); bind("ui.meters.znettrim", [], paintZ);
+        bind("input.zaxnet.id", [], paintZ); bind("ui.znettrim", [], paintZ);
         if(s.kind === "t") bind("trackmix.matrix", [], paintZ);
       }
       if(ch != null && ch >= 14){
         const tb = h("span", {class:"stx", "aria-hidden":"true"}); rtag.append(tb);
         /* Nov 12: on the meter columns the power label rides in the ZNet pill under the name ([ON|Z1 25]), not in the name box. */
         txNum = h("span", {class:"stxn", "aria-hidden":"true"});
-        const paintTx = () => { const v = (get("ui.txstate") || [])[ch - 14], show = v && get("ui.meters.tx"), w = !show ? "" : v === "On" ? "ON" : v === "Low power" ? "LOW" : v === "Standby" ? "STBY" : "WAKE";
+        const paintTx = () => { const v = (get("ui.txstate") || [])[ch - 14], show = v && mxIn("pwr", "name"), w = !show ? "" : v === "On" ? "ON" : v === "Low power" ? "LOW" : v === "Standby" ? "STBY" : "WAKE";
           for(const e of [tb, txNum]){ e.textContent = w; e.hidden = !show; e.dataset.st = v || ""; }
           scrib.title = `${s.name}${v ? " \u00b7 TX " + v : ""}`; refitNames(); };
-        bind("ui.txstate", [], paintTx); bind("ui.meters.tx", [], paintTx);
+        bind("ui.txstate", [], paintTx);
       }
-      const trim = h("span");
-      if(ch == null) trim.textContent = s.kind === "o" ? "OUT" : "MIX";
-      else bind("input.trim.level", [ch], v => trim.replaceChildren((v > 0 ? "+" : "") + v, h("span", {class:"u"}, " dB")));
       const cv = h("canvas", {class:"led", "aria-hidden":"true"});
       const compIns = () => s.kind === "t" ? routedInputs(s.t) : ch != null ? [ch] : [];
       hooks.push(dt => drawLED(cv, ballistic(s.id, s.db(), dt), null));  /* compressor marker off for now (Oct 28) */
@@ -3473,11 +3966,53 @@ function homeConsole(){
       hooks.push(() => fd.update());
       /* Nov 19 (Ferris: "try left orient on the track names and moving the zaxnet id, gain, and power to right orient
          on that"): with Setup › Meters › Name left, ZNet pill right, the pill sits at the right end of the name box. */
-      const zp = h("span", {class:"zpill"}, txNum, zbNum), numSpan = h("span", null, typeof s.num === "number" ? String(s.num).padStart(2, "0") : s.num);
-      scrib._zp = zp; scrib._num = numSpan; bind("ui.meters.nameleft", [], () => placePill(scrib));
-      const box = h("div", {class:"strip"}, scrib,
-        h("div", {class:"sinfo"}, numSpan, trim),
-        cv, pb, fd.cap);
+      const zp = h("span", {class:"zpill"}, txNum, zbNum);
+      scrib._zp = zp;
+      /* Nov 21 (Ferris: "the layout I just made in the meters artifact"): the extras where meterExtras() puts them.
+         Wireless (REC, battery, RF) from the Wireless page's example transmitters in the prototype (RX n = channel n);
+         the installed app has no RX-12 data yet, so those stay empty there. */
+      let wxc = null; try{ wxc = EXAMPLE && ch != null && ch >= 14 && ch <= 21 ? WX.ch(ch - 14) : null; }catch(e){}
+      const rxi = ch != null && ch >= 14 && ch <= 21 ? ch - 14 : null, MX = meterExtras();
+      const item0 = k => {
+        if(k === "num") return h("span", {class:"xi xnm"}, typeof s.num === "number" ? String(s.num).padStart(2, "0") : s.num,
+          s.mon ? h("span", {class:"montag", title:"Not armed: shown on the meters, not recording"}, "MON") : "");
+        if(k === "trim"){ const e = h("span", {class:"xi xtrim"});
+          if(ch == null){ if(s.kind === "o") e.textContent = "OUT"; else e.classList.add("xgap"); }   /* Nov 21 (Ferris): no "MIX"; those tracks are named that way anyway */
+          else bind("input.trim.level", [ch], v => e.replaceChildren((v > 0 ? "+" : "") + v, h("span", {class:"u"}, " dB")));
+          return e; }
+        if(k === "ztrim"){ if(rxi == null) return null; const e = h("span", {class:"xi xzt"});
+          const p = () => { const t = (get("ui.znettrim") || [])[rxi] ?? null; e.replaceChildren(t == null ? "" : String(t));   /* Nov 21 (Ferris): no "ZT" label */ e.title = t == null ? "" : `ZNet trim ${t}`; };
+          bind("ui.znettrim", [], p); return e; }
+        if(k === "zid"){ if(s.kind === "o" || ch == null) return null; const e = h("span", {class:"xi xzid"});
+          const p = () => { const z = znetIdOf(ch); e.textContent = z ? "Z" + z : ""; e.hidden = !z; };
+          bind("input.zaxnet.id", [], p); return e; }
+        if(k === "pwr"){ if(rxi == null) return null; const e = h("span", {class:"xi xpw"});
+          const p = () => { const v = (get("ui.txstate") || [])[rxi], show = !!v;
+            e.textContent = !show ? "" : v === "On" ? "ON" : v === "Low power" ? "LOW" : v === "Standby" ? "STBY" : "WAKE"; e.dataset.st = v || ""; e.hidden = !show; };
+          bind("ui.txstate", [], p); return e; }
+        if(!wxc) return null;
+        const c = wxc;
+        if(k === "bat") return h("span", {class:"xi wbat" + (c.off ? " off" : c.lowb ? " low" : ""), style:`--bp:${c.off ? 0 : c.bat}%`, title:c.off ? "No transmitter" : `Battery ${c.bat}%`}, h("i"), h("b", null, c.off ? "\u2014" : c.bat + "%"));
+        if(k === "rf"){ const bars = h("span", {class:"xi wrf" + (c.rf < 45 ? " weak" : ""), title:c.off ? "No RF" : `RF ${c.rf}%`}, ...[1,2,3,4,5].map(q => h("s", {class:c.rf >= q * 18 ? "on" : "", style:`height:${20 * q}%`})));
+          return bars; }
+        if(k === "rec"){ const e = h("span", {class:"xi wrec"}); let last = "";
+          const p = () => { const on = WX.recOn(c), st = c.off ? "off" : on ? "on" : ""; if(st === last && e.firstChild) return; last = st;
+            e.className = "xi wrec " + st; e.replaceChildren(c.off ? h("span", {class:"t"}, "NO RF") : h("span", {class:"d"}, on ? "\u25cf" : "\u25a0"), c.off ? "" : h("span", {class:"t"}, on ? "REC" : "STOP")); };
+          p(); hooks.push(p); return e; }
+        return null;
+      };
+      const item = k => { const e = item0(k); if(e) e.dataset.k = k; return e; };
+      const keysIn = p => MX.order.filter(k => MX.on[k] && MX.place[k] === p);
+      /* other items placed in the name box ride in its pill (the columns' pill and the rows' tag) */
+      for(const k of keysIn("name").filter(k => !["pwr","zid","ztrim"].includes(k))){ const a = item(k), b = item(k); if(a) zp.append(a); if(b) rtag.append(b); }
+      const xph = h("span", {class:"xph"});   /* where the name-box pill goes when the strip is too narrow for it */
+      const line = p => h("div", {class:"xl", "data-p":p}, p === "l1" ? xph : "", ...keysIn(p).map(k => item(k) || h("span", {class:"xi xgap", "data-k":k})));
+      scrib._num = xph; placePill(scrib);
+      const xnum = MX.on.num ? h("span", {class:"xnum"}, item("num")) : h("span", {class:"xnum"});
+      const rest = ["l1", "l2", "under"].flatMap(keysIn).filter(k => k !== "num");
+      const xr = h("div", {class:"xr"}, ...rest.map(k => { const e = item(k); if(e && ["rec","bat","rf"].includes(k)) e.classList.add("xw"); return e; }).filter(Boolean));
+      const box = h("div", {class:"strip" + (s.mon ? " monitor" : ""), title:s.mon ? `${s.name}: shown, not recording` : null}, scrib,
+        line("l1"), line("l2"), xnum, xr, cv, line("under"), pb, fd.cap);
       /* Nov 3 (Ferris: PFL was lighting the MIX strip): only a strip that carries the PFL'd input on its own lights,
          the same strips that have a PFL key. A track fed by two or more inputs is a mix, whatever it's called. */
       const paintSolo = () => { const so = get("ui.soloins") || []; const one = s.kind === "o" ? null : stripInput(s); const ins = one == null ? [] : [one];
@@ -3487,12 +4022,15 @@ function homeConsole(){
       return box;
     }));
     viewBinds.slice(before).forEach(b => b.strip = true);
+    strips.parentNode && mxMark(strips.parentNode, strips);
     requestAnimationFrame(fitMeters);
   };
-  bind("record.tracks", [], rebuild); bind("home.meters.source", [], rebuild); bind("input.color", [], rebuild);
+  bind("record.tracks", [], rebuild); bind("ui.meters.monitor", [], rebuild); bind("ui.meters.extras", [], rebuild); bind("home.meters.source", [], rebuild); bind("input.color", [], rebuild);
   bind("track.name", [], rebuild); bind("track.color", [], rebuild); bind("trackmix.preset", [], rebuild); bind("ui.outnames", [], rebuild);
   frameHooks.push(dt => hooks.forEach(f => f(dt)));
-  return h("div", {class:"stack"}, meterTabs(), h("div", {class:"strips-wrap"}, strips));
+  const wrap = h("div", {class:"strips-wrap"}, strips);
+  mxMark(wrap, strips);
+  return h("div", {class:"stack"}, meterTabs(), wrap);
 }
 
 
@@ -3565,8 +4103,7 @@ function cartPanel(){
     h("span", {class:"lbl"}, "Note in the capture"),
     h("div", {class:"flex"}, h("div", {style:"flex:1;min-width:0"}, noteIn), h("button", {type:"button", class:"btn", onclick:addNote}, "Add note")),
     h("p", {class:"hint keep"}, "Type what you're about to do on the Nova and press Enter; the note is saved in the capture file at that moment."),
-    pageFinder(),
-    testPanel());
+    null);
 }
 
 
@@ -3925,10 +4462,10 @@ let setupSec = "rec", setupEdit = null;
 const SETUP_GROUPS = [
   {id:"rec", title:"Recording", items:[["sample.rate", "Sample rate"], ["ui.bitdepth", "Bit depth"], ["neverclip.attenuation", "ISO Attenuation"], ["record.preroll", "Pre-roll"], ["setup.transport", "Transport"], ["tone.enable", "Tone"], ["tone.level", "Tone level"]]},
   {id:"meters", title:"Meters", items:[["meters.meter.hold", "Meter hold"], ["meters.meter.decay", "Meter decay"], ["meters.peak.hold", "Peak hold"], ["meters.peak.decay", "Peak decay"],
-    ["ui.refline.enable", "Reference line"], ["ui.refline.level", "Ref line level"], ["ui.meters.znet", "ZNet ID on meters"], ["ui.meters.znettrim", "ZNet trim on meters"], ["ui.meters.tx", "TX power on meters"], ["ui.meters.nameleft", "Name left, ZNet pill right"]]},
-  {id:"ctrl", title:"Remote roll & control", items:[["setup.gpi1.remoteroll", "GPI 1 roll"], ["setup.serial.remoteroll", "Serial roll"], ["setup.serial.mode", "Serial mode"],
+    ["ui.refline.enable", "Reference line"], ["ui.refline.level", "Ref line level"]]},
+  {id:"ctrl", title:"Nova control", items:[["setup.gpi1.remoteroll", "GPI 1 roll"], ["setup.serial.remoteroll", "Serial roll"], ["setup.serial.mode", "Serial mode"],
     ["setup.master.mode", "Master"], ["controller.backlight", "Backlight"], ["ui.update.period", "UI update"]]},
-  {id:"scream", title:"Scream trim", items:[]},
+  {id:"wireless", title:"Wireless", items:[]},
   {id:"disp", title:"Display", items:[["ui.helptext", "Help text"], ["ui.osk", "On-screen keyboard"]]}
 ];
 /* Tiles: on/off settings change on tap, other menus open a drop-down list, numbers open the bar (Nov 1). */
@@ -4015,33 +4552,83 @@ function setupTiles(onlyId){
   drawBar();
   return node;
 }
-/* Sections: a menu of sections on the left, one section's settings on the right. */
+/* Sections: a menu of sections on the left, one section's settings on the right.
+   Nov 20 (Ferris: "clean up the settings menu ... better groupings"): grouped by where the setting lives. Nova: settings
+   kept on the recorder. Pages: how Nova Relay's own pages look. Cart: the link, the Stream Deck on the box (only there)
+   and troubleshooting, out of the old crowded Connection. App: version, updates and screen; then Help. Scream trim and
+   the RX trim finder are Wireless; Display joined the app section; About and Updates are one section. */
+const wirelessTools = () => pageFinder();   /* installed: the RX trim finder */
+const troubleTools = () => testPanel();    /* installed: the protocol test tools */
+const SEC_SHORT = {help:"Help"};   /* phones: the name that fits a third of the width */
+const SEC_SUB = {rec:"Rate, pre-roll, tone", ctrl:"Remote roll, serial, backlight", meters:"Timing, reference line, extras",
+  wireless:"RX trim finder", conn:"Nova link, phones, Aria buttons",
+  updates:"New versions of Nova Relay", app:"Screen, version, licences", help:"Manual, Link log, problem reports", exp:"Features still being tested"};
+/* Nov 21: a section's panels side by side need them as direct children: lift panels out of plain wrapper stacks */
+const flatPanels = (...nodes) => nodes.filter(Boolean).flatMap(n => n.classList && n.classList.contains("stack") && !n.classList.contains("panel") && !n.id ? [...n.children] : [n]);
 function setupSections(connPanel, connTitle){
-  const secs = [...SETUP_GROUPS, {id:"conn", title:connTitle, items:[]}, {id:"deck", title:"Stream Deck", items:[]}, {id:"update", title:"Updates", items:[]}, {id:"help", title:"Help", items:[]}];
+  const G = id => SETUP_GROUPS.find(x => x.id === id);
+  /* Nov 21 (Ferris: "Remove grouping from setup menus just have them listed") */
+  /* Nov 21 (Ferris: "remove scream trim from setup for now"): Wireless keeps only the RX trim finder (installed app) */
+  const wxTools = wirelessTools();
+  const secs = [G("rec"), G("ctrl"), G("meters"), ...(wxTools ? [G("wireless")] : []),
+    {id:"conn", title:connTitle, items:[]},
+    {id:"updates", title:"Updates", items:[]}, {id:"app", title:"Nova Relay", items:[]}, {id:"help", title:"Help & Troubleshooting", items:[]}, {id:"exp", title:"Experimental", items:[]}];
   const nav = h("nav", {class:"secnav", "aria-label":"Setup sections"}, secs.map(g => {
-    const dot = g.id === "update" && updState().available ? h("i", {class:"secdot", "aria-label":"update available"}) : null;
-    return h("button", {type:"button", class:"secbtn", "aria-pressed":setupSec === g.id ? "true" : "false", onclick:() => { setupSec = g.id; go("setup"); }}, h("span", {class:"secname"}, g.title, dot));
+    const dot = g.id === "updates" && updState().available ? h("i", {class:"secdot", "aria-label":"update available"}) : null;
+    return h("button", {type:"button", class:"secbtn", "aria-pressed":setupSec === g.id ? "true" : "false", onclick:() => { setupSec = g.id; go("setup"); }},
+      h("span", {class:"secname"}, h("span", {class:"long"}, g.title), SEC_SHORT[g.id] ? h("span", {class:"short"}, SEC_SHORT[g.id]) : null, dot), SEC_SUB[g.id] ? h("span", {class:"secsub"}, SEC_SUB[g.id]) : null);
   }));
   const g = secs.find(x => x.id === setupSec) || secs[0];
   if(setupEdit && !g.items.some(([k]) => k === setupEdit.k)) setupEdit = null;
-  /* The link log lives under Connection (moved from its own tab, Oct 26). */
-  const body = g.id === "conn" ? h("div", {class:"stack"}, connPanel, h("div", {class:"panel"}, h("h3", null, "Link log"), RENDER.log()), diagPanel())
-    : g.id === "deck" ? streamDeckPanels() : g.id === "scream" ? screamPanel() : g.id === "update" ? updatesPanel() : g.id === "help" ? helpPanel()
-    : false ? h("div", {class:"stack"}, setupTiles(g.id), h("p", {class:"hint keep"}, "Faders on meters: strips with a PFL key get a fader. Drag the cap to move that input's Aria fader, the same as pushing it on the Aria (it works while recording). The Nova doesn't report fader positions, so the cap shows where Nova Relay last put it, and stays hollow until then. Touching that fader on the Aria takes over. After changing the Aria's bank, press its page buttons again, as for PFL."))
+  const body = g.id === "conn" ? h("div", {class:"stack"}, connPanel, slateComPanel())
+    : g.id === "wireless" ? h("div", {class:"stack"}, ...flatPanels(wxTools))
+    : g.id === "updates" ? h("div", {class:"stack"}, ...flatPanels(updatesPanel()))   /* Nov 21 (Ferris): "move updates to Update submenu" */
+    : g.id === "app" ? h("div", {class:"stack"}, ...flatPanels(setupTiles("disp"), aboutPanel()))
+    : g.id === "help" ? h("div", {class:"stack"}, ...flatPanels(helpPanel(), h("div", {class:"panel"}, h("h3", null, "Link log"), RENDER.log()), diagPanel(), troubleTools()))   /* Nov 21 (Ferris): "merge troubleshooting and help" */
+    : g.id === "exp" ? h("div", {class:"stack"}, ...flatPanels(experimentalPanel(), ...helpDeckPanels(), deckOffered() ? deckBoxPanel() : null))   /* Nov 21 (Ferris): "Move stream deck to experimental submenu", "stream deck plugin and button addresses should be in experimental, too" */
+    : g.id === "meters" ? h("div", {class:"stack"}, setupTiles(g.id), extrasPanel(), monitorPanel(), false && h("p", {class:"hint keep"}, "Faders on meters: strips with a PFL key get a fader. Drag the cap to move that input's Aria fader, the same as pushing it on the Aria (it works while recording). The Nova doesn't report fader positions, so the cap shows where Nova Relay last put it, and stays hollow until then. Touching that fader on the Aria takes over. After changing the Aria's bank, press its page buttons again, as for PFL."))
     : setupTiles(g.id);
   return h("div", {class:"secsplit"}, nav, body);
 }
 
 /* ---------- Setup › Help (Nov 19, Ferris: "Move the help button to settings to give the upper menu items more room. The
    mirror status gets cut off") ---------- The manual, and where to go when something goes wrong. */
+/* Nov 20 (Ferris): "an about section in the settings that gives the current version number and any licensing or
+   anything that Zaxcom requires". Nothing in Zaxcom's published files asks for a notice from a remote app; this states
+   that Relay is independent, names their trademarks, says how the Nova's own licence applies, and credits the MIT
+   NovaRemote project and the open-source parts Relay ships with (full texts in licenses.txt beside the page). */
+function aboutPanel(){
+  const row = (k, v) => h("div", {class:"aboutrow"}, h("span", {class:"lbl"}, k), h("b", null, v));
+  const ver = h("b"), nova = h("b");
+  const paintV = () => { ver.textContent = (typeof cart !== "undefined" && cart.version) || (protoUpd && protoUpd.running) || PROTO_VERSION; };
+  const paintN = () => { const c = typeof cart !== "undefined" && cart.nova ? cart.nova : null, m = (c && c.model) || novaModel;   /* the Nova's greeting, e.g. NOVA1 v5.23 sn010140 */
+    nova.textContent = m ? m + (c && c.aria ? " \u00b7 " + c.aria : "") : "Not connected"; };
+  paintV(); paintN(); bind("status.text", [], paintN);
+  return h("div", {class:"stack"},
+    h("div", {class:"panel"}, h("h3", null, "About"),
+      h("div", {class:"aboutrow"}, h("span", {class:"lbl"}, "Version"), ver),
+      h("div", {class:"aboutrow"}, h("span", {class:"lbl"}, "Recorder"), nova),
+      row("Made by", "gfssound"),
+      row("Source", "github.com/gfssound/nova-relay")),
+    h("div", {class:"panel"}, h("h3", null, "Zaxcom"),
+      h("p", {class:"hint keep"}, "Nova Relay is an independent app. It is not made, sold or supported by Zaxcom, Inc. Zaxcom, Nova, Aria, Oasis, NovaTouch and ZaxNet are trademarks of Zaxcom, Inc., used here only to say which equipment Nova Relay works with."),
+      h("p", {class:"hint keep"}, "Controlling a Nova from a computer needs the Nova's NovaTouch option or an Aria or Oasis attached. Nova Relay works within the licence your Nova has and never bypasses or imitates it."),
+      h("p", {class:"hint keep"}, "Details of the Nova's serial protocol come from Zaxcom's NovaRemote project (github.com/HowyZax/novaremote, MIT licence, © 2026 Zaxcom) and from listening to the Nova. Nova Relay contains no Zaxcom code or firmware.")),
+    h("div", {class:"panel"}, h("h3", null, "Open-source parts"),
+      h("ul", {class:"aboutlist"},
+        h("li", null, h("b", null, "Node.js"), " runs Nova Relay on the cart computer and the box (MIT licence)."),
+        h("li", null, h("b", null, "Electron"), " is the window of the Linux app (MIT licence)."),
+        h("li", null, h("b", null, "Saira Condensed, Barlow, Martian Mono"), " are the fonts on this page (SIL Open Font License 1.1)."),
+        h("li", null, h("b", null, "Liberation Sans Bold and DejaVu Sans Bold"), " draw the Stream Deck keys on the Nova Relay box (SIL Open Font License 1.1; Bitstream Vera licence)."),
+        h("li", null, h("b", null, "python-elgato-streamdeck and node-elgato-stream-deck"), " are where the Stream Deck model details come from (MIT licence)."),
+        h("li", null, h("b", null, "Raspberry Pi OS"), " runs the Nova Relay box (its own licences, listed on the card image).")),
+      h("div", {class:"flex", style:"gap:8px"}, h("a", {class:"btn", href:"licenses.txt", target:"_blank", rel:"noopener"}, "Read the licence texts"))));
+}
 function helpPanel(){
   return h("div", {class:"stack"},
     h("div", {class:"panel"}, h("h3", null, "User manual"),
       h("p", {class:"hint keep"}, "Every page and setting, connecting to the Nova, phones and iPads, the Stream Deck, the Nova Relay box, updates and troubleshooting."),
-      h("div", {class:"flex", style:"gap:8px"}, h("button", {type:"button", class:"btn primary", id:"helpBtn", onclick:() => openHelp()}, "Open the manual"))),
-    h("div", {class:"panel"}, h("h3", null, "Something went wrong?"),
-      h("p", {class:"hint keep"}, "Save the last few minutes of the Nova's line, or download a problem report, in Setup › Connection."),
-      h("div", {class:"flex", style:"gap:8px"}, h("button", {type:"button", class:"btn", onclick:() => { setupSec = "conn"; go("setup"); }}, "Go to Connection"))));
+      h("div", {class:"flex", style:"gap:8px"}, h("button", {type:"button", class:"btn primary", id:"helpBtn", onclick:() => openHelp()}, "Open the manual"))));
 }
 
 /* ---------- Setup › Connection › Something went wrong? (Nov 18, Ferris: "Let's work on 1, 2, 3") ----------
@@ -4082,7 +4669,7 @@ function diagPanel(){
    What's running; Check for updates (GitHub, github.com/gfssound/nova-relay); Install (two taps; never by itself);
    an update file from this device (a cart without internet); Go back to the version before. The prototype pretends:
    the installed app asks the cart computer, which checks, downloads, checks the signature and restarts. */
-const PROTO_VERSION = "0.6.10";
+const PROTO_VERSION = "0.6.11";
 let updDraw = null, updDev = null, updLocal = null;
 const updCmp = (a, b) => { const pa = String(a).split(".").map(n => parseInt(n, 10) || 0), pb = String(b).split(".").map(n => parseInt(n, 10) || 0);
   for(let i = 0; i < Math.max(pa.length, pb.length); i++){ const d = (pa[i] || 0) - (pb[i] || 0); if(d) return d < 0 ? -1 : 1; } return 0; };
@@ -4185,7 +4772,7 @@ function updatesPanel(){
    the Stream Deck is on the computer running Nova Relay), or the button addresses, each ready to copy, for Companion
    and anything else that can open a web address. */
 const deckBase = () => ((cart.urls && cart.urls[0] && cart.urls[0].url) || location.origin).replace(/\/+$/, "");      /* the installed app uses this computer's real address */
-const deckLocal = () => !(cart.urls && cart.urls.length) ? "Only this computer can reach Nova Relay right now, so these addresses work only here. To use buttons on another computer, turn on Phones and iPads (Setup › Cart & Recorder Link) or join the cart Wi-Fi." : "";                              /* set by the installed app when only this computer can reach it */
+const deckLocal = () => !(cart.urls && cart.urls.length) ? "Only this computer can reach Nova Relay right now, so these addresses work only here. To use buttons on another computer, turn on Phones and iPads (Setup › Connection) or join the cart Wi-Fi." : "";                              /* set by the installed app when only this computer can reach it */
 const deckPluginUrl = () => "streamdeck/Nova-Relay.streamDeckPlugin";                          /* the installed app serves the plugin file */
 /* Slate and Com keys press the Aria's own buttons. Slate's is known; Com's is learned from one press on the Aria.
    The prototype pretends to learn; the installed app asks the cart, which watches the Aria. */
@@ -4212,10 +4799,10 @@ function slateComPanel(){
       a.nova ? null : h("p", {class:"hint keep"}, "Connect to the Nova (through the Aria) to learn the Com button."));
   };
   deckDraw = draw; draw();
-  return h("div", {class:"panel"}, h("h3", null, "Slate and Com"),
+  return h("div", {class:"panel"}, h("h3", null, "Aria Slate and Com buttons"),
     h("p", {class:"hint keep"}, "Slate mic and Com mic keys press the Aria's own Slate and Com buttons, so the mics go wherever the Nova routes slate and com. They stay on while the key is held, as on the Aria (or tap on, tap off). Com has to be learned once: press Learn, then press Com on the Aria."),
     body,
-    h("p", {class:"hint keep"}, "In Companion, put the “on” address in the button's press actions and the “off” address in its release actions."));
+    h("p", {class:"hint keep"}, "For the Stream Deck keys and the Slate and Com button addresses (Setup › Help)."));
 }
 /* ---------- Setup › Stream Deck › Stream Deck plugged into this box (Nov 14, Ferris: "Build Stream Deck support straight
    into Nova Relay on the Pi, so a plugged-in Stream Deck works like the plugin with live labels and needs no Companion") ----------
@@ -4241,7 +4828,7 @@ const DECK_OPTS = (() => {
                note: "Sends the Aria's Slate button, so the slate mic goes wherever the Nova routes slate. Lit while it's on, also when Slate is pressed on the Aria." }],
     com: [{ key: "mode", type: "select", label: "Press", def: "hold",
              options: [["hold", "On while held (like the Aria)"], ["latch", "Tap on, tap off"]],
-             note: "Sends the Aria's Com button. Learn it once: Nova Relay › Setup › Stream Deck › Learn, then press Com on the Aria." }],
+             note: "Sends the Aria's Com button. Learn it once: Nova Relay › Setup › Connection › Learn, then press Com on the Aria." }],
     hp: [{ key: "mode", type: "select", label: "Preset", def: "next",
            options: [["next", "Next preset"], ["prev", "Previous preset"], ...range(12, "Preset")],
            note: "Next and previous skip presets that are turned off." }],
@@ -4303,7 +4890,7 @@ const DECK_OPTS = (() => {
         note: "Hold to keep going. Needs the fader set once from Nova Relay (the Nova doesn't say where it is). Touching that fader on the Aria takes over." }],
     hpdial: [{ type: "info", note: "Turn for the next or previous headphone preset (presets that are off are skipped)." }],
     status: [{ type: "info", note: "Shows timecode, record state, scene and take. Press it to open Nova Relay in the browser." }],
-    scream: [{ type: "info", note: "Panic button for loud screams. Choose the transmitters and the scream ZNet trim in Nova Relay (Setup › Scream trim). One tap drops them, the next puts them back. Amber while on. The Nova's RX page keeps its old number, so trim each transmitter from one place." }],
+    scream: [{ type: "info", note: "Panic button for loud screams. Choose the transmitters and the scream ZNet trim in Nova Relay (Setup › Wireless). One tap drops them, the next puts them back. Amber while on. The Nova's RX page keeps its old number, so trim each transmitter from one place." }],
   };
   return OPTS;
 })();
@@ -4476,7 +5063,11 @@ function deckBoxPanel(){
   return panel;
 }
 
-function streamDeckPanels(){
+/* Nov 20 (Ferris: "does it need a submenu at all?"): no Stream Deck section on Mac and Windows. The plugin and the
+   button addresses live in Setup › Help, learning the Aria's Com button in Setup › Connection, and Setup › Stream Deck
+   is only offered where a Stream Deck can be plugged straight in (the Nova Relay box and Linux): the key editor. */
+const deckOffered = () => { const d = deckBox(); return !!(d && d.supported); };
+function helpDeckPanels(){
   const base = deckBase();
   const copyB = (text, what) => h("button", {type:"button", class:"btn small", "aria-label":`Copy ${what}`, onclick:() => copyText(text, what)}, "Copy");
   const pick = (n, label, first = 1) => h("select", {class:"sel decknum", "aria-label":label}, Array.from({length:n}, (_, i) => h("option", {value:i + first}, String(i + first))));
@@ -4531,30 +5122,24 @@ function streamDeckPanels(){
   const getB = plugUrl ? h("a", {class:"btn primary", href:plugUrl, download:"Nova-Relay.streamDeckPlugin"}, "Download the Stream Deck plugin")
     : h("button", {type:"button", class:"btn primary", onclick:() => toast("The plugin comes with the installed Nova Relay (and with each new version)")}, "Download the Stream Deck plugin");
   const local = deckLocal();
-  return h("div", {class:"stack"},
-    deckBoxPanel(),
+  const list = h("div", {class:"stack", style:"gap:8px", hidden:true},
+    local ? h("p", {class:"hint keep", style:"color:var(--warn)"}, local) : null,
+    h("div", {class:"decklist"}, rows),
+    h("p", {class:"hint keep"}, "These act on a single press, with no hold, so keep REC and STOP away from other buttons. Every address answers with the recorder's state (the same as Status). For Slate and Com, put the “on” address in the button's press actions and the “off” address in its release actions."));
+  const showB = h("button", {type:"button", class:"btn", "aria-expanded":"false", onclick:() => { list.hidden = !list.hidden; showB.setAttribute("aria-expanded", String(!list.hidden)); showB.textContent = list.hidden ? "Show the button addresses" : "Hide the button addresses"; }}, "Show the button addresses");
+  return [
     h("div", {class:"panel"}, h("h3", null, "Stream Deck plugin"),
-      h("p", {class:"hint keep"}, "The simplest way. Keys light up with the recorder: REC turns red with the take time, Tone goes green, Arm keys show the track's name and turn red when armed, PFL keys go yellow. Drive time left, Battery, Primary free and Mirror keys turn amber, then red and blinking, when they get low or the mirror falls behind (the levels are set on each key). REC turns amber when no tracks are armed. REC, STOP and Tone have the same short hold as the buttons here, so a bump can't roll or stop a take."),
+      h("p", {class:"hint keep"}, "Keys light up with the recorder: REC turns red with the take time, Arm keys show the track's name, PFL keys go yellow, and the drive, battery and mirror keys warn when they get low. REC, STOP and Tone have the same short hold as the buttons here, so a bump can't roll or stop a take."),
       h("ol", {class:"decksteps"},
         h("li", null, getB),
-        h("li", null, "Double-click the file on the Mac or PC the Stream Deck is plugged into. The Stream Deck app adds it."),
-        h("li", null, "In the Stream Deck app, drag keys from the Nova Relay group onto the Stream Deck. Click a key to change its options."),
-        h("li", null, "The keys: REC, STOP, Tone, Slate mic, Com mic; Next scene, Take +1 / \u22121, Note, Last take; Arm track, Arm set; PFL, Headphones; Route, Input page, Jam; Meter, Receiver, Timecode & take, Drive time left, Battery, Primary free, Mirror. On a Stream Deck + or Studio, the Input trim and Headphones dials turn with the dials."),
+        h("li", null, "Double-click the file on the Mac or PC the Stream Deck is plugged into. The Stream Deck app adds the plugin and offers the Nova Relay profile: ready-made pages for your Stream Deck. Say yes to start with those."),
+        h("li", null, "To change a key, drag another one from the Nova Relay group in the Stream Deck app, or click a key to change its options. You can also build your own profile from scratch."),
         h("li", null, "Stream Deck on this computer: nothing more to do. On another computer: click any Nova Relay key and type this address under Nova Relay (once, for every key):",
           h("div", {class:"urlrow", style:"margin-top:6px"}, h("code", null, base.replace(/^http:\/\//, "")), copyB(base.replace(/^http:\/\//, ""), "the address")))),
-      h("p", {class:"hint keep"}, "The Stream Deck app runs on Mac and Windows. On the Nova Relay box (or Linux), plug the Stream Deck straight into it instead: no Stream Deck app needed. Its keys are set up on this page when you're connected to the box.")),
-    h("div", {class:"panel"}, h("h3", null, "Folders: arming, PFL and more"),
-      h("ol", {class:"decksteps"},
-        h("li", null, "In the Stream Deck app, drag Create Folder (in the Stream Deck › Navigation group) onto a key and name it, for example ARM."),
-        h("li", null, "Open the folder and drag Arm track onto each empty key. Each new Arm key takes the next track (1, 2, 3…) and shows its name, so the folder fills itself in. Add Arm all and Disarm all keys if you like."),
-        h("li", null, "The folder's top-left key takes you back.")),
-      h("p", {class:"hint keep"}, "PFL keys number themselves the same way (Aria faders 1–8), so a PFL folder works too. A 15-key Stream Deck has 14 free keys in a folder (one is Back): put tracks 15 and 16 on a second page, or use a bigger Stream Deck.")),
-    slateComPanel(),
+      h("p", {class:"hint keep"}, "The Stream Deck app runs on Mac and Windows. On the Nova Relay box, plug the Stream Deck straight into the box instead: no app needed, and its keys are set up in Setup › Experimental.")),
     h("div", {class:"panel"}, h("h3", null, "Button addresses (Companion and other apps)"),
       h("p", {class:"hint keep"}, "For Bitfocus Companion (Generic HTTP module, GET), the Stream Deck app's Website action (tick “GET request in background”), or anything that can open a web address. Copy an address into the button."),
-      local ? h("p", {class:"hint keep", style:"color:var(--warn)"}, local) : null,
-      h("div", {class:"decklist"}, rows),
-      h("p", {class:"hint keep"}, "These act on a single press, with no hold, so keep REC and STOP away from other buttons. Every address answers with the recorder's state (the same as Status).")));
+      h("div", {class:"flex", style:"gap:8px"}, showB), list)];
 }
 
 /* ---------- Input settings: value tiles (chosen Oct 26 over strip and tab layouts) ---------- */
@@ -4821,7 +5406,7 @@ let dayMode = false; try{ dayMode = localStorage.getItem("cart-remote-day") === 
 function applyDay(){
   document.documentElement.dataset.theme = dayMode ? "day" : "";
   const b = $("dayBtn"); if(b){ b.setAttribute("aria-pressed", dayMode ? "true" : "false"); b.textContent = dayMode ? "Daylight on" : "Daylight"; }
-  readColors();
+  readColors(); dispatchEvent(new Event("themechange"));
 }
 function paintToneLock(){ /* Tone is no longer locked while recording (Nov 1). */ }
 function renderTransport(){
@@ -4846,8 +5431,9 @@ function paintRecFile(){
 function applyLayout(){ document.body.dataset.layout = "console"; applyDay(); }
 function wireChrome(){
   bind("ui.helptext", [], v => document.body.dataset.help = v ? "1" : "0", true);
-  bind("ui.meters.nameleft", [], v => { document.body.dataset.nameleft = v ? "1" : "0"; requestAnimationFrame(() => fitNames()); }, true);
+  document.body.dataset.nameleft = "1";   /* Nov 21: names always sit left; the name box's extras ride in its pill */
   bind("ui.osk", [], v => { if(!v) OSK.hide(); }, true);
+  bind("ui.exp.wireless", [], v => { document.body.dataset.xwx = v ? "1" : "0"; if(!v && current === "wireless") go("home"); }, true);
   bind("ui.recfile", [], () => paintRecFile(), true);
   /* Headphone preset in the top bar: shows the current one, tap steps through the presets that are On. */
   const hpLabel = () => {
@@ -4863,7 +5449,7 @@ function wireChrome(){
     for(let k = 1; k <= HP_COUNT; k++){ const n = (((cur + k) % HP_COUNT) + HP_COUNT) % HP_COUNT; if(en[n]){ if(n !== cur){ hpBus2 = false; set("hpmix.preset", [], n + 1); } return; } }
     toast("No headphone presets are on. Turn one on under Routing \u2192 Headphones.");
   });
-  const SHORT = {home:"Meters", arm:"Arm", inputs:"Inputs", routing:"Routing", names:"Names", timecode:"TC", meta:"Meta", setup:"Setup"};
+  const SHORT = {home:"Meters", arm:"Arm", inputs:"Inputs", routing:"Routing", names:"Names", timecode:"TC", meta:"Meta", wireless:"RX", setup:"Setup"};
   $("tabs").append(...VIEWS.map(([v, t]) => h("button", {type:"button", class:"tab", role:"tab", "data-v":v, "aria-label":t, onclick:() => go(v)},
     h("span", {class:"tl-long"}, t), h("span", {class:"tl-short"}, SHORT[v] || t))));
   /* REC and Tone need a short hold (REC Oct 30, Tone Nov 1) so a stray tap can't roll or send tone.
@@ -4962,6 +5548,18 @@ function simStatusText(dt){
 }
 /* No recorder to show (shipped versions with no Nova connected): timecode reads dashes. */
 const noRecorder = () => !EXAMPLE && !novaConnected();
+/* Nov 20 (Ferris: "Can the TLOC count down in real time?"): the Nova repeats its time-left figure about once a second
+   but only refreshes it now and then while recording (Nov 18-19 capture: the same value for 18 minutes of rolling).
+   So the header counts it down itself while recording, one second per second, and takes the Nova's figure again
+   whenever the Nova sends a different one. Stopped: it holds. */
+const tl = {raw:null, base:null, t:0, rec:false};
+function tlocNow(){
+  const raw = V["drive.time.remaining"]; if(raw == null) return null;
+  const now = performance.now(), rec = sim.state === "RECORDING";
+  if(raw !== tl.raw){ tl.raw = raw; tl.base = raw; tl.t = now; }
+  if(rec !== tl.rec){ if(tl.rec) tl.base = Math.max(0, tl.base - (now - tl.t) / 1000); tl.t = now; tl.rec = rec; }
+  return Math.max(0, rec ? tl.base - (now - tl.t) / 1000 : tl.base);
+}
 function frame(t){
   const prev = sim.lastT; sim.tick(t); const dt = Math.min(0.1, (t - prev) / 1000);
   if(!novaConnected() && EXAMPLE) V["status.text"] = simStatusText(dt);
@@ -4970,9 +5568,9 @@ function frame(t){
   if(get("timecode.displayed") === 0){ tcFrames = sim.state === "RECORDING" ? sim.genFrames : sim.state === "PLAYING" ? sim.playStart + sim.elapsed * fr.r : sim.genFrames; }
   $("tc").textContent = noRecorder() ? "--:--:--:--" : framesToTC(tcFrames, fr);
   $("stElapsed").textContent = fmtDur(sim.elapsed);
+  { const tl = tlocNow(), txt = tl == null ? "\u2014" : `${Math.floor(tl / 3600)}:${String(Math.floor(tl / 60) % 60).padStart(2, "0")}:${String(Math.floor(tl) % 60).padStart(2, "0")}`; const el = $("stDrive"); if(el.textContent !== txt) el.textContent = txt; }
   if(t - lastStatus > 500){
     lastStatus = t;
-    $("stDrive").textContent = (() => { const s = V["drive.time.remaining"]; return s == null ? "\u2014" : `${Math.floor(s/3600)}h ${String(Math.floor(s/60)%60).padStart(2,"0")}m`; })();
     $("stBatt").textContent = V["battery.status"] && V["battery.status"].volts != null ? V["battery.status"].volts.toFixed(1) + " V" : "\u2014";
     paintDrives();
   }
@@ -5049,8 +5647,327 @@ wireChrome();
 applyLayout();
 applyPhoneOpts();
 let startTab = "home"; try{ startTab = localStorage.getItem("cart-remote-tab") || "home"; }catch(e){}
+
+/* ---------- Wireless (Nov 20, prototype only) ----------
+   The RX-12 page as Ferris chose it: Z4 tiles, always 4 to a row (2 on a phone), 1-24 channels (the RX-12 is going
+   to 24), labels 1A/1B..., channel box amber = transmitter battery 25% or less, red = no transmitter, 30-minute signal:
+   tall cyan = strong, short amber = weak, red = dropout only, red X = never locked. REC pill follows the transmitter
+   (here: the first 12 follow the Nova's record state). Detail panel off by default. Example data: Nova Relay can't read
+   an RX-12 yet. */
+const WX = (() => {
+  const MAX = 24, GAP = 8, N60 = 60;
+  const cl = x => Math.max(30, Math.min(80, x));
+  const mk = (seed, base, f) => Array.from({length:N60}, (_, k) => { let x = base + Math.sin(k * .45 + seed) * 2.5 + Math.sin(k * .13 + seed * 2) * 3.5; return cl(f ? f(k, x) : x); });
+  const dip = (c, w, d) => (k, x) => Math.abs(k - c) < w ? x - (w - Math.abs(k - c)) * d : x;
+  const lena = Array.from({length:N60}, (_, k) => { let x = 72 + Math.sin(k * .5) * 2; if(k >= 14 && k < 31) x = 72 - (k - 14) * 1.9 + Math.sin(k) * 1.5; if(k > 31 && k < 42) x = 44 + (k - 31) * 2.4; return cl(x); });
+  const S = [
+    ["ANNA",87,mk(1,70),[27],1,-18],["MARCUS",71,mk(2,66),[],1,-24],["DEV",20,mk(3,55,dip(20,6,2.6)),[16,44],1,-30],["RUTH",80,mk(4,69),[],1,-16],
+    ["OSCAR",60,mk(5,58),[],1,-28],["PRIYA",93,mk(6,57),[],1,-34],["TOMAS",66,mk(7,63),[],1,-22],["LENA",74,lena,[31],1,-20],
+    ["JUNE",100,mk(8,67),[],1,-26],["BOOM 2",40,mk(9,62),[],1,-31],["NOAH",82,mk(11,68),[],1,-19],["GRACE",77,mk(12,64),[],1,-25],
+    ["ELI",58,mk(13,61),[],0,-27],["MAYA",90,mk(14,66),[],0,-33],["SAM",15,mk(15,60),[],0,-29],["IRIS",69,mk(16,65),[],0,-23],
+    ["HUGO",63,mk(17,52,dip(50,5,2.4)),[48,52],0,-21],["NINA",85,mk(18,67),[],0,-35],["LEO",72,mk(19,63),[],0,-26],["VERA",95,mk(20,70),[],0,-30],
+    ["PLANT 1",55,mk(21,59),[],0,-38],["PLANT 2",48,mk(22,57),[],0,-36],["",0,mk(23,63,(k, x) => k >= 41 ? 30 : x),[],"LOST",-99],["",0,Array(N60).fill(30),[],"NONE",-99]
+  ];
+  let zz = 1;
+  const CH = S.map((a, i) => {
+    const [name, bat, v, drops, follow, lv] = a, lost = follow === "LOST", none = follow === "NONE", off = lost || none;
+    const vv = v.map((x, k) => drops.includes(k) ? 31 : x), seen = vv.filter((x, k) => !drops.includes(k) && (!lost || k < 41));
+    const rf = off ? 0 : Math.round((vv[N60 - 1] - 30) * 2), low = none ? null : Math.round((Math.min(...seen) - 30) * 2), lowb = !off && bat <= 25;
+    const why = off ? (lost ? "Transmitter lost 9 minutes ago" : "No transmitter heard on this channel")
+      : [lowb ? "Battery " + bat + "%" : "", drops.length ? drops.length + (drops.length > 1 ? " dropouts" : " dropout") + " in the last 30 min" : "", rf < 45 ? "Weak signal" : ""].filter(Boolean).join(" · ");
+    return {i, label:(Math.floor(i / 2) + 1) + (i % 2 ? "B" : "A"), name, bat, v:vv, drops, follow:follow === 1, lost, none, off, rf, low, lowb, why, lv, lvNow:lv,
+      tx:off ? "—" : String(i + 5).padStart(2, "0"), zid:off ? "" : "Z" + (zz++), freq:(554.3 + i * 1.6).toFixed(3)};
+  });
+  /* Nov 21 (Ferris: "Wireless page should read how many channels are available and show that max amount. Nova has 8
+     max, RX8 is also 8, RX12 can be anywhere from 2-24 depending on installed modules"): the page shows every channel
+     the receiver has, no count to pick. From Zaxcom's RX12/RX8 notes: an RX-12 reports each receiver module on its own
+     (cQUICKLEVELS, source byte = receiver 0-11, two channels each), so its count is 2 x the modules heard; an RX-8 is
+     four dual receivers (8); the Nova's own receivers are RX 1-8. Until the receiver code is in (Howy), the prototype
+     has a preview switch for the receiver and, for an RX-12, how many modules. */
+  const DEVS = {none:{name:"", fixed:8, wait:true}, nova:{name:"NOVA RX", fixed:8}, rx8:{name:"RX-8", fixed:8}, rx12:{name:"RX-12"}};
+  let dev = EXAMPLE ? "rx12" : "none", mods = 12, count = 24, sel = 2, detail = false;
+  try{ const s = JSON.parse(localStorage.getItem("cart-remote-wx") || "{}");
+    if(EXAMPLE && DEVS[s.dev]) dev = s.dev; if(s.mods >= 1 && s.mods <= 12) mods = s.mods; else if(s.count >= 1 && s.count <= MAX) mods = Math.ceil(s.count / 2);
+    detail = s.detail === true; }catch(e){}
+  const devCount = () => DEVS[dev].fixed || mods * 2;
+  /* Nov 21 (Ferris: "Don't allow locking. Frequency, single/dual, ZHD/XR still need to be selectable"): each receiver's
+     modulation (ZHD / XR) and single / dual, and each channel's frequency, can be changed from here at any time, recording
+     or not (a new frequency retunes the receiver and drops that channel's audio for a moment). Single: the receiver
+     gives one channel (A, both antennas), so B goes away. The prototype keeps these per browser; the installed app will
+     send them to the receiver (cCHANNEL for frequencies; modes once Zaxcom's notes cover them). */
+  const RXM = Array.from({length:12}, () => ({mode:"ZHD", dual:true}));
+  try{ const r = JSON.parse(localStorage.getItem("cart-remote-wx-rx") || "null"); if(Array.isArray(r)) r.forEach((x, i) => { if(RXM[i] && x){ RXM[i].mode = x.mode === "XR" ? "XR" : "ZHD"; RXM[i].dual = x.dual !== false; } }); }catch(e){}
+  const saveRx = () => { try{ localStorage.setItem("cart-remote-wx-rx", JSON.stringify(RXM)); }catch(e){} };
+  const shown = i => i < count && ((i & 1) === 0 || RXM[i >> 1].dual);
+  const FQ_MIN = 470, FQ_MAX = 614, FQ_STEP = 0.1;   /* MHz; the receiver's own tuning range will come from cRXFORMAT */
+  const segs = r => `<span class="wx-seg" data-r="${r}" data-k="mode" role="group" aria-label="Receiver ${r + 1} modulation"><button type="button" data-v="ZHD">ZHD</button><button type="button" data-v="XR">XR</button></span><span class="wx-seg" data-r="${r}" data-k="dual" role="group" aria-label="Receiver ${r + 1} single or dual"><button type="button" data-v="0">SINGLE</button><button type="button" data-v="1">DUAL</button></span>`;
+  count = devCount();
+  const save = () => { try{ localStorage.setItem("cart-remote-wx", JSON.stringify({dev, mods, detail})); }catch(e){} };
+  /* Nov 21 (Ferris: "a connected RX8 or RX12 should replace the Nova text in that box when it's connected since
+     currently you would only have one device connected at a time. If in the future they add the ability to have
+     multiple then we can bring the connection light on the top of the wireless page back"): the light up top names the
+     receiver while one is connected. Prototype preview only; the shipped page gets this from the cart once it can see one. */
+  function paintRxPill(){
+    if(!EXAMPLE) return; const p = document.getElementById("linkPill"), t = p && p.querySelector("span"); if(!t) return;
+    const rx = get("ui.exp.wireless") && !DEVS[dev].wait && dev !== "nova" ? DEVS[dev].name : "";   /* only with the Wireless page on */
+    t.textContent = rx || "Simulated recorder"; p.title = rx ? `Connected to ${rx}` : "";
+  }
+  bind("ui.exp.wireless", [], paintRxPill, true);
+  const esc = s => String(s).replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+  const recOn = c => !c.off && c.follow && sim.state === "RECORDING";
+  const recTxt = c => recOn(c) ? "● REC" : c.off ? "NO RF" : "STOP", recCls = c => recOn(c) ? "on" : c.off ? "off" : "";
+  const batC = c => c.off ? "var(--dim)" : c.lowb ? "var(--warn)" : "var(--ok)";
+  const labCls = c => c.off ? "off" : c.lowb ? "low" : "";
+  const rfBars = c => [1,2,3,4,5].map(k => `<s class="${c.rf >= k * 18 ? "on" : ""}" style="height:${20 * k}%"></s>`).join("");
+  const lvColor = c => c.off ? "var(--dim)" : c.lvNow > -10 ? "var(--rec)" : c.lvNow > -20 ? "var(--warn)" : "var(--fg)";
+  const stat = c => c.none ? `<span>now <b>—</b></span><span style="color:var(--rec)">never locked</span>`
+    : `<span>now <b style="color:${c.off ? "var(--muted)" : c.rf < 45 ? "var(--warn)" : "var(--wx-name)"}">${c.off ? "—" : c.rf + "%"}</b></span><span>low <b style="color:var(--fg)">${c.low}%</b></span><b style="color:${c.lost ? "var(--warn)" : c.drops.length ? "var(--rec)" : "var(--muted)"}">${c.lost ? "lost 9 min ago" : c.drops.length + (c.drops.length === 1 ? " drop" : " drops")}</b>`;
+  /* Nov 21 (Ferris: "Reduce the size of RX channel label and put the ZNet ID underneath. Also make sure name is always
+     visible"): the channel box is smaller with the ZNet ID under it; the TX number gives way before the name does. */
+  const head = c => `<div class="hd"><span class="lw"><span class="lab ${labCls(c)}">${c.label}</span>${c.zid ? `<span class="zid">${c.zid}</span>` : ""}</span><div class="who"><div class="l1"><span class="tx">TX ${c.tx}</span></div><div class="nm ${c.off ? "off" : ""}">${esc(c.off ? "NO TRANSMITTER" : c.name)}</div><span class="nx">${batHTML(c)}${rfHTML(c)}</span></div><span class="hr"><span class="rc ${recCls(c)}">${recTxt(c)}</span><button type="button" class="fq" data-fi="${c.i}" aria-label="Frequency ${c.freq} MHz, change">${c.freq}</button></span></div>`;   /* Nov 21 (Ferris): frequency under REC, always shown, tap to change */
+  const batHTML = c => `<span class="bat" style="--bc:${batC(c)};--bp:${c.bat}%"><i></i><span>${c.off ? "—" : c.bat + "%"}</span></span>`;
+  const rfHTML = c => `<span class="rf"><i>${rfBars(c)}</i><span>${c.off ? "—" : c.rf + "%"}</span></span>`;
+
+  /* drawing */
+  const DPR = () => Math.min(3, window.devicePixelRatio || 1);
+  /* the page's colours, read from the page itself (so the daylight ones apply); read again when the theme changes */
+  const wxPal = () => { const t = document.documentElement.dataset.theme || "", el = document.querySelector(".wx");
+    if(el && (wxPal.t !== t || !wxPal.v)){ const cs = getComputedStyle(el), v = k => cs.getPropertyValue(k).trim(); wxPal.t = t; wxPal.v = {ok:v("--ok"), warn:v("--warn"), rec:v("--rec"), line:v("--line"), unlit:v("--wx-unlit"), needle:v("--wx-needle"), trk:v("--wx-trk")}; }
+    return wxPal.v || {ok:COLORS["--ok"], warn:COLORS["--warn"], rec:COLORS["--rec"], line:COLORS["--line"], unlit:COLORS["--meter-bg"], needle:"#f2f2f2", trk:"#5ccfff"}; };
+  const trkCol = () => getComputedStyle(document.documentElement).getPropertyValue("--wx-trk").trim() || (document.documentElement.dataset.theme === "day" ? "#1590c4" : "#5ccfff");
+  function prep(cv){ const r = cv.getBoundingClientRect(), d = DPR(), w = Math.max(1, Math.round(r.width * d)), hh = Math.max(1, Math.round(r.height * d)); if(cv.width !== w || cv.height !== hh){ cv.width = w; cv.height = hh; } const g = cv.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, hh); return {g, w, h:hh, d}; }
+  function drawMeter(cv, c){
+    const {g, w, h:hh, d} = prep(cv), P = wxPal(), n = 24, gap = Math.max(1, Math.round(1.5 * d)), sw = (w - gap * (n - 1)) / n;
+    for(let s = 0; s < n; s++){ const db = -40 + s * 40 / n, lit = !c.off && db < c.lvNow, x0 = Math.round(s * (sw + gap)), x1 = s === n - 1 ? w : Math.round((s + 1) * (sw + gap)) - gap;
+      g.fillStyle = lit ? (db < -20 ? P.ok : db < -10 ? P.warn : P.rec) : P.unlit; g.fillRect(x0, 0, Math.max(1, x1 - x0), hh); }
+    if(!c.off){ const x = Math.round((c.lvNow + 40) / 40 * w); g.fillStyle = P.needle; g.fillRect(Math.min(w - 2 * d, x), 0, 2 * d, hh); }
+  }
+  function drawTrack(cv, c){
+    const {g, w, h:hh, d} = prep(cv), P = wxPal(), cyan = P.trk;
+    const n = w / d / N60 < 5 ? 30 : N60, gap = (w / n) > 4 * d ? Math.round(d) : 0, bw = (w - gap * (n - 1)) / n, step = N60 / n;
+    for(let j = 0; j < n; j++){
+      const ks = Array.from({length:step}, (_, q) => j * step + q), dr = ks.some(k => c.drops.includes(k)), gone = c.none || (c.lost && ks[0] >= 41);
+      const s = Math.max(0, Math.min(1, (Math.min(...ks.map(k => c.v[k])) - 38) / 30));
+      const bh = gone ? Math.max(1, 2 * d) : dr ? hh : Math.round(hh * (.1 + .9 * s));
+      g.fillStyle = gone ? P.line : dr ? P.rec : s < .45 ? P.warn : cyan;
+      const x0 = Math.round(j * (bw + gap)), x1 = j === n - 1 ? w : Math.round((j + 1) * (bw + gap)) - gap;
+      g.fillRect(x0, hh - bh, Math.max(1, x1 - x0), bh);
+    }
+    /* Nov 21 (Ferris): no X for a channel that never locked; its stats say so */
+  }
+
+  /* Nov 21 (Ferris: "Y3 until it can't fit anymore, and then Z4", then "Can I see the Z2 layout instead?"): receiver
+     cards, two channels each (A over B). Y3 while every channel row gets at least 128 px and every card 340 px; then Z2,
+     the same cards made compact (up to six across, rows down to 70 px; past that the page scrolls). WX_SMALL = "z4"
+     brings back the Z4 tiles instead of Z2. */
+  const WX_SMALL = "z2";
+  /* Nov 21 (Ferris: "make tiles scale to page size"): no top limit; the cards always fill the page, and their text and
+     boxes grow and shrink with them. Z2 rows go down to 40 px on a computer before anything scrolls (phones scroll). */
+  const CARD = {y3:{w:340, min:128, max:Infinity, hdr:35, maxC:3}, z2:{w:250, min:40, max:Infinity, hdr:27, maxC:6}};
+  function fitCards(n, W, H, kind, minRow, force){
+    const P = Object.assign({}, CARD[kind], minRow ? {min:minRow} : {}), rx = Math.ceil(n / 2), maxC = Math.max(1, Math.floor((W + GAP) / (P.w + GAP)));
+    let cc = Math.min(maxC, rx, P.maxC); const rr = Math.ceil(rx / cc); cc = Math.ceil(rx / rr);
+    const cw = (W - GAP * (cc - 1)) / cc, room = (H - GAP * (rr - 1)) / rr; let ch = Math.min(P.max, Math.floor((room - P.hdr - 2) / 2));
+    if(kind === "y3" && !force && (cw < P.w || ch < P.min)) return null;
+    ch = Math.max(P.min, ch);
+    return {kind, rx, cc, rr, cw, ch, hdr:P.hdr, cardH:P.hdr + 2 * ch + 2};
+  }
+  function fit(n, W, H){
+    const c = W < 500 ? 2 : 4, r = Math.ceil(n / c), w = (W - GAP * (c - 1)) / c;
+    return {c, r, w, h:Math.max(74, Math.min((H - GAP * (r - 1)) / r, w / 1.15))};
+  }
+
+  function render(){
+    const root = document.createElement("div"); root.className = "wx";
+    root.innerHTML = `<div class="wx-bar"><span class="wx-sp"></span>
+      <div class="wx-sim" title="Prototype only: Nova Relay reads this from the receiver"><span class="lb">PREVIEW</span>
+        <select class="sel" aria-label="Receiver to preview"><option value="none">No receiver (waiting)</option><option value="nova">Nova receivers (8)</option><option value="rx8">RX-8 (8)</option><option value="rx12">RX-12</option></select>
+        <span class="wx-mods"><span class="lb" id="wxLb">MODULES</span><div class="wx-step"><button type="button" class="m" aria-label="One module fewer">−</button><output aria-labelledby="wxLb"></output><button type="button" class="p" aria-label="One module more">+</button></div></span></div>
+      <label class="wx-sw"><input type="checkbox" id="wxDet"><span></span>Detailed View</label></div>
+      <div class="wx-body"><div class="wx-wrap"><div class="wx-grid"></div></div><aside class="wx-det" aria-live="polite" hidden></aside></div>
+      <div class="wx-wait" role="status"><div class="wi" aria-hidden="true"><svg viewBox="0 0 120 120"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"><path class="w3" d="M27 45a46 46 0 0 1 66 0"/><path class="w2" d="M38 56a30 30 0 0 1 44 0"/><path class="w1" d="M49 67a14 14 0 0 1 22 0"/></g><rect x="30" y="80" width="60" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="44" cy="91" r="3.5" fill="currentColor"/><path d="M60 91h18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg></div>
+        <h2>Connect an <b>RX-8</b> or <b>RX-12</b></h2><p class="ws"><i></i>Waiting for a receiver</p></div>`;
+    const q = s => root.querySelector(s), grid = q(".wx-grid"), wrap = q(".wx-wrap"), det = q(".wx-det"), out = q("output"), devSel = q(".wx-sim select"), sw = q("#wxDet");
+    if(!EXAMPLE) q(".wx-sim").style.display = "none";   /* the preview picker is the prototype's stand-in for a real receiver */
+    const tiles = new Map(), cards = new Map(), holds = new Map(); let cyan = "#5ccfff";
+    function card(r){
+      let el = cards.get(r);
+      if(!el){ el = document.createElement("div"); el.className = "wx-rx gone"; el.setAttribute("aria-hidden", "true");
+        el.innerHTML = `<div class="rh"><span class="rt">RECEIVER ${r + 1}</span><span class="rch"></span><span class="wx-sp"></span>${segs(r)}<span class="rmode"><button type="button" data-r="${r}" data-k="mode" class="rm"></button><button type="button" data-r="${r}" data-k="dual" class="rm"></button></span></div>`;
+        grid.prepend(el); cards.set(r, el); paintModes(el, r); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove("gone"))); } else el.classList.remove("gone", "leaving");
+      clearTimeout(el._t); return el;
+    }
+    function dropCards(keep){ cards.forEach((el, r) => { if(r < keep || el.classList.contains("leaving")) return; el.classList.add("gone", "leaving");
+      el._t = setTimeout(() => { el.remove(); cards.delete(r); }, 260); }); }
+    const tro = new ResizeObserver(es => { if(!root.isConnected){ tro.disconnect(); return; } for(const e of es){ const el = e.target, c = CH[+el.dataset.i]; fitName(el); const t = el.querySelector(".tc"), m = el.querySelector(".mc"); if(t && t.offsetParent) drawTrack(t, c, cyan); if(m && m.offsetParent) drawMeter(m, c); } });
+    const ro = new ResizeObserver(() => { if(!root.isConnected){ ro.disconnect(); return; } layout(); });
+    const dro = new ResizeObserver(() => { if(!root.isConnected){ dro.disconnect(); return; } const t = det.querySelector(".dtc"); if(t) drawTrack(t, CH[sel], cyan); });
+    function fitName(el){
+      const nm = el.querySelector(".nm"); if(!nm || !nm.clientWidth) return;
+      el.classList.remove("g1", "g2", "g3"); nm.style.fontSize = "";
+      const cut = () => nm.scrollWidth > nm.clientWidth + 1, f0 = parseFloat(getComputedStyle(nm).fontSize);
+      const shrink = lo => { for(let f = f0; cut() && f > lo; ){ f = Math.max(lo, f - 1); nm.style.fontSize = f + "px"; } };
+      if(cut()) el.classList.add("g1"); if(cut()) el.classList.add("g2");
+      shrink(Math.max(12, f0 * .75)); if(cut()) el.classList.add("g3"); shrink(10);
+    }
+    function tileHTML(c){
+      return `${head(c)}
+        <div class="mt"><canvas class="mc"></canvas><span class="lv"></span></div>
+        <div class="trk"><div class="th"><span class="lbl">SIGNAL · 30 MIN</span>${stat(c)}</div><canvas class="tc"></canvas></div>`;
+    }
+    function makeTile(c){
+      const el = document.createElement("div"); el.className = "wx-tile enter"; el.tabIndex = 0; el.setAttribute("role", "button"); el.dataset.i = c.i;
+      el.setAttribute("aria-label", `Channel ${c.label}, ${c.off ? "no transmitter" : c.name}`); el.innerHTML = tileHTML(c);
+      el.addEventListener("click", e => { if(e.target.closest(".fq")){ e.stopPropagation(); openFreq(c.i, e.target.closest(".fq")); return; } select(c.i); }); el.addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); select(c.i); } });
+      grid.appendChild(el); tiles.set(c.i, el); tro.observe(el); return el;
+    }
+    function layout(){
+      const W = wrap.clientWidth; if(!W) return;
+      const narrow = innerWidth <= 900, H = narrow ? Math.max(420, innerHeight * .7) : wrap.clientHeight, cfit = w => fitCards(count, w, H, "y3") || (WX_SMALL === "z2" ? fitCards(count, w, H, "z2", narrow ? 96 : 0) : null)   /* phones scroll, so rows keep a readable tracker */,
+        /* Nov 21 (Ferris: "detailed panel squishes information" / "I don't want it to be a floating window"): the panel sits beside
+           the cards; with it open the cards keep the size they have with it closed, fewer fit across and the page scrolls. */
+        yc = !narrow && !det.hidden ? cfit(W + det.offsetWidth + 12) : null,
+        y = yc ? fitCards(count, W, H, yc.kind, yc.ch, true) : cfit(W), f = y ? null : fit(CH.filter(c => shown(c.i)).length, W, H);
+      grid.classList.toggle("cards", !!y); grid.classList.toggle("y3", !!y && y.kind === "y3"); grid.classList.toggle("z2", !!y && y.kind === "z2");
+      grid.style.height = (y ? y.rr * y.cardH + GAP * (y.rr - 1) : f.r * f.h + GAP * (f.r - 1)) + "px";
+      if(y){
+        for(let r = 0; r < y.rx; r++){ const el = card(r); el.classList.remove("leaving");
+          Object.assign(el.style, {left:(r % y.cc) * (y.cw + GAP) + "px", top:Math.floor(r / y.cc) * (y.cardH + GAP) + "px", width:y.cw + "px", height:y.cardH + "px"});
+          el.querySelector(".rch").textContent = 2 * r + 1 < count && RXM[r].dual ? `${r + 1}A · ${r + 1}B` : `${r + 1}A`; paintModes(el, r); }
+        dropCards(y.rx);
+      } else dropCards(0);
+      const vis = CH.filter(c => shown(c.i)).map(c => c.i);
+      CH.forEach(c => {
+        let el = tiles.get(c.i);
+        if(shown(c.i)){
+          if(!el) el = makeTile(c);
+          el.classList.remove("leave"); clearTimeout(el._t);
+          if(y){ const r = c.i >> 1, x0 = (r % y.cc) * (y.cw + GAP), y0 = Math.floor(r / y.cc) * (y.cardH + GAP);
+            Object.assign(el.style, {left:(x0 + 1) + "px", top:(y0 + y.hdr + (c.i & 1) * y.ch) + "px", width:(y.cw - 2) + "px", height:(!RXM[r].dual && Math.ceil(count / 2) >= 9 ? 2 * y.ch : y.ch) + "px"}); }
+          else { const k = vis.indexOf(c.i); Object.assign(el.style, {left:(k % f.c) * (f.w + GAP) + "px", top:Math.floor(k / f.c) * (f.h + GAP) + "px", width:f.w + "px", height:f.h + "px"}); }
+          el.classList.toggle("b", (c.i & 1) === 1);
+          if(el.classList.contains("enter")) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove("enter")));
+        } else if(el && !el.classList.contains("leave")){ el.classList.add("leave"); el._t = setTimeout(() => { tro.unobserve(el); el.remove(); tiles.delete(c.i); }, 260); }
+      });
+      tiles.forEach((el, i) => el.classList.toggle("sel", i === sel));
+      /* Nov 21 (Ferris): a single-mode receiver, with up to 8 receivers, keeps its B place and says so there (as Zaxcom's
+         RX8 page marks an empty place); with 9-12 receivers A takes the whole card instead. */
+      const rxN = Math.ceil(count / 2);
+      for(let r = 0; r < 12; r++){
+        let el = holds.get(r); const want = y && r < rxN && 2 * r + 1 < count && !RXM[r].dual && rxN <= 8;
+        if(want){
+          if(!el){ el = document.createElement("div"); el.className = "wx-hold gone";
+            el.innerHTML = `<b>SINGLE MODE</b>`;   /* Nov 21 (Ferris): just the words; the card's SINGLE / DUAL switch changes it */
+            grid.appendChild(el); holds.set(r, el); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove("gone"))); }
+          clearTimeout(el._t); el.classList.remove("leaving");
+          const x0 = (r % y.cc) * (y.cw + GAP), y0 = Math.floor(r / y.cc) * (y.cardH + GAP);
+          Object.assign(el.style, {left:(x0 + 1) + "px", top:(y0 + y.hdr + y.ch) + "px", width:(y.cw - 2) + "px", height:y.ch + "px"});
+        } else if(el && !el.classList.contains("leaving")){ el.classList.add("gone", "leaving"); el._t = setTimeout(() => { el.remove(); holds.delete(r); }, 260); }
+      }
+    }
+    function renderDetail(){
+      /* Nov 21 (Ferris: "no detailed panel for RX8 or Nova. detailed panel squishes information"): RX-12 only, and it
+         floats over the right of the page (with a close button) instead of making the cards narrower */
+      det.hidden = !detail || dev !== "rx12"; if(det.hidden) return;
+      const c = CH[sel], tone = c.off ? "bad" : c.why ? "" : "ok";
+      det.innerHTML = `${head(c)}<div class="wx-why ${tone}">${esc(c.why || "All good")}</div>
+        <div class="wx-cells"><div class="wx-cell"><small>BATTERY</small>${batHTML(c)}</div><div class="wx-cell"><small>RF</small>${rfHTML(c)}</div><button type="button" class="wx-cell dfq" aria-label="Frequency ${c.freq} MHz, change"><small>FREQUENCY</small><span>${c.freq}</span></button></div>
+        <div><div class="wx-sec" style="display:flex;margin-bottom:6px">AUDIO dBFS<span style="flex:1"></span><b class="lv dlv" style="font-size:15px"></b></div><div class="wx-dm"><canvas class="dmc"></canvas></div><div class="wx-scale"><span>-40</span><span>-30</span><span>-20</span><span>-10</span><span>0</span></div></div>
+        <div class="wx-dt"><div class="th"><span class="wx-sec">SIGNAL · 30 MIN</span><span style="flex:1"></span>${stat(c)}</div><canvas class="dtc"></canvas><div class="wx-axis"><span>−30 min</span><span>−20</span><span>−10</span><span>now</span></div></div>
+        <div class="wx-modes">${segs(c.i >> 1)}</div>`;   /* Nov 21 (Ferris): no hint line */
+      paintModes(det, c.i >> 1);
+      det.querySelector(".dfq").addEventListener("click", e => openFreq(c.i, e.currentTarget));
+      requestAnimationFrame(() => { const t = det.querySelector(".dtc"); if(t) drawTrack(t, c, cyan); });
+    }
+    function select(i){ sel = i; tiles.forEach((el, k) => el.classList.toggle("sel", k === sel)); renderDetail(); }
+    /* Nov 21 (Ferris: "Remove the smaller texts and only show the receiver type and connection status"): no counts or summary */
+    function summary(){}
+    /* the receiver (and, for an RX-12, its modules) sets the channel count */
+    function setDev(d, m){
+      if(DEVS[d]) dev = d; if(m != null) mods = Math.max(1, Math.min(12, m));
+      count = devCount(); const rx = Math.ceil(count / 2);
+      devSel.value = dev; paintRxPill();
+      /* Nov 21 (Ferris): with only a Nova connected the page waits for an RX-8 or RX-12; a Nova's own receivers (if
+         that comes) need no header, as the Nova's connection already shows at the top */
+      root.classList.toggle("waiting", !!DEVS[dev].wait);
+      paintCount();
+      q(".wx-mods").hidden = !!DEVS[dev].fixed; q(".wx-sw").hidden = dev !== "rx12"; renderDetail(); out.textContent = mods; q(".m").disabled = mods <= 1; q(".p").disabled = mods >= 12;
+      if(sel >= count) select(count - 1);
+      layout(); summary(); save();
+    }
+    const setCount = () => setDev(dev);
+    function paintCount(){}
+    function paintModes(scope, r){
+      const m = RXM[r];
+      scope.querySelectorAll(`.wx-seg[data-r="${r}"] button`).forEach(b => b.setAttribute("aria-pressed", String(b.parentNode.dataset.k === "mode" ? b.dataset.v === m.mode : (b.dataset.v === "1") === m.dual)));
+      scope.querySelectorAll(`.rm[data-r="${r}"]`).forEach(b => { b.textContent = b.dataset.k === "mode" ? m.mode : m.dual ? "DUAL" : "SINGLE"; b.title = b.dataset.k === "mode" ? `Receiver ${r + 1}: ${m.mode}, tap for ${m.mode === "ZHD" ? "XR" : "ZHD"}` : `Receiver ${r + 1}: ${m.dual ? "dual" : "single"}, tap for ${m.dual ? "single" : "dual"}`; });
+    }
+    /* mode switches anywhere on the page (card headers, compact toggles, detail panel) */
+    root.addEventListener("click", e => {
+      const b = e.target.closest(".wx-seg[data-r] button, .rm[data-r]"); if(!b) return;
+      const g = b.classList.contains("rm") ? b : b.parentNode, r = +g.dataset.r, k = g.dataset.k, m = RXM[r];
+      if(k === "mode") m.mode = b.classList.contains("rm") ? (m.mode === "ZHD" ? "XR" : "ZHD") : b.dataset.v;
+      else { const was = m.dual; m.dual = b.classList.contains("rm") ? !m.dual : b.dataset.v === "1"; if(!m.dual && sel === 2 * r + 1) select(2 * r); if(was !== m.dual) toast(`Receiver ${r + 1}: ${m.dual ? `dual, ${r + 1}A and ${r + 1}B` : `single, ${r + 1}A only`}`); }
+      saveRx(); cards.forEach((el, i) => paintModes(el, i)); paintModes(det, r); layout(); summary(); paintCount();
+    });
+    /* the frequency picker: type it or step it by 0.1 MHz; Set retunes */
+    let fpop = null;
+    function closeFreq(){ if(fpop){ fpop.remove(); fpop = null; document.removeEventListener("pointerdown", fOut, true); } }
+    const fOut = e => { if(fpop && !fpop.contains(e.target) && !e.target.closest(".fq, .dfq")) closeFreq(); };
+    function openFreq(i, from){
+      closeFreq(); const c = CH[i];
+      fpop = document.createElement("div"); fpop.className = "wx-fp"; fpop.setAttribute("role", "dialog"); fpop.setAttribute("aria-label", `Frequency for ${c.label}`);
+      fpop.innerHTML = `<div class="fh"><b>${c.label}</b><span>${esc(c.off ? "No transmitter" : c.name)}</span></div>
+        <div class="fr"><button type="button" class="fdn" aria-label="Down 0.1 MHz">−</button><input type="text" inputmode="decimal" aria-label="Frequency in MHz" value="${c.freq}"><button type="button" class="fup" aria-label="Up 0.1 MHz">+</button><span class="u">MHz</span></div>
+        <div class="fn">Setting it retunes ${c.label}; its audio drops for a moment.</div>
+        <div class="fb"><button type="button" class="btn small fcl">Cancel</button><button type="button" class="btn small primary fok">Set</button></div>`;
+      root.appendChild(fpop);
+      const inp = fpop.querySelector("input"), ok = fpop.querySelector(".fok");
+      const val = () => { const v = parseFloat(inp.value.replace(",", ".")); return Number.isFinite(v) && v >= FQ_MIN && v <= FQ_MAX ? v : null; };
+      const check = () => { const v = val(); inp.classList.toggle("bad", v == null); ok.disabled = v == null; };
+      const step = d => { const v = val() ?? parseFloat(c.freq); inp.value = Math.min(FQ_MAX, Math.max(FQ_MIN, Math.round((v + d) * 10) / 10)).toFixed(3); check(); };
+      fpop.querySelector(".fdn").addEventListener("click", () => step(-FQ_STEP)); fpop.querySelector(".fup").addEventListener("click", () => step(FQ_STEP));
+      inp.addEventListener("input", check);
+      const apply = () => { const v = val(); if(v == null) return; c.freq = v.toFixed(3);
+        const t = tiles.get(i), b = t && t.querySelector(".fq"); if(b){ b.textContent = c.freq; b.setAttribute("aria-label", `Frequency ${c.freq} MHz, change`); }
+        if(detail && sel === i) renderDetail(); closeFreq(); toast(`${c.label} set to ${c.freq} MHz`); };
+      ok.addEventListener("click", apply); fpop.querySelector(".fcl").addEventListener("click", closeFreq);
+      fpop.addEventListener("keydown", e => { if(e.key === "Escape"){ e.preventDefault(); closeFreq(); from.focus(); } else if(e.key === "Enter"){ e.preventDefault(); apply(); }
+        else if(e.key === "ArrowUp" || e.key === "ArrowDown"){ e.preventDefault(); step(e.key === "ArrowUp" ? FQ_STEP : -FQ_STEP); } });
+      const rr = root.getBoundingClientRect(), fr = from.getBoundingClientRect(), w = 270;
+      if(innerWidth <= 600) fpop.classList.add("fx"); else {
+      fpop.style.left = Math.max(8, Math.min(rr.width - w - 8, fr.right - rr.left - w)) + "px"; fpop.style.top = (fr.bottom - rr.top + 6) + "px";
+      const pr = fpop.getBoundingClientRect(); if(pr.bottom > innerHeight - 8) fpop.style.top = (fr.top - rr.top - pr.height - 6) + "px"; }
+      document.addEventListener("pointerdown", fOut, true); inp.focus(); inp.select();
+    }
+    devSel.addEventListener("change", () => setDev(devSel.value));
+    q(".m").addEventListener("click", () => setDev(dev, mods - 1)); q(".p").addEventListener("click", () => setDev(dev, mods + 1));
+    sw.checked = detail; sw.addEventListener("change", () => { detail = sw.checked; renderDetail(); save(); });
+    ro.observe(wrap); dro.observe(det);
+    const onTheme = () => { if(!root.isConnected){ removeEventListener("themechange", onTheme); return; } wxPal.t = null;
+      tiles.forEach((el, i) => { const t = el.querySelector(".tc"), m = el.querySelector(".mc"); if(t && t.offsetParent) drawTrack(t, CH[i]); if(m && m.offsetParent) drawMeter(m, CH[i]); }); renderDetail(); };
+    addEventListener("themechange", onTheme);
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => tiles.forEach(fitName));
+    /* audio moves; REC pills follow the Nova's record state */
+    let acc = 0, tick = 0, lastRec = null;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    frameHooks.push(dt => {
+      acc += dt; if(acc < 0.11) return; acc = 0; tick++;
+      const r = sim.state === "RECORDING";
+      if(r !== lastRec){ lastRec = r; tiles.forEach((el, i) => { const c = CH[i], p = el.querySelector(".rc"); p.className = "rc " + recCls(c); p.textContent = recTxt(c); }); summary(); if(detail) renderDetail(); }
+      if(!reduce) CH.forEach((c, i) => { if(!c.off) c.lvNow = Math.max(-40, Math.min(-2, c.lv + Math.sin(tick * .7 + i * 1.3) * 4 + Math.sin(tick * 1.9 + i) * 2.5)); });
+      tiles.forEach((el, i) => { const c = CH[i], m = el.querySelector(".mc"), l = el.querySelector(".lv"); if(m && m.offsetParent) drawMeter(m, c); if(l){ l.textContent = c.off ? "—" : Math.round(c.lvNow); l.style.color = lvColor(c); } });
+      if(detail){ const c = CH[sel], m = det.querySelector(".dmc"), l = det.querySelector(".dlv"); if(m) drawMeter(m, c); if(l){ l.textContent = c.off ? "—" : Math.round(c.lvNow); l.style.color = lvColor(c); } }
+    });
+    requestAnimationFrame(() => { cyan = getComputedStyle(root).getPropertyValue("--wx-trk").trim() || cyan; setCount(); renderDetail(); });
+    return root;
+  }
+  return {render, ch:i => CH[i], recOn};
+})();
+RENDER.wireless = () => WX.render();
 const hashTab = (location.hash || "").slice(1); if(VIEWS.some(v => v[0] === hashTab)) startTab = hashTab;
-go(VIEWS.some(v => v[0] === startTab) ? startTab : "home");
+const wxOn = () => !!get("ui.exp.wireless");
+go(VIEWS.some(v => v[0] === startTab) && (startTab !== "wireless" || wxOn()) ? startTab : "home");
 renderTransport();
 setCartStatus(false); $("linkText").textContent = "Connecting\u2026";
 net.connect();

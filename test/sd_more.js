@@ -38,7 +38,7 @@ const fillOf = svg => (svg.match(/<rect width="144" height="144" rx="18" fill="(
   await p.goto('http://127.0.0.1:8155/'); await p.waitForFunction(() => cart.ready);
   await p.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(300);
   await p.evaluate(path => { const s = document.getElementById('f-serial-port'); s.append(new Option(path, path)); s.value = path; }, pty);
-  await p.locator('button', { hasText: 'Connect' }).first().click(); await sleep(9000);
+  await p.locator('button', { hasText: /^Connect$/ }).first().click(); await sleep(9000);
   const sd = await fakeStreamDeck();
   const plug = spawn('node', [path.join(PLUG, 'bin/plugin.js'), '-port', String(sd.port), '-pluginUUID', 'PLUGINCTX', '-registerEvent', 'registerPlugin', '-info', '{}']);
   let perr = ''; plug.stderr.on('data', d => perr += d);

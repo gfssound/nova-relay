@@ -33,7 +33,7 @@ const SCHEMA = JSON.parse(fs.readFileSync(path.join(__dirname, "schema.json"), "
 const BY_ID = new Map(SCHEMA.map(s => [s.id, s]));
 const BY_KEY = new Map(SCHEMA.map(s => [s.k, s]));
 
-const VERSION = "0.6.10";
+const VERSION = "0.6.11";
 const args = process.argv.slice(2);
 const argVal = (name, def) => { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
 const PORT = +(process.env.PORT || argVal("--port", 8080));
@@ -590,7 +590,7 @@ const nova = {
         this.autoReloaded = true;
         logAll("ev", `Nova link: the Nova didn't send its settings (${this.setIds.size} of them so far): it thinks this computer never left. Asking again…`);
         this.reload(); return;
-      } else { this.setsCheckAt = Infinity; logAll("er", "Nova link: still no settings from the Nova. Try Setup \u203a Cart & Recorder Link \u203a Reload from Nova, or unplug the Nova's cable for 5 seconds."); }
+      } else { this.setsCheckAt = Infinity; logAll("er", "Nova link: still no settings from the Nova. Try Setup \u203a Connection \u203a Reload from Nova, or unplug the Nova's cable for 5 seconds."); }
     }
     if (this.connected && !this.loaded && this.setIds && this.setIds.size >= 30 && now - this.lastSetAt > 3000 && this.loadPct == null) this.markLoaded("no loading count from this Nova");
     /* Nov 15 (Ferris's Pi capture 2026-11-15T13-09-37: "(Reboot)", then the Nova froze at "computer found"): while a
@@ -867,6 +867,17 @@ const nova = {
      no take-list row for that file, at the split or at STOP, only store.current/store.segment (the new file number) and
      take.current ("1a"). And when the Nova starts its take list over (store.segment 000, no "list cleared" message),
      the old rows stayed on Relay: a split file then showed the old test take's 1/2, start and length. */
+  /* Nov 20 (Ferris: TLOC and the Stream Deck Drive key should count down in real time): the Nova repeats its time-left
+     figure about once a second but only refreshes it now and then while recording (Nov 18-19: the same value for 18
+     minutes of rolling). So count it down one second per second while recording, take the Nova's figure again whenever
+     it sends a different one, and hold while stopped. Same rule as the page's header. */
+  driveNow() {
+    const raw = this.drive; if (raw == null) return null;
+    const now = performance.now(), rec = this.state === "RECORDING", d = this._dl || (this._dl = { raw: null, base: 0, t: 0, rec: false });
+    if (raw !== d.raw) { d.raw = raw; d.base = raw; d.t = now; }
+    if (rec !== d.rec) { if (d.rec) d.base = Math.max(0, d.base - (now - d.t) / 1000); d.t = now; d.rec = rec; }
+    return Math.max(0, rec ? d.base - (now - d.t) / 1000 : d.base);
+  },
   afterValue(k) {
     if (k === "store.segment") this.trimHistory(parseInt(V[k], 10));
     else if (k === "store.current" || k === "take.current") this.checkSplit();
@@ -1217,7 +1228,7 @@ const nova = {
   },
   /* Slate and Com (Nov 7, for Stream Deck keys). The Aria's Slate button is CMD 25 90, held while talking (the
      captures show it held 2.5 s and 13 s, press 00 / release 80). The remote presses it the same way: down when the key
-     goes down, up when it comes up. Com has never been seen, so it's learned: Setup › Stream Deck › Learn, then a
+     goes down, up when it comes up. Com has never been seen, so it's learned: Setup › Connection › Learn, then a
      press of the Aria's Com button; the first Aria button press that isn't one already known is saved
      (nova-link.json "buttons"). The Aria's own presses also light the keys. A held button is let go after 2 minutes
      in case a key's release never arrives. */
@@ -1370,7 +1381,7 @@ const auto = {
   manual(open) {
     this.trying = null;
     if (open) { if (!this.on && !AUTO_OFF) logAll("ev", "Auto-connect is back on."); this.on = !AUTO_OFF; }
-    else { this.on = false; logAll("ev", "Auto-connect paused. Press Connect (Setup \u2192 Cart & Recorder Link) to resume."); }
+    else { this.on = false; logAll("ev", "Auto-connect paused. Press Connect (Setup \u203a Connection) to resume."); }
     broadcast({ t: "serial", serial: Object.assign(serial, { auto: this.on }) });
   },
   found(p) { this.trying = null; this.queue = []; logAll("ev", `Found the Nova on ${p}. Nova Relay will reconnect here automatically.`); },
@@ -1543,7 +1554,7 @@ function onMessage(c, m) {
         else if (JAMS[m.name]) nova.write(NOVA.CMD.ACTION, Buffer.from(JAMS[m.name], "latin1"), `→ Nova  ${JAMS[m.name]}  (as NovaTouch sends it)`);
         else if (/^PFL \d+$/.test(m.name)) nova.pfl(+m.name.slice(4) - 1, c.name);
         else if (/^PFL FIX \d+$/.test(m.name)) { const ch = +m.name.slice(8) - 1; if (ch >= 0 && ch < 22) { if (nova.solo.has(ch)) nova.solo.delete(ch); else nova.solo.add(ch); logAll("ev", `PFL light for ${inName(ch)} corrected to ${nova.solo.has(ch) ? "on" : "off"} by ${c.name} (nothing sent to the Nova)`); broadcast({ t: "nova", nova: nova.status() }); } }
-        else if (/^(SLATE|COM) (DOWN|UP)$/.test(m.name)) { const [w, d] = m.name.toLowerCase().split(" "); if (!nova.hold(w, d === "down", c.name)) logAll("ev", "The Aria's Com button isn't learned yet (Setup \u203a Stream Deck \u203a Learn)."); }
+        else if (/^(SLATE|COM) (DOWN|UP)$/.test(m.name)) { const [w, d] = m.name.toLowerCase().split(" "); if (!nova.hold(w, d === "down", c.name)) logAll("ev", "The Aria's Com button isn't learned yet (Setup \u203a Connection \u203a Learn)."); }
         else logAll("ev", `${m.name}: not sent to the Nova (this command isn't known yet).`);
         return;
       }
@@ -1642,7 +1653,7 @@ const API_HELP = [
   ["/api/scream", "Scream trim on/off: the chosen transmitters drop to the scream ZNet trim, then go back (/on, /off)"],
   ["/api/tx/power/on", "transmitter power for every transmitter: /on, /wake or /low (one transmitter can't be set from a computer)"],
   ["/api/test/power/wake", "EXPERIMENTAL: every transmitter On/Wake/Low (cQRXTX 98): /api/test/power/wake. Also /api/test/fader|trim|out/<ch>/<0-255> and /api/test/enc/<-63..63>. Not while recording."],
-  ["/api/com/down", "Com mic on (the Aria's Com button, once learned in Setup \u203a Stream Deck); /api/com/up lets it go (/api/com: on or off)"],
+  ["/api/com/down", "Com mic on (the Aria's Com button, once learned in Setup \u203a Connection); /api/com/up lets it go (/api/com: on or off)"],
 ];
 /* Scream trim (Nov 12): the same steps as the Meters page button, for the Stream Deck and button boxes. */
 function screamSet(on, who) {
@@ -1650,7 +1661,7 @@ function screamSet(on, who) {
   const rxs = [0, 1, 2, 3, 4, 5, 6, 7].filter(i => rx[i]);
   if (on === !!st.on) return { changed: false };
   if (on) {
-    if (!rxs.length) return { error: "No receivers chosen for Scream trim (Setup › Scream trim)." };
+    if (!rxs.length) return { error: "No receivers chosen for Scream trim (Setup › Wireless)." };
     const saved = {}, arr = (get("ui.znettrim") || Array(8).fill(null)).slice();
     for (const r of rxs) { saved[r] = arr[r] ?? null; arr[r] = lvl; }
     setV("ui.scream.state", [], { on: true, saved, level: lvl }); setV("ui.znettrim", [], arr);
@@ -1715,7 +1726,7 @@ function driveStatus() {
   const on = nova.connected;
   const behind = DRIVES.state === "mirroring" && DRIVES.files != null ? Math.max(0, DRIVES.files - DRIVES.file) : DRIVES.state && DRIVES.state !== "off" ? 0 : null;
   return {
-    driveLeft: on && nova.drive ? Math.round(nova.drive) : null,         /* seconds of recording left at the armed track count */
+    driveLeft: on && nova.drive ? Math.round(nova.driveNow()) : null,    /* seconds of recording left at the armed track count (counted down while recording, Nov 20) */
     volts: on && nova.volts ? nova.volts : null,
     primaryFreeGB: on ? DRIVES.pri : null,
     mirror: on ? { mode: DRIVES.mode || null, state: DRIVES.state || null, pct: DRIVES.pct, file: DRIVES.file, files: DRIVES.files, behind,
@@ -1984,7 +1995,7 @@ function apiRoute(req, res, p) {
     }
     case "slate": case "com": {
       if (!nova.connected) return out(409, { ...apiStatus(), ok: false, error: "No Nova connected, so there's nothing to talk to." });
-      if (nova.talkCode(what) == null) return out(409, { ...apiStatus(), ok: false, error: "The Com button isn't learned yet: Setup \u203a Stream Deck \u203a Learn, then press Com on the Aria." });
+      if (nova.talkCode(what) == null) return out(409, { ...apiStatus(), ok: false, error: "The Com button isn't learned yet: Setup \u203a Connection \u203a Learn, then press Com on the Aria." });
       const down = a === "down" ? true : a === "up" ? false : a === undefined ? !nova.held[what] : null;
       if (down == null) return out(400, { ok: false, error: `Use /api/${what}/down and /api/${what}/up (or /api/${what} to switch it on or off).` });
       nova.hold(what, down, "button API"); return out(200, apiStatus());
@@ -2051,7 +2062,7 @@ function updUpload(req, res) {
   req.on("close", () => { if (over) try { reply(413, { ok: false, error: "That file is too big to be a Nova Relay update." }); } catch (_) { } });
 }
 const TYPES = { ".html": "text/html; charset=utf-8", ".pdf": "application/pdf", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json",
-  ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".woff2": "font/woff2" };
+  ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8" };
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent((req.url || "/").split("?")[0]);
   if ((p === "/api/problem-report" || p.startsWith("/api/capture/s")) && diagRoute(req, res, p)) return;

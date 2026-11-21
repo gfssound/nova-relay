@@ -8,7 +8,7 @@ const errors = []; const check = (ok, what) => { console.log(`${ok ? 'ok  ' : 'F
   for (const [w, hgt, name] of [[1280, 900, 'desk'], [390, 844, 'phone']]) {
     const p = await b.newPage({ viewport: { width: w, height: hgt }, deviceScaleFactor: name === 'desk' ? 1 : 2 }); p.on('pageerror', e => errors.push(e.message));
     await p.goto('file://' + path.join(__dirname, '../build/cart-remote.html')); await sleep(400);
-    await p.evaluate(() => { setupSec = 'deck'; go('setup'); }); await sleep(300);
+    await p.evaluate(() => { setupSec = 'exp'; go('setup'); }); await sleep(300);
     const box = p.locator('#deck-box');
     check(await box.isVisible(), `${name}: panel shown`);
     check(await box.locator('.dk-grid').first().locator('.dk-key').count() === 15, `${name}: 15 keys`);

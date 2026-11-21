@@ -12,7 +12,7 @@ const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Prom
   await p.goto('http://127.0.0.1:8157/'); await p.waitForFunction(() => cart.ready);
   await p.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(300);
   await p.evaluate(path => { const s = document.getElementById('f-serial-port'); s.append(new Option(path, path)); s.value = path; }, pty);
-  await p.locator('button', { hasText: 'Connect' }).first().click();
+  await p.locator('button', { hasText: /^Connect$/ }).first().click();
   let sawFile = '';
   for (let i = 0; i < 70; i++) { await sleep(1000); const t = await p.evaluate(() => document.getElementById('stFile').hidden ? '' : document.getElementById('stFile').textContent); if (t && !sawFile.includes(t)) { sawFile += t + ' '; if (sawFile.split(' ').length === 2) await p.screenshot({ path: path.join(DIR, 'rf-recording.png'), clip: { x: 0, y: 40, width: 700, height: 100 } }); } }
   console.log('header showed while recording:', sawFile || 'nothing');
@@ -33,7 +33,7 @@ const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Prom
   await p2.goto('http://127.0.0.1:8158/'); await p2.waitForFunction(() => cart.ready);
   await p2.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(300);
   await p2.evaluate(path => { const s = document.getElementById('f-serial-port'); s.append(new Option(path, path)); s.value = path; }, pty2);
-  await p2.locator('button', { hasText: 'Connect' }).first().click(); await sleep(9000);
+  await p2.locator('button', { hasText: /^Connect$/ }).first().click(); await sleep(9000);
   await p2.evaluate(() => go('meta')); await sleep(400);
   console.log('after restart:'); for (const r of (await p2.locator('table.hist tbody tr').allInnerTexts()).slice(0, 5)) console.log('  ', r.replace(/\s+/g, ' '));
   await b.close(); srv2.kill(); fake2.kill(); await sleep(500); fs.rmSync(data, { recursive: true, force: true });

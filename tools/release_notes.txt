@@ -1,4 +1,8 @@
-Metadata: a note added while recording now goes on the take that's rolling, on the Nova as well (it was kept on Relay only)
-Metadata: when a file reaches the Nova's size limit and the take carries on in a new file (take 1a, 2a…), the take list and sound report show that file with its own take name, start and length, and the note of the take it continues
-Metadata: when the Nova starts its take list over, Relay drops the old rows (an old take could show up in place of a new file)
-Sound report: Start TC is the file's own start (the pre-roll before REC is now included, as in the WAV)
+Setup: sections regrouped into Nova, Pages, Cart and App with less scrolling; the Stream Deck plugin and button addresses are in Help, Aria Slate/Com learning in Connection, the Link log and problem reports in Troubleshooting
+Setup › Experimental: the Wireless page (RX-8 / RX-12), off until switched on; Nova Relay can't read a receiver yet, so the page waits for one
+Meters: extras on the meters (power status, ZNet ID, ZNet trim, trim, track number) each switched on or off in Setup › Meters; lines with nothing on them close up and the meters get taller
+Meters: tracks can be shown without being recorded (Setup › Meters › Show without recording), with a dashed outline and MON
+Meters: a cleaner two-line look for sideways meters on phones and upright iPads, and the dB scale lines up with the meters
+TLOC counts down every second while recording, on screen and on the Stream Deck Drive key (plugin 1.5.3.0)
+Setup › Nova Relay › About: the version, the recorder, the Zaxcom notice and the open-source licences
+New app icon

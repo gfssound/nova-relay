@@ -12,7 +12,7 @@ const DIR = __dirname, ROOT = path.join(DIR, '..'); const sleep = ms => new Prom
   await p.evaluate(() => { setupSec = 'conn'; go('setup'); }); await sleep(400);
   await p.check('#f-listen');
   await p.evaluate(path => { const s = document.getElementById('f-serial-port'); s.append(new Option(path, path)); s.value = path; }, pty);
-  await p.locator('button', { hasText: 'Connect' }).first().click(); await sleep(3000);
+  await p.locator('button', { hasText: /^Connect$/ }).first().click(); await sleep(3000);
   await p.fill('#f-cap-note', 'pressed MENU on the Nova'); await p.keyboard.press('Enter'); await sleep(500);
   await p.evaluate(() => set('tone.enable', [], 1)); await sleep(800);
   const sent = fs.readFileSync(rx, 'utf8').trim();

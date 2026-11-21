@@ -90,7 +90,7 @@ function openDevice(info) {
     wfd = TEST ? fs.openSync(info.path + ".out", "a") : fd;
   } catch (e) {
     const err = e.code === "EACCES" || e.code === "EPERM"
-      ? `Nova Relay isn't allowed to use the ${info.model.name}. On the Nova Relay box, run the box installer again (it adds the permission); on other Linux computers, add the udev rule shown in Setup › Stream Deck.`
+      ? `Nova Relay isn't allowed to use the ${info.model.name}. On the Nova Relay box, run the box installer again (it adds the permission); on other Linux computers, add the udev rule shown in Setup › Experimental.`
       : `Couldn't open the ${info.model.name} (${e.code || e.message}).`;
     if (err !== lastError) { lastError = err; log("Stream Deck: " + err); }
     status("error", { name: info.model.name, error: err });
