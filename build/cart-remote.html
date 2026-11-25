@@ -315,6 +315,33 @@ body[data-layout="console"]{
 .xi.wrf s.on{background:var(--ok)}
 .xi.wrf.weak s.on{background:var(--warn)}
 .strip.monitor .scrib{background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.22) 0 6px,transparent 6px 12px)}
+/* Nov 24: saved setups and warnings */
+.sulist{display:flex;flex-direction:column;gap:8px}
+.surow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;background:var(--raised);border:1px solid var(--line);border-radius:var(--r)}
+.suname{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:3px}
+.suname b{font-family:var(--f-display);font-weight:700;font-size:var(--t-lg);letter-spacing:.03em}
+.suname small{font-size:var(--t-sm);color:var(--muted)}
+.suname .sudiff{color:var(--warn)}
+.surec{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;background:var(--raised);border:1px solid var(--line);border-radius:var(--r);cursor:pointer}
+.surec input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent)}
+.surec span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.surec b{font-family:var(--f-display);font-weight:700;font-size:var(--t-md);letter-spacing:.03em}
+.surec small{font-size:var(--t-sm);color:var(--muted);overflow-wrap:anywhere}
+.surec.same{opacity:.55;cursor:default}
+.warnpill{border-color:var(--warn);color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,var(--raised));font-weight:700;cursor:pointer}
+.warnpill i{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--warn);color:#111;box-shadow:none;font:800 11px/1 var(--f-body);font-style:normal}
+.status .warnpill > span{display:inline}
+.wgrid{grid-template-columns:minmax(0,1fr) !important}
+.mxgrid .mxrow.wrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px}
+.wrow .mxname{min-width:0;text-align:left}
+@media (max-width:600px){ .mxgrid .mxrow.wrow{grid-template-columns:auto minmax(0,1fr)} .wrow .wstep{grid-column:1 / -1;justify-content:flex-end} }
+.wstep{display:flex;align-items:center;gap:6px}
+.wstep output{min-width:84px;text-align:center;font-size:var(--t-sm)}
+.wstep .bsb{width:36px;height:32px}
+.wlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.wlist li{display:flex;align-items:center;gap:10px;padding:8px 10px;background:color-mix(in srgb,var(--warn) 12%,var(--raised));border:1px solid color-mix(in srgb,var(--warn) 55%,var(--line));border-radius:var(--r);font-weight:600}
+.wlist li span{flex:1;min-width:0}
+.wlist li.none{background:var(--raised);border-color:var(--line);color:var(--muted);font-weight:500}
 /* Nov 24 (Ferris: "Can I see the track meter names from 21 on the current layout?"): design 21's name boxes: a neutral
    box with the track colour as a bar along the top and the name in the page's text colour (was the whole box in the
    track colour with dark text). Meter rows (phones, upright iPads) put the bar down the left side. */
@@ -1494,6 +1521,7 @@ button.wx-cell span{font:700 clamp(14px,15cqi,24px) var(--f-mono);white-space:no
   <header class="status gut" id="status">
     <div class="brand">Nova Relay <small>prototype</small></div>
     <span class="pill" id="linkPill"><i></i><span>Simulated recorder</span></span>
+    <button type="button" class="pill warnpill" id="warnBtn" hidden><i aria-hidden="true" id="warnNum">!</i><span id="warnText"></span></button>
     <div class="stat"><span class="lbl">Rate</span><b id="stRate">—</b></div>
     <div class="stat"><span class="lbl">Frame</span><b id="stFps">—</b></div>
     <div class="stat opt" title="Time left on the drive at the current number of armed tracks"><span class="lbl">TLOC</span><b id="stDrive">—</b></div>
@@ -1579,6 +1607,10 @@ const LOCAL = [
   /* Nov 24 (Ferris: "Let's make the full color boxes a toggle switch option"): name boxes filled with the track colour
      (the look before Nov 24) instead of design 21's grey box with a colour bar. Per device, off at first. */
   {id:0, n:"METERS_FULL_COLOUR_NAMES", t:"Menu", k:"ui.meters.fullname", m:["OFF","ON"], local:true},
+  /* Nov 24: saved setups (shared by the cart) and warnings (rules shared; whether a device shows them, per device) */
+  {id:0, n:"SAVED_SETUPS", t:"Base", k:"ui.setups", local:true},
+  {id:0, n:"WARNING_RULES", t:"Base", k:"ui.warn", local:true},
+  {id:0, n:"WARNINGS_SHOWN", t:"Menu", k:"ui.warn.show", m:["OFF","ON"], local:true},
   /* Nov 20 (Ferris): tracks shown on the Meters page without being armed, to watch crew comms and the like. Per device. */
   {id:0, n:"METERS_MONITOR", t:"Base", k:"ui.meters.monitor", local:true},
   /* Nov 21 (Ferris): which meter extras are on, {on:{key:0|1}} (Setup › Meters › Extras On The Meters). Per device. */
@@ -1632,7 +1664,7 @@ const EXAMPLE = true;
 const V = {}; SCHEMA.forEach(s => V[s.k] = build(s.d, () => def(s)));
 V["ui.refline.enable"] = 1; V["ui.refline.level"] = -18;
 V["ui.track.com1"] = Array(16).fill(0);
-V["ui.meters.fullname"] = 0; V["ui.helptext"] = 0; V["ui.osk"] = 1; V["ui.exp.wireless"] = EXAMPLE ? 1 : 0;   /* Nov 19, 19:35 (Ferris): "On screen keyboard should default to on" */
+V["ui.meters.fullname"] = 0; V["ui.setups"] = []; V["ui.warn"] = null; V["ui.warn.show"] = 1; V["ui.helptext"] = 0; V["ui.osk"] = 1; V["ui.exp.wireless"] = EXAMPLE ? 1 : 0;   /* Nov 19, 19:35 (Ferris): "On screen keyboard should default to on" */
 
 /* Nov 14 (0.6.1): faders on the meters. Off until turned on (per device); positions are where Nova Relay last put each
    input's Aria fader (0-255), null until then. */
@@ -4336,15 +4368,224 @@ const troubleTools = () => null;    /* installed: the protocol test tools */
 const SEC_SHORT = {help:"Help"};   /* phones: the name that fits a third of the width */
 const SEC_SUB = {rec:"Rate, pre-roll, tone", ctrl:"Remote roll, serial, backlight", meters:"Timing, reference line, extras",
   wireless:"RX trim finder", conn:"Nova link, phones, Aria buttons",
-  updates:"New versions of Nova Relay", app:"Screen, version, licences", help:"Manual, Link log, problem reports", exp:"Features still being tested"};
+  updates:"New versions of Nova Relay", app:"Screen, version, licences", help:"Manual, Link log, problem reports", exp:"Features still being tested", setups:"Save and recall the Nova's setup", warn:"Drive, battery, standby, silence"};
 /* Nov 21: a section's panels side by side need them as direct children: lift panels out of plain wrapper stacks */
 const flatPanels = (...nodes) => nodes.filter(Boolean).flatMap(n => n.classList && n.classList.contains("stack") && !n.classList.contains("panel") && !n.id ? [...n.children] : [n]);
+/* ---------- Setup › Setups and Setup › Warnings (Nov 24, Ferris: "Let's do a mockup of recall settings and warnings") ----------
+   Setups: the Nova's setup as it is now (track names, arming, routing, headphone mixes, outputs), saved under a name and
+   put back later. Recalling shows what would change, part by part, and sends only the differences; never while
+   recording; Undo puts back what was there. Shared by every device on the cart.
+   Warnings: rules checked every second (drive, recorder battery, a transmitter not ON while rolling, an armed track silent
+   at the start of a take, a track over a level, transmitter battery with the Wireless page). A new warning is a notice on
+   each device that shows warnings, and an amber WARNINGS button at the top lists them; each can be snoozed 10 minutes. */
+const SETUP_PARTS = [
+  {id:"names", title:"Track names", keys:["track.name"]},
+  {id:"arm", title:"Arming", keys:["record.tracks"]},
+  {id:"route", title:"Track routing", keys:["trackmix.matrix", "trackmix.preset"]},
+  {id:"hp", title:"Headphone mixes", keys:["hpmix.tracks", "hpmix.returns", "hpmix.outputs", "hpmix.phase", "hpmix.names", "hpmix.preset"]},
+  {id:"out", title:"Outputs", keys:["outputmix.matrix", "outputmix.tone", "outputmix.slate", "outputmix.names", "ui.outnames"]}];
+const suClone = v => v == null ? v : JSON.parse(JSON.stringify(v));
+const setupSnap = () => { const d = {}; SETUP_PARTS.forEach(p => p.keys.forEach(k => { if(k in V) d[k] = suClone(V[k]); })); return d; };
+function suDiffs(a, b, idx, out){
+  if(Array.isArray(b)){ b.forEach((v, i) => suDiffs(Array.isArray(a) ? a[i] : undefined, v, idx.concat(i), out)); return out; }
+  if(JSON.stringify(a ?? null) !== JSON.stringify(b ?? null)) out.push({idx, from:a, to:b});
+  return out;
+}
+const partChanges = (p, data) => p.keys.filter(k => data && k in data && S[k]).flatMap(k => suDiffs(V[k], data[k], [], []).map(c => ({...c, k})));
+const suTrack = t => get("track.name", [t]) || `TRK ${t + 1}`;
+const suList = (l, more) => l.slice(0, 4).join(" · ") + (l.length > 4 ? ` · +${l.length - 4} more` : "") + (more || "");
+function suDescribe(p, ch){
+  const pts = n => n ? `${n} routing point${n > 1 ? "s" : ""}` : "";
+  if(p.id === "names") return suList(ch.map(c => `${c.idx[0] + 1}: ${c.from || "—"} → ${c.to || "—"}`));
+  if(p.id === "arm"){
+    const on = ch.filter(c => c.to && c.idx[0] < 16).map(c => suTrack(c.idx[0])), off = ch.filter(c => !c.to && c.idx[0] < 16).map(c => suTrack(c.idx[0]));
+    return [on.length ? "Arm " + on.join(", ") : "", off.length ? "Disarm " + off.join(", ") : ""].filter(Boolean).join(" · ") || pts(ch.length);
+  }
+  const nm = ch.filter(c => /names$/.test(c.k)).map(c => `${c.from || "—"} → ${c.to || "—"}`), rest = ch.length - nm.length;
+  return [nm.length ? suList(nm) : "", pts(rest)].filter(Boolean).join(" · ");
+}
+const suWhen = iso => { try{ return new Date(iso).toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}); }catch(e){ return ""; } };
+const setupsAll = () => (get("ui.setups") || []).filter(s => s && s.name && s.data);
+/* the prototype starts with two saved setups: the one on screen, and an earlier day's that differs a little */
+function seedSetups(){
+  if(!EXAMPLE || setupsAll().length) return;
+  const now = setupSnap(), old = suClone(now), p = Math.max(0, (old["trackmix.preset"] || 1) - 1);
+  if(old["track.name"]){ old["track.name"][2] = "BOOM 2"; old["track.name"][9] = "PLANT 2"; }
+  if(old["record.tracks"]){ old["record.tracks"][3] = 0; old["record.tracks"][10] = 1; }
+  const m = old["trackmix.matrix"]; if(m && m[p] && m[p][10]){ m[p][10][1] = 1; }
+  if(old["hpmix.names"] && old["hpmix.names"].length > 1) old["hpmix.names"][1] = "DIRECTOR";
+  if(old["ui.outnames"]) old["ui.outnames"][2] = "IFB 2";
+  const d = (h, back) => new Date(Date.now() - back * 864e5 - h * 36e5).toISOString();
+  V["ui.setups"] = [{name:"DAY 3 · INT KITCHEN", at:d(2, 0), data:now}, {name:"DAY 2 · EXT PORCH", at:d(5, 1), data:old}];
+}
+function applySetup(data, ids){
+  let n = 0;
+  SETUP_PARTS.filter(p => ids.includes(p.id)).forEach(p => partChanges(p, data).forEach(c => { set(c.k, c.idx, c.to); n++; }));
+  return n;
+}
+function openRecall(i, from){
+  closeModal(); closePicker();
+  const s = setupsAll()[i]; if(!s) return;
+  const before = viewBinds.length, parts = SETUP_PARTS.map(p => ({p, ch:partChanges(p, s.data)})), pick = {};
+  parts.forEach(x => pick[x.p.id] = x.ch.length > 0);
+  const sendB = h("button", {type:"button", class:"btn primary"});
+  const paint = () => {
+    const n = parts.filter(x => pick[x.p.id]).reduce((a, x) => a + x.ch.length, 0), rec = sim.state === "RECORDING";
+    sendB.disabled = rec || !n; sendB.textContent = rec ? "Not while recording" : n ? `Send ${n} change${n > 1 ? "s" : ""} to the Nova` : "Nothing to change";
+  };
+  const rows = parts.map(x => {
+    const none = !x.ch.length;
+    const cb = h("input", {type:"checkbox", disabled:none, onchange:e => { pick[x.p.id] = e.target.checked; paint(); }}); cb.checked = pick[x.p.id];
+    return h("label", {class:"surec" + (none ? " same" : "")}, cb,
+      h("span", null, h("b", null, x.p.title), h("small", null, none ? "Same as now" : `${x.ch.length} change${x.ch.length > 1 ? "s" : ""}: ${suDescribe(x.p, x.ch)}`)));
+  });
+  sendB.addEventListener("click", () => {
+    const undo = setupSnap(), ids = parts.filter(x => pick[x.p.id]).map(x => x.p.id), n = applySetup(s.data, ids);
+    log("ev", `Recalled setup ${s.name}: ${n} change${n === 1 ? "" : "s"} sent (${ids.join(", ")})`);
+    closeModal(); toast(`${s.name}: ${n} change${n === 1 ? "" : "s"} sent`, () => { applySetup(undo, ids); toast("Put back"); });
+  });
+  const closeBtn = h("button", {type:"button", class:"mclose", "aria-label":"Close", onclick:() => closeModal()}, "×");
+  const box = h("div", {class:"modal nt", role:"dialog", "aria-modal":"true", "aria-labelledby":"mtitle"},
+    h("div", {class:"mhead"}, h("h3", {id:"mtitle"}, `Recall ${s.name}`), closeBtn),
+    h("p", {class:"hint keep"}, `Saved ${suWhen(s.at)}. Only what's different from the Nova now is sent. Untick a part to leave it as it is.`),
+    h("div", {class:"stack"}, ...rows),
+    h("div", {class:"flex", style:"justify-content:flex-end"}, h("button", {type:"button", class:"btn", onclick:() => closeModal()}, "Cancel"), sendB));
+  const back = h("div", {class:"modal-back"}, box);
+  back.addEventListener("click", e => { if(e.target === back) closeModal(); });
+  document.body.append(back);
+  viewBinds.slice(before).forEach(b => b.modal = true);
+  modal = {el:back, from};
+  paint(); sendB.focus();
+}
+function setupsPanel(){
+  const list = h("div", {class:"sulist"});
+  const name = h("input", {type:"text", class:"txt", maxlength:40, autocomplete:"off", placeholder:"e.g. DAY 3 · INT KITCHEN", "aria-label":"Setup name"});
+  let armDel = null, armOver = null;
+  const put = a => set("ui.setups", [], a, "local");
+  const draw = () => {
+    const all = setupsAll();
+    list.replaceChildren(...(all.length ? all.map((s, i) => {
+      const n = SETUP_PARTS.reduce((a, p) => a + partChanges(p, s.data).length, 0), armed = (s.data["record.tracks"] || []).slice(0, 16).filter(Boolean).length;
+      return h("div", {class:"surow"},
+        h("div", {class:"suname"}, h("b", null, s.name), h("small", null, `Saved ${suWhen(s.at)} · ${armed} armed · `, h("span", {class:n ? "sudiff" : ""}, n ? `${n} difference${n > 1 ? "s" : ""} from now` : "same as now"))),
+        h("div", {class:"flex"},
+          h("button", {type:"button", class:"btn primary", onclick:e => openRecall(i, e.currentTarget)}, "Recall…"),
+          h("button", {type:"button", class:"btn", onclick:() => {
+            if(armOver !== i){ armOver = i; armDel = null; draw(); return; }
+            armOver = null; const a = setupsAll(), old = a[i]; a[i] = {...old, at:new Date().toISOString(), data:setupSnap()}; put(a);
+            toast(`Saved over ${s.name}`, () => { const b = setupsAll(); b[i] = old; put(b); }); }}, armOver === i ? "Tap again to save over" : "Save over"),
+          h("button", {type:"button", class:"btn", onclick:() => {
+            if(armDel !== i){ armDel = i; armOver = null; draw(); return; }
+            armDel = null; const a = setupsAll(), [gone] = a.splice(i, 1); put(a);
+            toast(`Deleted ${gone.name}`, () => { const b = setupsAll(); b.splice(i, 0, gone); put(b); }); }}, armDel === i ? "Tap again to delete" : "Delete")));
+    }) : [h("p", {class:"hint keep"}, "No setups saved yet.")]));
+  };
+  const save = () => {
+    const n = name.value.trim().toUpperCase() || `SETUP ${setupsAll().length + 1}`, a = setupsAll(), at = a.findIndex(x => x.name === n);
+    const entry = {name:n, at:new Date().toISOString(), data:setupSnap()};
+    if(at >= 0) a[at] = entry; else a.unshift(entry);
+    put(a); name.value = ""; toast(at >= 0 ? `Updated ${n}` : `Saved ${n}`);
+  };
+  name.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); save(); } });
+  bind("ui.setups", [], draw); SETUP_PARTS.forEach(p => p.keys.forEach(k => { if(S[k]) bind(k, [], draw); }));
+  return h("div", {class:"stack"},
+    h("div", {class:"panel"}, h("h3", null, "Save this setup"),
+      h("p", {class:"hint keep"}, "Saves the track names, arming, track routing, headphone mixes and outputs as they are now. Every device on this cart sees the same list."),
+      h("div", {class:"flex"}, h("div", {style:"flex:1 1 240px;min-width:0"}, name), h("button", {type:"button", class:"btn primary", onclick:save}, "Save"))),
+    h("div", {class:"panel"}, h("h3", null, "Saved setups"),
+      h("p", {class:"hint keep"}, "Recall shows what would change and sends only the differences. Not while recording; Undo puts back what was there."), list));
+}
+
+const WARN_RULES = [
+  {k:"drive", name:"Drive Time Left Below", unit:"min", def:60, min:15, max:240, step:15, on:1,
+    test:v => { const s = tlocNow(); return s != null && s < v * 60 ? {id:"", text:`Drive: ${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, "0")} left`} : null; }},
+  {k:"batt", name:"Recorder Battery Below", unit:"V", def:13, min:11, max:16, step:.5, on:1,
+    test:v => { const b = V["battery.status"] && V["battery.status"].volts; return b != null && b < v ? {id:"", text:`Recorder battery ${b.toFixed(1)} V`} : null; }},
+  {k:"txrec", name:"Transmitter Not On While Rolling", on:1,
+    test:() => sim.state !== "RECORDING" ? null : (get("ui.txstate") || []).map((st, r) => st && st !== "On" ? {id:r, text:`${feedsText(14 + r) || "RX " + (r + 1)}: transmitter on ${st} while rolling`} : null).filter(Boolean)},
+  {k:"silent", name:"Armed Track Silent After REC", unit:"s", def:10, min:5, max:30, step:5, on:1,
+    test:v => sim.state !== "RECORDING" || sim.elapsed < v ? null : warnArmed().filter(t => (WARN.peak[t] ?? -200) < -60).map(t => ({id:t, text:`${suTrack(t)}: no signal since REC`}))},
+  {k:"clip", name:"Track Level Over", unit:"dBFS", def:-1, min:-6, max:0, step:1, on:0,
+    test:v => warnArmed().filter(t => WARN.over[t] > Date.now()).map(t => ({id:t, text:`${suTrack(t)} went over ${v} dBFS`}))},
+  {k:"txbat", name:"Transmitter Battery Below", unit:"%", def:25, min:10, max:50, step:5, on:1, wx:true,
+    test:v => { const out = []; try{ for(let i = 0; i < 24; i++){ const c = WX.ch(i); if(c && !c.off && c.bat < v) out.push({id:i, text:`${c.name} (${c.label}): transmitter battery ${c.bat}%`}); } }catch(e){} return out.slice(0, 6); }}];
+const WARN = {list:[], seen:new Set(), snooze:{}, peak:{}, over:{}, testUntil:0, draws:new Set()};
+const warnArmed = () => (get("record.tracks") || []).slice(0, 16).map((a, t) => a ? t : -1).filter(t => t >= 0);
+function warnCfg(){
+  const v = get("ui.warn") || {}, o = {};
+  WARN_RULES.forEach(r => o[r.k] = {on:v.on && r.k in v.on ? !!v.on[r.k] : !!r.on, v:v.v && r.k in v.v ? v.v[r.k] : r.def});
+  return o;
+}
+function warnTick(){
+  const c = warnCfg(), now = Date.now(), out = [];
+  if(sim.state === "RECORDING") warnArmed().forEach(t => { const d = trackDb(t); WARN.peak[t] = Math.max(WARN.peak[t] ?? -200, d); if(d > c.clip.v) WARN.over[t] = now + 5000; });
+  else WARN.peak = {};
+  WARN_RULES.forEach(r => {
+    if(!c[r.k].on || (r.wx && !get("ui.exp.wireless"))) return;
+    const m = r.test(c[r.k].v); if(!m) return;
+    (Array.isArray(m) ? m : [m]).forEach(x => out.push({id:`${r.k}:${x.id}`, text:x.text, rule:r.k}));
+  });
+  if(WARN.testUntil > now) out.push({id:"test", text:"Test: this is how a warning looks", rule:"test"});
+  const live = out.filter(w => !(WARN.snooze[w.id] > now)), fresh = WARN.started ? live.filter(w => !WARN.seen.has(w.id)) : [];
+  WARN.started = true;   /* warnings already there when the page opens show on the button, without a notice */
+  WARN.seen = new Set(out.map(w => w.id)); WARN.list = live;
+  paintWarn();
+  if(fresh.length && get("ui.warn.show")) toast(`⚠ ${fresh[0].text}${fresh.length > 1 ? ` (+${fresh.length - 1} more)` : ""}`);
+}
+function paintWarn(){
+  const b = document.getElementById("warnBtn"), n = WARN.list.length, show = !!get("ui.warn.show");
+  if(b){ b.hidden = !show || !n; document.getElementById("warnText").textContent = `warning${n === 1 ? "" : "s"}`; document.getElementById("warnNum").textContent = n; b.setAttribute("aria-label", `${n} warning${n === 1 ? "" : "s"}`); b.title = WARN.list.map(w => w.text).join("\n"); }
+  WARN.draws.forEach(f => { try{ f(); }catch(e){} });
+}
+function warnListEl(){
+  const ul = h("ul", {class:"wlist"});
+  const draw = () => ul.replaceChildren(...(WARN.list.length ? WARN.list.map(w => h("li", null, h("span", null, w.text),
+    h("button", {type:"button", class:"btn small", onclick:() => { WARN.snooze[w.id] = Date.now() + 600000; warnTick(); }}, "Snooze 10 min"))) : [h("li", {class:"none"}, "No warnings right now.")]));
+  draw(); WARN.draws.add(draw);
+  const ro = new MutationObserver(() => { if(!ul.isConnected){ WARN.draws.delete(draw); ro.disconnect(); } }); ro.observe(document.body, {childList:true, subtree:true});
+  return ul;
+}
+function openWarnings(from){
+  closeModal(); closePicker();
+  const closeBtn = h("button", {type:"button", class:"mclose", "aria-label":"Close", onclick:() => closeModal()}, "×");
+  const box = h("div", {class:"modal nt", role:"dialog", "aria-modal":"true", "aria-labelledby":"mtitle"},
+    h("div", {class:"mhead"}, h("h3", {id:"mtitle"}, "Warnings"), closeBtn), warnListEl(),
+    h("div", {class:"flex", style:"justify-content:flex-end"}, h("button", {type:"button", class:"btn", onclick:() => { closeModal(); setupSec = "warn"; go("setup"); }}, "Warning settings"),
+      h("button", {type:"button", class:"btn primary", onclick:() => closeModal()}, "Done")));
+  const back = h("div", {class:"modal-back"}, box);
+  back.addEventListener("click", e => { if(e.target === back) closeModal(); });
+  document.body.append(back); modal = {el:back, from};
+}
+function warnPanel(){
+  const grid = h("div", {class:"mxgrid wgrid"});
+  const put = fn => { const v = suClone(get("ui.warn")) || {}; v.on = v.on || {}; v.v = v.v || {}; fn(v); set("ui.warn", [], v, "local"); };
+  const draw = () => {
+    const c = warnCfg();
+    grid.replaceChildren(...WARN_RULES.filter(r => !r.wx || get("ui.exp.wireless")).map(r => {
+      const on = c[r.k].on, val = c[r.k].v, fmt = x => (r.step < 1 ? x.toFixed(1) : String(x)) + " " + r.unit;
+      const stepper = r.unit ? h("div", {class:"wstep"},
+        h("button", {type:"button", class:"bsb", "aria-label":`Lower ${r.name}`, disabled:!on || val <= r.min, onclick:() => put(v => v.v[r.k] = Math.max(r.min, +(val - r.step).toFixed(2)))}, "−"),
+        h("output", {class:"mono"}, fmt(val)),
+        h("button", {type:"button", class:"bsb", "aria-label":`Raise ${r.name}`, disabled:!on || val >= r.max, onclick:() => put(v => v.v[r.k] = Math.min(r.max, +(val + r.step).toFixed(2)))}, "+")) : null;
+      return h("div", {class:"mxrow wrow" + (on ? "" : " off")}, tsw(r.name, on, x => put(v => v.on[r.k] = x ? 1 : 0)), h("span", {class:"mxname"}, h("b", null, r.name)), stepper);
+    }));
+  };
+  bind("ui.warn", [], draw); bind("ui.exp.wireless", [], draw);
+  const showRow = h("div", {class:"mxrow"});
+  bind("ui.warn.show", [], v => { showRow.className = "mxrow" + (v ? "" : " off"); showRow.replaceChildren(tsw("Show On This Device", !!v, x => set("ui.warn.show", [], x ? 1 : 0)), h("span", {class:"mxname"}, h("b", null, "Show On This Device"))); });
+  return h("div", {class:"stack"},
+    h("div", {class:"panel"}, h("h3", null, "Warn me when"),
+      h("p", {class:"hint keep"}, "Checked every second on the cart, for every device. A new warning shows as a notice, and an amber WARNINGS button at the top lists them until they clear."), grid),
+    h("div", {class:"panel"}, h("h3", null, "This device"), h("div", {class:"mxgrid wgrid"}, showRow)),
+    h("div", {class:"panel"}, h("h3", null, "Right now"), warnListEl(),
+      h("div", {class:"flex"}, h("button", {type:"button", class:"btn", onclick:() => { WARN.testUntil = Date.now() + 20000; warnTick(); }}, "Show a test warning"))));
+}
 function setupSections(connPanel, connTitle){
   const G = id => SETUP_GROUPS.find(x => x.id === id);
   /* Nov 21 (Ferris: "Remove grouping from setup menus just have them listed") */
   /* Nov 21 (Ferris: "remove scream trim from setup for now"): Wireless keeps only the RX trim finder (installed app) */
   const wxTools = wirelessTools();
-  const secs = [G("rec"), G("ctrl"), G("meters"), ...(wxTools ? [G("wireless")] : []),
+  const secs = [G("rec"), G("ctrl"), G("meters"), ...(wxTools ? [G("wireless")] : []), {id:"setups", title:"Setups", items:[]}, {id:"warn", title:"Warnings", items:[]},
     {id:"conn", title:connTitle, items:[]},
     {id:"updates", title:"Updates", items:[]}, {id:"app", title:"Nova Relay", items:[]}, {id:"help", title:"Help & Troubleshooting", items:[]}, {id:"exp", title:"Experimental", items:[]}];
   const nav = h("nav", {class:"secnav", "aria-label":"Setup sections"}, secs.map(g => {
@@ -4359,6 +4600,8 @@ function setupSections(connPanel, connTitle){
     : g.id === "updates" ? h("div", {class:"stack"}, ...flatPanels(updatesPanel()))   /* Nov 21 (Ferris): "move updates to Update submenu" */
     : g.id === "app" ? h("div", {class:"stack"}, ...flatPanels(setupTiles("disp"), aboutPanel()))
     : g.id === "help" ? h("div", {class:"stack"}, ...flatPanels(helpPanel(), h("div", {class:"panel"}, h("h3", null, "Link log"), RENDER.log()), diagPanel(), troubleTools()))   /* Nov 21 (Ferris): "merge troubleshooting and help" */
+    : g.id === "setups" ? setupsPanel()
+    : g.id === "warn" ? warnPanel()
     : g.id === "exp" ? h("div", {class:"stack"}, ...flatPanels(experimentalPanel(), ...helpDeckPanels(), deckOffered() ? deckBoxPanel() : null))   /* Nov 21 (Ferris): "Move stream deck to experimental submenu", "stream deck plugin and button addresses should be in experimental, too" */
     : g.id === "meters" ? h("div", {class:"stack"}, setupTiles(g.id), extrasPanel(), monitorPanel(), h("p", {class:"hint keep"}, "Faders on meters: strips with a PFL key get a fader. Drag the cap to move that input's Aria fader, the same as pushing it on the Aria (it works while recording). The Nova doesn't report fader positions, so the cap shows where Nova Relay last put it, and stays hollow until then. Touching that fader on the Aria takes over. After changing the Aria's bank, press its page buttons again, as for PFL."))
     : setupTiles(g.id);
@@ -5165,6 +5408,10 @@ function wireChrome(){
   document.body.dataset.nameleft = "1";   /* Nov 21: names always sit left; the name box's extras ride in its pill */
   bind("ui.osk", [], v => { if(!v) OSK.hide(); }, true);
   bind("ui.meters.fullname", [], v => { document.body.dataset.fullname = v ? "1" : "0"; }, true);
+  seedSetups();
+  $("warnBtn").addEventListener("click", e => openWarnings(e.currentTarget));
+  bind("ui.warn.show", [], paintWarn, true);
+  setInterval(warnTick, 1000);
   bind("ui.exp.wireless", [], v => { document.body.dataset.xwx = v ? "1" : "0"; if(!v && current === "wireless") go("home"); }, true);
   bind("ui.recfile", [], () => paintRecFile(), true);
   /* Headphone preset in the top bar: shows the current one, tap steps through the presets that are On. */
