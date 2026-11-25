@@ -67,7 +67,7 @@ rep('''const link = {
 /* ---------- Connection to the cart computer ----------
    The cart computer holds the shared settings and runs the recorder link. Every device
    (this one, phones, iPads) sends its changes there and receives everyone else's. */
-const PER_DEVICE = new Set(["ui.helptext", "ui.osk", "ui.exp.wireless", "ui.refline.enable", "ui.refline.level", "ui.meters.faders", "ui.meters.monitor", "ui.meters.extras"]);
+const PER_DEVICE = new Set(["ui.helptext", "ui.osk", "ui.exp.wireless", "ui.refline.enable", "ui.refline.level", "ui.meters.faders", "ui.meters.monitor", "ui.meters.extras", "ui.meters.fullname"]);
 const cart = {urls:[], serial:null, ports:[], devices:1, ready:false, synced:false, nova:null};
 const cartSubs = new Set();
 const cartChanged = () => cartSubs.forEach(f => { try{ f(); }catch(e){} });

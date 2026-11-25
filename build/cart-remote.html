@@ -315,6 +315,14 @@ body[data-layout="console"]{
 .xi.wrf s.on{background:var(--ok)}
 .xi.wrf.weak s.on{background:var(--warn)}
 .strip.monitor .scrib{background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.22) 0 6px,transparent 6px 12px)}
+/* Nov 24 (Ferris: "Can I see the track meter names from 21 on the current layout?"): design 21's name boxes: a neutral
+   box with the track colour as a bar along the top and the name in the page's text colour (was the whole box in the
+   track colour with dark text). Meter rows (phones, upright iPads) put the bar down the left side. */
+body:not([data-fullname="1"]) .strip:not(.scale) > .scrib{background:var(--raised-2) !important;color:var(--fg);border-top:4px solid var(--sc,#9aa5b1);border-radius:3px}
+body:not([data-fullname="1"]) .strip.monitor:not(.scale) > .scrib{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.06) 0 6px,transparent 6px 12px)}
+@media (max-width:600px), (orientation:portrait) and (max-width:1100px){
+  body:not([data-fullname="1"]) .strip:not(.scale) > .scrib{border-top:0;box-shadow:inset 4px 0 0 var(--sc,#9aa5b1);padding-left:8px}
+}
 .montag{padding:0 .4em;border:1px solid var(--muted);border-radius:3px;color:var(--fg);font-size:.9em;letter-spacing:.06em}
 
 /* PFL keys (Nov 1): yellow when on, like the Aria's PFL light */
@@ -1568,6 +1576,9 @@ const LOCAL = [
   {id:0, n:"EXPERIMENTAL_WIRELESS", t:"Menu", k:"ui.exp.wireless", m:["OFF","ON"], local:true},
   /* Nov 21: the old ZNet ID / TX power / ZNet trim / name-left switches became the meter extras (METERS_EXTRAS). */
   {id:0, n:"METERS_SHOW_FADERS", t:"Menu", k:"ui.meters.faders", m:["OFF","ON"], local:true},
+  /* Nov 24 (Ferris: "Let's make the full color boxes a toggle switch option"): name boxes filled with the track colour
+     (the look before Nov 24) instead of design 21's grey box with a colour bar. Per device, off at first. */
+  {id:0, n:"METERS_FULL_COLOUR_NAMES", t:"Menu", k:"ui.meters.fullname", m:["OFF","ON"], local:true},
   /* Nov 20 (Ferris): tracks shown on the Meters page without being armed, to watch crew comms and the like. Per device. */
   {id:0, n:"METERS_MONITOR", t:"Base", k:"ui.meters.monitor", local:true},
   /* Nov 21 (Ferris): which meter extras are on, {on:{key:0|1}} (Setup › Meters › Extras On The Meters). Per device. */
@@ -1621,7 +1632,7 @@ const EXAMPLE = true;
 const V = {}; SCHEMA.forEach(s => V[s.k] = build(s.d, () => def(s)));
 V["ui.refline.enable"] = 1; V["ui.refline.level"] = -18;
 V["ui.track.com1"] = Array(16).fill(0);
-V["ui.helptext"] = 0; V["ui.osk"] = 1; V["ui.exp.wireless"] = EXAMPLE ? 1 : 0;   /* Nov 19, 19:35 (Ferris): "On screen keyboard should default to on" */
+V["ui.meters.fullname"] = 0; V["ui.helptext"] = 0; V["ui.osk"] = 1; V["ui.exp.wireless"] = EXAMPLE ? 1 : 0;   /* Nov 19, 19:35 (Ferris): "On screen keyboard should default to on" */
 
 /* Nov 14 (0.6.1): faders on the meters. Off until turned on (per device); positions are where Nova Relay last put each
    input's Aria fader (0-255), null until then. */
@@ -4225,7 +4236,7 @@ let setupSec = "rec", setupEdit = null;
 const SETUP_GROUPS = [
   {id:"rec", title:"Recording", items:[["sample.rate", "Sample rate"], ["ui.bitdepth", "Bit depth"], ["neverclip.attenuation", "ISO Attenuation"], ["record.preroll", "Pre-roll"], ["setup.transport", "Transport"], ["tone.enable", "Tone"], ["tone.level", "Tone level"]]},
   {id:"meters", title:"Meters", items:[["meters.meter.hold", "Meter hold"], ["meters.meter.decay", "Meter decay"], ["meters.peak.hold", "Peak hold"], ["meters.peak.decay", "Peak decay"],
-    ["ui.refline.enable", "Reference line"], ["ui.refline.level", "Ref line level"], ["ui.meters.faders", "Faders on meters"]]},
+    ["ui.refline.enable", "Reference line"], ["ui.refline.level", "Ref line level"], ["ui.meters.fullname", "Full colour name boxes"], ["ui.meters.faders", "Faders on meters"]]},
   {id:"ctrl", title:"Nova control", items:[["setup.gpi1.remoteroll", "GPI 1 roll"], ["setup.serial.remoteroll", "Serial roll"], ["setup.serial.mode", "Serial mode"],
     ["setup.master.mode", "Master"], ["controller.backlight", "Backlight"], ["ui.update.period", "UI update"]]},
   {id:"wireless", title:"Wireless", items:[]},
@@ -5153,6 +5164,7 @@ function wireChrome(){
   bind("ui.helptext", [], v => document.body.dataset.help = v ? "1" : "0", true);
   document.body.dataset.nameleft = "1";   /* Nov 21: names always sit left; the name box's extras ride in its pill */
   bind("ui.osk", [], v => { if(!v) OSK.hide(); }, true);
+  bind("ui.meters.fullname", [], v => { document.body.dataset.fullname = v ? "1" : "0"; }, true);
   bind("ui.exp.wireless", [], v => { document.body.dataset.xwx = v ? "1" : "0"; if(!v && current === "wireless") go("home"); }, true);
   bind("ui.recfile", [], () => paintRecFile(), true);
   /* Headphone preset in the top bar: shows the current one, tap steps through the presets that are On. */
