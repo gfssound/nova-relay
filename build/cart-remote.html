@@ -46,7 +46,6 @@ button{cursor:pointer}
 /* Nov 25: the warnings button took the room the title needed, so "prototype" wrapped under it and pushed the meters down
    (CI meters_noscroll). The title stays on one line; its small word gives way while warnings show. */
 .brand{white-space:nowrap}
-.status:has(#warnBtn:not([hidden])) .brand small{display:none}
 .stat{display:flex;flex-direction:column;gap:1px;min-width:0}
 .stat b{font-family:var(--f-mono);font-weight:400;font-size:var(--t-sm);font-variant-numeric:tabular-nums;white-space:nowrap}
 .hpbtn{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:var(--raised);border:1px solid var(--line);border-radius:var(--r);padding:4px 12px;min-height:44px;justify-content:center;text-align:left;max-width:220px}
@@ -332,9 +331,6 @@ body[data-layout="console"]{
 .surec b{font-family:var(--f-display);font-weight:700;font-size:var(--t-md);letter-spacing:.03em}
 .surec small{font-size:var(--t-sm);color:var(--muted);overflow-wrap:anywhere}
 .surec.same{opacity:.55;cursor:default}
-.warnpill{border-color:var(--rec);border-width:2px;color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,var(--raised));font-weight:700;cursor:pointer}
-.warnpill i{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--warn);color:#111;box-shadow:none;font:800 11px/1 var(--f-body);font-style:normal}
-.status .warnpill > span{display:inline}
 .wgrid{grid-template-columns:minmax(0,1fr) !important}
 .mxgrid .mxrow.wrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px}
 .wrow .mxname{min-width:0;text-align:left}
@@ -502,7 +498,7 @@ button.scrib:hover{filter:brightness(1.12)}
   font-family:var(--f-display);font-weight:700;font-size:clamp(17px,2.2vw,22px);letter-spacing:.02em;line-height:1.3;text-align:center;
   padding:18px 26px;border-radius:10px;min-width:min(300px,calc(100% - 32px));max-width:min(560px,calc(100% - 32px));box-shadow:0 18px 50px rgba(0,0,0,.6)}
 .toast{background:var(--surface);color:var(--fg);border:2px solid var(--accent-line)}
-/* Nov 25 (Ferris: "give warnings red borders"): the header pill, the warning list and a warning's pop-up notice */
+/* Nov 25 (Ferris: "give warnings red borders"): the warning list and a warning's pop-up notice */
 .toast.warn{border-color:var(--rec)}
 .toast .btn{font-size:16px;padding:8px 16px}
 .locktoast{background:var(--rec);color:#fff;border:2px solid #fff}
@@ -1527,7 +1523,6 @@ button.wx-cell span{font:700 clamp(14px,15cqi,24px) var(--f-mono);white-space:no
   <header class="status gut" id="status">
     <div class="brand">Nova Relay <small>prototype</small></div>
     <span class="pill" id="linkPill"><i></i><span>Simulated recorder</span></span>
-    <button type="button" class="pill warnpill" id="warnBtn" hidden><i aria-hidden="true" id="warnNum">!</i><span id="warnText"></span></button>
     <div class="stat"><span class="lbl">Rate</span><b id="stRate">—</b></div>
     <div class="stat"><span class="lbl">Frame</span><b id="stFps">—</b></div>
     <div class="stat opt" title="Time left on the drive at the current number of armed tracks"><span class="lbl">TLOC</span><b id="stDrive">—</b></div>
@@ -4540,8 +4535,7 @@ function warnTick(){
   if(fresh.length && get("ui.warn.show")) toast(`⚠ ${fresh[0].text}${fresh.length > 1 ? ` (+${fresh.length - 1} more)` : ""}`, null, "warn");
 }
 function paintWarn(){
-  const b = document.getElementById("warnBtn"), n = WARN.list.length, show = !!get("ui.warn.show");
-  if(b){ b.hidden = !show || !n; document.getElementById("warnText").textContent = `warning${n === 1 ? "" : "s"}`; document.getElementById("warnNum").textContent = n; b.setAttribute("aria-label", `${n} warning${n === 1 ? "" : "s"}`); b.title = WARN.list.map(w => w.text).join("\n"); }
+  /* Nov 25 (Ferris: "Remove warning button from the top, just have the pop up that happens"): no header button; the pop-up and Setup › Warnings › Right now */
   WARN.draws.forEach(f => { try{ f(); }catch(e){} });
 }
 function warnListEl(){
@@ -4582,7 +4576,7 @@ function warnPanel(){
   bind("ui.warn.show", [], v => { showRow.className = "mxrow" + (v ? "" : " off"); showRow.replaceChildren(tsw("Show On This Device", !!v, x => set("ui.warn.show", [], x ? 1 : 0)), h("span", {class:"mxname"}, h("b", null, "Show On This Device"))); });
   return h("div", {class:"stack"},
     h("div", {class:"panel"}, h("h3", null, "Warn me when"),
-      h("p", {class:"hint keep"}, "Checked every second on the cart, for every device. A new warning shows as a notice, and an amber WARNINGS button at the top lists them until they clear."), grid),
+      h("p", {class:"hint keep"}, "Checked every second on the cart, for every device. A new warning pops up as a notice; Right now, below, lists the ones that haven't cleared."), grid),
     h("div", {class:"panel"}, h("h3", null, "This device"), h("div", {class:"mxgrid wgrid"}, showRow)),
     h("div", {class:"panel"}, h("h3", null, "Right now"), warnListEl(),
       h("div", {class:"flex"}, h("button", {type:"button", class:"btn", onclick:() => { WARN.testUntil = Date.now() + 20000; warnTick(); }}, "Show a test warning"))));
@@ -5416,8 +5410,6 @@ function wireChrome(){
   bind("ui.osk", [], v => { if(!v) OSK.hide(); }, true);
   bind("ui.meters.fullname", [], v => { document.body.dataset.fullname = v ? "1" : "0"; }, true);
   seedSetups();
-  $("warnBtn").addEventListener("click", e => openWarnings(e.currentTarget));
-  bind("ui.warn.show", [], paintWarn, true);
   setInterval(warnTick, 1000);
   bind("ui.exp.wireless", [], v => { document.body.dataset.xwx = v ? "1" : "0"; if(!v && current === "wireless") go("home"); }, true);
   bind("ui.recfile", [], () => paintRecFile(), true);
