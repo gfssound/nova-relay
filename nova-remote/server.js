@@ -33,7 +33,7 @@ const SCHEMA = JSON.parse(fs.readFileSync(path.join(__dirname, "schema.json"), "
 const BY_ID = new Map(SCHEMA.map(s => [s.id, s]));
 const BY_KEY = new Map(SCHEMA.map(s => [s.k, s]));
 
-const VERSION = "0.6.11";
+const VERSION = "0.6.12";
 const args = process.argv.slice(2);
 const argVal = (name, def) => { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
 const PORT = +(process.env.PORT || argVal("--port", 8080));

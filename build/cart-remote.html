@@ -4528,8 +4528,8 @@ function warnTick(){
     (Array.isArray(m) ? m : [m]).forEach(x => out.push({id:`${r.k}:${x.id}`, text:x.text, rule:r.k}));
   });
   if(WARN.testUntil > now) out.push({id:"test", text:"Test: this is how a warning looks", rule:"test"});
-  const live = out.filter(w => !(WARN.snooze[w.id] > now)), fresh = WARN.started ? live.filter(w => !WARN.seen.has(w.id)) : [];
-  WARN.started = true;   /* warnings already there when the page opens show on the button, without a notice */
+  /* Nov 25: with no header button, warnings already there when the page opens pop up too */
+  const live = out.filter(w => !(WARN.snooze[w.id] > now)), fresh = live.filter(w => !WARN.seen.has(w.id));
   WARN.seen = new Set(out.map(w => w.id)); WARN.list = live;
   paintWarn();
   if(fresh.length && get("ui.warn.show")) toast(`⚠ ${fresh[0].text}${fresh.length > 1 ? ` (+${fresh.length - 1} more)` : ""}`, null, "warn");
@@ -4683,7 +4683,7 @@ function diagPanel(){
    What's running; Check for updates (GitHub, github.com/gfssound/nova-relay); Install (two taps; never by itself);
    an update file from this device (a cart without internet); Go back to the version before. The prototype pretends:
    the installed app asks the cart computer, which checks, downloads, checks the signature and restarts. */
-const PROTO_VERSION = "0.6.11";
+const PROTO_VERSION = "0.6.12";
 let protoUpd = {running:PROTO_VERSION, appVersion:PROTO_VERSION, fromUpdate:false, back:null, auto:true, checking:false, checkedAt:0, error:null, offline:false, busy:null, latest:null, available:false, recording:false, source:"github.com/gfssound/nova-relay"};
 let updDraw = null;
 const updState = () => ({...protoUpd, recording:sim.state === "RECORDING"});
