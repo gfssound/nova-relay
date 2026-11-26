@@ -5,6 +5,8 @@ Nova (through an Aria-8 or Zaxcom's direct cable, 38400 baud 8O1) and serves a b
 network. It ships as a Mac app builder, a Raspberry Pi box (SD-card image builder), a Linux AppImage and a Stream Deck
 plugin, each with the user manual.
 
+**User manual:** [Nova Relay User Manual.pdf](nova-remote/Nova%20Relay%20User%20Manual.pdf) (pictures of every page, a contents page that jumps to each section). The same file opens from Setup › Help & Troubleshooting in the app.
+
 ## Layout
 
 | Folder | What's in it |
