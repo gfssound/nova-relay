@@ -1603,6 +1603,9 @@ const LOCAL = [
   {id:0, n:"ON_SCREEN_KEYBOARD", t:"Menu", k:"ui.osk", m:["OFF","ON"], local:true},
   /* Nov 21 (Ferris): the Wireless page is experimental until Nova Relay can read an RX-8 / RX-12. Per device. */
   {id:0, n:"EXPERIMENTAL_WIRELESS", t:"Menu", k:"ui.exp.wireless", m:["OFF","ON"], local:true},
+  /* Nov 25 (Ferris: "Keep them experimental until we can test"): Presets and Warnings, each behind its own switch */
+  {id:0, n:"EXPERIMENTAL_PRESETS", t:"Menu", k:"ui.exp.presets", m:["OFF","ON"], local:true},
+  {id:0, n:"EXPERIMENTAL_WARNINGS", t:"Menu", k:"ui.exp.warn", m:["OFF","ON"], local:true},
   /* Nov 21: the old ZNet ID / TX power / ZNet trim / name-left switches became the meter extras (METERS_EXTRAS). */
   {id:0, n:"METERS_SHOW_FADERS", t:"Menu", k:"ui.meters.faders", m:["OFF","ON"], local:true},
   /* Nov 24 (Ferris: "Let's make the full color boxes a toggle switch option"): name boxes filled with the track colour
@@ -1665,7 +1668,7 @@ const EXAMPLE = true;
 const V = {}; SCHEMA.forEach(s => V[s.k] = build(s.d, () => def(s)));
 V["ui.refline.enable"] = 1; V["ui.refline.level"] = -18;
 V["ui.track.com1"] = Array(16).fill(0);
-V["ui.meters.fullname"] = 0; V["ui.setups"] = []; V["ui.warn"] = null; V["ui.warn.show"] = 1; V["ui.helptext"] = 0; V["ui.osk"] = 1; V["ui.exp.wireless"] = EXAMPLE ? 1 : 0;   /* Nov 19, 19:35 (Ferris): "On screen keyboard should default to on" */
+V["ui.meters.fullname"] = 0; V["ui.setups"] = []; V["ui.warn"] = null; V["ui.warn.show"] = 1; V["ui.helptext"] = 0; V["ui.osk"] = 1; V["ui.exp.wireless"] = EXAMPLE ? 1 : 0; V["ui.exp.presets"] = EXAMPLE ? 1 : 0; V["ui.exp.warn"] = EXAMPLE ? 1 : 0;   /* Nov 19, 19:35 (Ferris): "On screen keyboard should default to on" */
 
 /* Nov 14 (0.6.1): faders on the meters. Off until turned on (per device); positions are where Nova Relay last put each
    input's Aria fader (0-255), null until then. */
@@ -3420,14 +3423,14 @@ function extrasPanel(){
    Nov 21 (Ferris: "Same with the track shows"): switches, like the extras. Per device. */
 /* Nov 21 (Ferris): features that are built but not yet confirmed working go here, each behind its own switch. */
 function experimentalPanel(){
-  const row = h("div", {class:"mxrow"});
-  const draw = v => { row.className = "mxrow" + (v ? "" : " off"); row.replaceChildren(tsw("Wireless page", !!v, on => set("ui.exp.wireless", [], on ? 1 : 0)),
-    h("span", {class:"mxname"}, h("b", null, "Wireless Page"))); };
-  bind("ui.exp.wireless", [], draw);
+  const sw = (k, label) => { const row = h("div", {class:"mxrow"});
+    bind(k, [], v => { row.className = "mxrow" + (v ? "" : " off"); row.replaceChildren(tsw(label, !!v, on => set(k, [], on ? 1 : 0)), h("span", {class:"mxname"}, h("b", null, label))); });
+    return row; };
   return h("div", {class:"panel"}, h("h3", null, "Experimental"),
     h("p", {class:"hint keep"}, "Built, but not yet confirmed working on every setup. Try them away from a job first."),
-    h("div", {class:"mxgrid"}, row),
-    h("p", {class:"hint keep"}, "Wireless page: the receivers of an RX-8 or RX-12 with battery, RF, frequency and a 30-minute signal history. Nova Relay can't read a receiver yet, so the page waits for one. This device only."));
+    h("div", {class:"mxgrid"}, sw("ui.exp.wireless", "Wireless Page"), sw("ui.exp.presets", "Presets"), sw("ui.exp.warn", "Warnings")),
+    h("p", {class:"hint keep"}, "Wireless page: the receivers of an RX-8 or RX-12 with battery, RF, frequency and a 30-minute signal history. Nova Relay can't read a receiver yet, so the page waits for one."),
+    h("p", {class:"hint keep"}, "Presets: a Setup section to save the cart's setup (names, arming, routing, headphones, outputs) and recall it later. Warnings: a Setup section and pop-ups for low drive time, low battery, transmitters not on while rolling and silent tracks. Each switch is for this device only."));
 }
 function monitorPanel(){
   const grid = h("div", {class:"mxgrid"});
@@ -4519,6 +4522,7 @@ function warnCfg(){
   return o;
 }
 function warnTick(){
+  if(!get("ui.exp.warn")){ if(WARN.list.length || WARN.seen.size){ WARN.list = []; WARN.seen = new Set(); paintWarn(); } return; }   /* Experimental › Warnings off */
   const c = warnCfg(), now = Date.now(), out = [];
   if(sim.state === "RECORDING") warnArmed().forEach(t => { const d = trackDb(t); WARN.peak[t] = Math.max(WARN.peak[t] ?? -200, d); if(d > c.clip.v) WARN.over[t] = now + 5000; });
   else WARN.peak = {};
@@ -4586,7 +4590,8 @@ function setupSections(connPanel, connTitle){
   /* Nov 21 (Ferris: "Remove grouping from setup menus just have them listed") */
   /* Nov 21 (Ferris: "remove scream trim from setup for now"): Wireless keeps only the RX trim finder (installed app) */
   const wxTools = wirelessTools();
-  const secs = [G("rec"), G("ctrl"), G("meters"), ...(wxTools ? [G("wireless")] : []), {id:"setups", title:"Presets", items:[]}, {id:"warn", title:"Warnings", items:[]},
+  const secs = [G("rec"), G("ctrl"), G("meters"), ...(wxTools ? [G("wireless")] : []),
+    ...(get("ui.exp.presets") ? [{id:"setups", title:"Presets", items:[]}] : []), ...(get("ui.exp.warn") ? [{id:"warn", title:"Warnings", items:[]}] : []),
     {id:"conn", title:connTitle, items:[]},
     {id:"updates", title:"Updates", items:[]}, {id:"app", title:"Nova Relay", items:[]}, {id:"help", title:"Help & Troubleshooting", items:[]}, {id:"exp", title:"Experimental", items:[]}];
   const nav = h("nav", {class:"secnav", "aria-label":"Setup sections"}, secs.map(g => {
@@ -5412,6 +5417,8 @@ function wireChrome(){
   seedSetups();
   setInterval(warnTick, 1000);
   bind("ui.exp.wireless", [], v => { document.body.dataset.xwx = v ? "1" : "0"; if(!v && current === "wireless") go("home"); }, true);
+  /* Nov 25: the Presets and Warnings sections come and go with their Experimental switches */
+  ["ui.exp.presets", "ui.exp.warn"].forEach(k => { let first = true; bind(k, [], () => { if(first){ first = false; return; } if(current === "setup") go("setup"); }, true); });
   bind("ui.recfile", [], () => paintRecFile(), true);
   /* Headphone preset in the top bar: shows the current one, tap steps through the presets that are On. */
   const hpLabel = () => {

@@ -1,4 +1,4 @@
-Setup › Presets: save the cart's setup (track names, arming, track routing, headphone mixes, outputs) under a name and recall it later; Recall shows what each part would change and sends only the differences, never while recording, with Undo
-Setup › Warnings: a pop-up with a red border for low drive time, low recorder battery, a transmitter not On while rolling, an armed track silent after REC, and (off at first) a track going over a level; each can be switched off or set, and Right now lists the ones still active
+Setup › Experimental › Presets (off at first): save the cart's setup (track names, arming, track routing, headphone mixes, outputs) under a name and recall it later; Recall shows what each part would change and sends only the differences, never while recording, with Undo
+Setup › Experimental › Warnings (off at first): a pop-up with a red border for low drive time, low recorder battery, a transmitter not On while rolling, an armed track silent after REC, and (off at first) a track going over a level; each can be switched off or set, and Right now lists the ones still active
 Meters: track names sit in a grey box with a stripe of the track's colour, easier to read on every colour; Setup › Meters › Full colour name boxes brings back the filled boxes
 Header: the title stays on one line, so the Meters page no longer scrolls on iPad sizes
