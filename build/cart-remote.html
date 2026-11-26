@@ -300,10 +300,6 @@ body[data-layout="console"]{
 .xi .u{display:none}
 .xzt i{font-style:normal;font-weight:500;color:var(--muted);margin-right:.3em}
 .xzt{color:var(--fg)}
-/* Nov 25 (Ferris: "put a little dividing line between znet gain and trim") */
-.xzt + .xtrim::before{content:"";display:inline-block;width:1px;height:.9em;margin-right:.5em;background:var(--dim);vertical-align:-.1em}
-.strip > .xl:has(> .xzt + .xtrim){position:relative}
-.strip > .xl > .xzt + .xtrim::before{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0}   /* in the meter columns the line sits midway between the two */
 .xzid{padding:.1em .35em;border-radius:.3em;background:#0a0b0c;border:1px solid #2c3238;color:#c2c9d0}
 .xpw{color:var(--warn)} .xpw[data-st="On"]{color:var(--ok)}
 .xi.wrec{display:inline-flex;align-items:center;gap:.3em;padding:.22em .45em;border-radius:.3em;background:#3a3f45;color:#d7dce0;font:800 .86em/1 var(--f-display);letter-spacing:.04em}
@@ -1148,7 +1144,7 @@ main.secs-all .phsec-panel > h3:first-child{display:none}
     .strips-wrap.mx .strip > .xl{font-size:clamp(10px,10.4cqi,17px)}
     @container (max-width:92px){ .xl .wbat b{display:none} }
     /* narrow strips (16 on a laptop, a phone held sideways): ZNet trim joins the pill on line 1, as before */
-    @container (max-width:120px){ .xl .xzt{display:none} .xl .xzt + .xtrim::before{display:none} .strip .xl .zpill .zt.mxn{display:inline !important} .strips-wrap.mx .strip > .xl{gap:.2em} }
+    @container (max-width:120px){ .xl .xzt{display:none} .strip .xl .zpill .zt.mxn{display:inline !important} .strips-wrap.mx .strip > .xl{gap:.2em} }
     @container (max-width:80px){ .xl .zpill{font-size:9px} }
     /* Nov 21 (Ferris: "when all 16 are present ... just keep TX battery and RF"): on narrow meters (16 on a laptop, a
        phone held sideways) only battery and RF stay; the other extras and the name-box pill step aside, and lines left
