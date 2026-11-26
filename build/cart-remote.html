@@ -315,7 +315,7 @@ body[data-layout="console"]{
 .xi.wrf s.on{background:var(--ok)}
 .xi.wrf.weak s.on{background:var(--warn)}
 .strip.monitor .scrib{background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.22) 0 6px,transparent 6px 12px)}
-/* Nov 24: saved setups and warnings */
+/* Nov 24: saved setups and warnings (Nov 25, Ferris: "Change \"Setups\" to \"Presets\"": the screen says Presets; keys stay ui.setups) */
 .sulist{display:flex;flex-direction:column;gap:8px}
 .surow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;background:var(--raised);border:1px solid var(--line);border-radius:var(--r)}
 .suname{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -4368,7 +4368,7 @@ const troubleTools = () => null;    /* installed: the protocol test tools */
 const SEC_SHORT = {help:"Help"};   /* phones: the name that fits a third of the width */
 const SEC_SUB = {rec:"Rate, pre-roll, tone", ctrl:"Remote roll, serial, backlight", meters:"Timing, reference line, extras",
   wireless:"RX trim finder", conn:"Nova link, phones, Aria buttons",
-  updates:"New versions of Nova Relay", app:"Screen, version, licences", help:"Manual, Link log, problem reports", exp:"Features still being tested", setups:"Save and recall the Nova's setup", warn:"Drive, battery, standby, silence"};
+  updates:"New versions of Nova Relay", app:"Screen, version, licences", help:"Manual, Link log, problem reports", exp:"Features still being tested", setups:"Save and recall Nova presets", warn:"Drive, battery, standby, silence"};
 /* Nov 21: a section's panels side by side need them as direct children: lift panels out of plain wrapper stacks */
 const flatPanels = (...nodes) => nodes.filter(Boolean).flatMap(n => n.classList && n.classList.contains("stack") && !n.classList.contains("panel") && !n.id ? [...n.children] : [n]);
 /* ---------- Setup › Setups and Setup › Warnings (Nov 24, Ferris: "Let's do a mockup of recall settings and warnings") ----------
@@ -4441,7 +4441,7 @@ function openRecall(i, from){
   });
   sendB.addEventListener("click", () => {
     const undo = setupSnap(), ids = parts.filter(x => pick[x.p.id]).map(x => x.p.id), n = applySetup(s.data, ids);
-    log("ev", `Recalled setup ${s.name}: ${n} change${n === 1 ? "" : "s"} sent (${ids.join(", ")})`);
+    log("ev", `Recalled preset ${s.name}: ${n} change${n === 1 ? "" : "s"} sent (${ids.join(", ")})`);
     closeModal(); toast(`${s.name}: ${n} change${n === 1 ? "" : "s"} sent`, () => { applySetup(undo, ids); toast("Put back"); });
   });
   const closeBtn = h("button", {type:"button", class:"mclose", "aria-label":"Close", onclick:() => closeModal()}, "×");
@@ -4459,7 +4459,7 @@ function openRecall(i, from){
 }
 function setupsPanel(){
   const list = h("div", {class:"sulist"});
-  const name = h("input", {type:"text", class:"txt", maxlength:40, autocomplete:"off", placeholder:"e.g. DAY 3 · INT KITCHEN", "aria-label":"Setup name"});
+  const name = h("input", {type:"text", class:"txt", maxlength:40, autocomplete:"off", placeholder:"e.g. DAY 3 · INT KITCHEN", "aria-label":"Preset name"});
   let armDel = null, armOver = null;
   const put = a => set("ui.setups", [], a, "local");
   const draw = () => {
@@ -4478,10 +4478,10 @@ function setupsPanel(){
             if(armDel !== i){ armDel = i; armOver = null; draw(); return; }
             armDel = null; const a = setupsAll(), [gone] = a.splice(i, 1); put(a);
             toast(`Deleted ${gone.name}`, () => { const b = setupsAll(); b.splice(i, 0, gone); put(b); }); }}, armDel === i ? "Tap again to delete" : "Delete")));
-    }) : [h("p", {class:"hint keep"}, "No setups saved yet.")]));
+    }) : [h("p", {class:"hint keep"}, "No presets saved yet.")]));
   };
   const save = () => {
-    const n = name.value.trim().toUpperCase() || `SETUP ${setupsAll().length + 1}`, a = setupsAll(), at = a.findIndex(x => x.name === n);
+    const n = name.value.trim().toUpperCase() || `PRESET ${setupsAll().length + 1}`, a = setupsAll(), at = a.findIndex(x => x.name === n);
     const entry = {name:n, at:new Date().toISOString(), data:setupSnap()};
     if(at >= 0) a[at] = entry; else a.unshift(entry);
     put(a); name.value = ""; toast(at >= 0 ? `Updated ${n}` : `Saved ${n}`);
@@ -4489,10 +4489,10 @@ function setupsPanel(){
   name.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); save(); } });
   bind("ui.setups", [], draw); SETUP_PARTS.forEach(p => p.keys.forEach(k => { if(S[k]) bind(k, [], draw); }));
   return h("div", {class:"stack"},
-    h("div", {class:"panel"}, h("h3", null, "Save this setup"),
+    h("div", {class:"panel"}, h("h3", null, "Save as a preset"),
       h("p", {class:"hint keep"}, "Saves the track names, arming, track routing, headphone mixes and outputs as they are now. Every device on this cart sees the same list."),
       h("div", {class:"flex"}, h("div", {style:"flex:1 1 240px;min-width:0"}, name), h("button", {type:"button", class:"btn primary", onclick:save}, "Save"))),
-    h("div", {class:"panel"}, h("h3", null, "Saved setups"),
+    h("div", {class:"panel"}, h("h3", null, "Saved presets"),
       h("p", {class:"hint keep"}, "Recall shows what would change and sends only the differences. Not while recording; Undo puts back what was there."), list));
 }
 
@@ -4585,7 +4585,7 @@ function setupSections(connPanel, connTitle){
   /* Nov 21 (Ferris: "Remove grouping from setup menus just have them listed") */
   /* Nov 21 (Ferris: "remove scream trim from setup for now"): Wireless keeps only the RX trim finder (installed app) */
   const wxTools = wirelessTools();
-  const secs = [G("rec"), G("ctrl"), G("meters"), ...(wxTools ? [G("wireless")] : []), {id:"setups", title:"Setups", items:[]}, {id:"warn", title:"Warnings", items:[]},
+  const secs = [G("rec"), G("ctrl"), G("meters"), ...(wxTools ? [G("wireless")] : []), {id:"setups", title:"Presets", items:[]}, {id:"warn", title:"Warnings", items:[]},
     {id:"conn", title:connTitle, items:[]},
     {id:"updates", title:"Updates", items:[]}, {id:"app", title:"Nova Relay", items:[]}, {id:"help", title:"Help & Troubleshooting", items:[]}, {id:"exp", title:"Experimental", items:[]}];
   const nav = h("nav", {class:"secnav", "aria-label":"Setup sections"}, secs.map(g => {
