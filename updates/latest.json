@@ -1,17 +1,13 @@
 {
- "version": "0.6.11",
- "file": "Nova-Relay-0.6.11-update.zip",
- "sha256": "81bc47d09dd6f17d264f409fabdc1f1c1e2f0869314bd4f072b91a5d5c8d9e19",
- "size": 1029843,
- "date": "2026-11-21",
+ "version": "0.6.12",
+ "file": "Nova-Relay-0.6.12-update.zip",
+ "sha256": "eafe74113d3e91460d945dec6bfa5e1f30ab8ea995acd266d8cf5c376d99660d",
+ "size": 1052345,
+ "date": "2026-11-26",
  "notes": [
-  "Setup: sections regrouped into Nova, Pages, Cart and App with less scrolling; the Stream Deck plugin and button addresses are in Help, Aria Slate/Com learning in Connection, the Link log and problem reports in Troubleshooting",
-  "Setup › Experimental: the Wireless page (RX-8 / RX-12), off until switched on; Nova Relay can't read a receiver yet, so the page waits for one",
-  "Meters: extras on the meters (power status, ZNet ID, ZNet trim, trim, track number) each switched on or off in Setup › Meters; lines with nothing on them close up and the meters get taller",
-  "Meters: tracks can be shown without being recorded (Setup › Meters › Show without recording), with a dashed outline and MON",
-  "Meters: a cleaner two-line look for sideways meters on phones and upright iPads, and the dB scale lines up with the meters",
-  "TLOC counts down every second while recording, on screen and on the Stream Deck Drive key (plugin 1.5.3.0)",
-  "Setup › Nova Relay › About: the version, the recorder, the Zaxcom notice and the open-source licences",
-  "New app icon"
+  "Setup › Experimental › Presets (off at first): save the cart's setup (track names, arming, track routing, headphone mixes, outputs) under a name and recall it later; Recall shows what each part would change and sends only the differences, never while recording, with Undo",
+  "Setup › Experimental › Warnings (off at first): a pop-up with a red border for low drive time, low recorder battery, a transmitter not On while rolling, an armed track silent after REC, and (off at first) a track going over a level; each can be switched off or set, and Right now lists the ones still active",
+  "Meters: track names sit in a grey box with a stripe of the track's colour, easier to read on every colour; Setup › Meters › Full colour name boxes brings back the filled boxes",
+  "Header: the title stays on one line, so the Meters page no longer scrolls on iPad sizes"
  ]
 }
