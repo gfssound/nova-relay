@@ -86,6 +86,11 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
     if(missing.length) console.error("contents: no page found for", missing.join(", "));
     const html2 = html.replace(/<span class="pg" data-for="([^"]+)">00<\/span>/g, (m, id) => `<span class="pg">${pageOf[id] || ""}</span>`);
     await render(html2, out);
+    /* links straight to their pages, plus bookmarks (tools/manual/fixlinks.py, pypdf) */
+    const entries = [...html2.matchAll(/<(ol|ul)>|<\/(ol|ul)>|<a href="#([^"]+)"><span class="t">([\s\S]*?)<\/span>/g)];
+    let depth = -1; const list = [];
+    for(const m of entries){ if(m[1]) depth++; else if(m[2]) depth--; else list.push([m[4].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&"), Math.max(0, depth), m[3]]); }
+    console.log(String(execFileSync("python3", [path.join(dir, "fixlinks.py"), out, JSON.stringify(list)])).trim());
   }
   fs.unlinkSync(tmp); await b.close();
   console.log("manual PDF:", out);
